@@ -1,9 +1,21 @@
 import { db } from "@white-shop/db";
 import { Prisma } from "@prisma/client";
+import { customAlphabet } from "nanoid";
 import type { CheckoutData } from "../types/checkout";
 import { logger } from "../utils/logger";
+import { adminDeliveryService } from "./admin/admin-delivery.service";
+import { extractMediaUrl } from "../utils/extractMediaUrl";
 
-// Types for cart items with relations
+const orderNumberId = customAlphabet("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ", 10);
+
+function generateOrderNumber(): string {
+  const now = new Date();
+  const ymd =
+    now.getFullYear().toString().slice(-2) +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    String(now.getDate()).padStart(2, "0");
+  return `${ymd}-${orderNumberId()}`;
+}
 type CartItemWithRelations = Prisma.CartItemGetPayload<{
   include: {
     product: {
@@ -49,18 +61,6 @@ type OrderItemWithVariant = Prisma.OrderItemGetPayload<{
   };
 }>;
 
-// Media type helper
-type MediaItem = string | { url?: string; src?: string } | unknown;
-
-function generateOrderNumber(): string {
-  const now = new Date();
-  const year = now.getFullYear().toString().slice(-2);
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const random = String(Math.floor(Math.random() * 10000)).padStart(5, "0");
-  return `${year}${month}${day}-${random}`;
-}
-
 class OrdersService {
   /**
    * Create order (checkout)
@@ -74,9 +74,9 @@ class OrdersService {
         phone,
         shippingMethod = 'pickup',
         shippingAddress,
-        shippingAmount: providedShippingAmount,
         paymentMethod = 'idram',
       } = data;
+      // shippingAmount is ignored — computed server-side from shippingMethod and address
 
       // Validate required fields
       if (!email || !phone) {
@@ -175,17 +175,7 @@ class OrdersService {
               .join(', ') || undefined;
 
             // Get image URL
-            let imageUrl: string | undefined;
-            if (product.media && Array.isArray(product.media) && product.media.length > 0) {
-              const firstMedia = product.media[0] as MediaItem;
-              if (typeof firstMedia === "string") {
-                imageUrl = firstMedia;
-              } else if (firstMedia && typeof firstMedia === 'object' && 'url' in firstMedia && typeof firstMedia.url === 'string') {
-                imageUrl = firstMedia.url;
-              } else if (firstMedia && typeof firstMedia === 'object' && 'src' in firstMedia && typeof firstMedia.src === 'string') {
-                imageUrl = firstMedia.src;
-              }
-            }
+            const imageUrl = extractMediaUrl(product.media) ?? undefined;
 
             // Check stock availability
             if (variant.stock < item.quantity) {
@@ -197,11 +187,13 @@ class OrdersService {
               };
             }
 
+            // Use current variant price from DB (ignore priceSnapshot to prevent outdated/abused prices)
+            const currentPrice = Number(variant.price);
             const cartItem = {
               variantId: variant.id,
               productId: product.id,
               quantity: item.quantity,
-              price: Number(item.priceSnapshot),
+              price: currentPrice,
               productTitle: translation?.title || 'Unknown Product',
               variantTitle,
               sku: variant.sku || '',
@@ -221,82 +213,65 @@ class OrdersService {
         
         logger.info('All cart items processed', { count: cartItems.length });
       } else if (guestItems && Array.isArray(guestItems) && guestItems.length > 0) {
-        // Get items from guest checkout
-        cartItems = await Promise.all(
-          guestItems.map(async (item: { productId: string; variantId: string; quantity: number }) => {
-            const { productId, variantId, quantity } = item;
-
-            if (!productId || !variantId || !quantity) {
-              throw {
-                status: 400,
-                type: "https://api.shop.am/problems/validation-error",
-                title: "Validation Error",
-                detail: "Each item must have productId, variantId, and quantity",
-              };
-            }
-
-            // Get product and variant details
-            const variant = await db.productVariant.findUnique({
-              where: { id: variantId },
-              include: {
-                product: {
-                  include: {
-                    translations: true,
-                  },
-                },
-                options: true,
-              },
-            });
-
-            if (!variant || variant.productId !== productId) {
-              throw {
-                status: 404,
-                type: "https://api.shop.am/problems/not-found",
-                title: "Product variant not found",
-                detail: `Variant ${variantId} not found for product ${productId}`,
-              };
-            }
-
-            // Check stock
-            if (variant.stock < quantity) {
-              throw {
-                status: 422,
-                type: "https://api.shop.am/problems/validation-error",
-                title: "Insufficient stock",
-                detail: `Insufficient stock. Available: ${variant.stock}, Requested: ${quantity}`,
-              };
-            }
-
-            const translation = variant.product.translations?.[0] || variant.product.translations?.[0];
-            const variantTitle = variant.options
-              ?.map((opt: { attributeKey?: string | null; value?: string | null }) => `${opt.attributeKey || ''}: ${opt.value || ''}`)
-              .join(', ') || undefined;
-
-            // Get image URL
-            let imageUrl: string | undefined;
-            if (variant.product.media && Array.isArray(variant.product.media) && variant.product.media.length > 0) {
-              const firstMedia = variant.product.media[0] as MediaItem;
-              if (typeof firstMedia === "string") {
-                imageUrl = firstMedia;
-              } else if (firstMedia && typeof firstMedia === 'object' && 'url' in firstMedia && typeof firstMedia.url === 'string') {
-                imageUrl = firstMedia.url;
-              } else if (firstMedia && typeof firstMedia === 'object' && 'src' in firstMedia && typeof firstMedia.src === 'string') {
-                imageUrl = firstMedia.src;
-              }
-            }
-
-            return {
-              variantId: variant.id,
-              productId: variant.product.id,
-              quantity,
-              price: Number(variant.price),
-              productTitle: translation?.title || 'Unknown Product',
-              variantTitle,
-              sku: variant.sku || '',
-              imageUrl,
+        // Validate and collect variant IDs
+        const variantIds: string[] = [];
+        for (const item of guestItems) {
+          if (!item.productId || !item.variantId || !item.quantity) {
+            throw {
+              status: 400,
+              type: "https://api.shop.am/problems/validation-error",
+              title: "Validation Error",
+              detail: "Each item must have productId, variantId, and quantity",
             };
-          })
-        );
+          }
+          variantIds.push(item.variantId);
+        }
+        const uniqueVariantIds = [...new Set(variantIds)];
+
+        // Batch fetch all variants (one query instead of N)
+        const variants = await db.productVariant.findMany({
+          where: { id: { in: uniqueVariantIds } },
+          include: {
+            product: { include: { translations: true } },
+            options: true,
+          },
+        });
+        const variantMap = new Map(variants.map((v) => [v.id, v]));
+
+        cartItems = guestItems.map((item: { productId: string; variantId: string; quantity: number }) => {
+          const variant = variantMap.get(item.variantId);
+          if (!variant || variant.productId !== item.productId) {
+            throw {
+              status: 404,
+              type: "https://api.shop.am/problems/not-found",
+              title: "Product variant not found",
+              detail: `Variant ${item.variantId} not found for product ${item.productId}`,
+            };
+          }
+          if (variant.stock < item.quantity) {
+            throw {
+              status: 422,
+              type: "https://api.shop.am/problems/validation-error",
+              title: "Insufficient stock",
+              detail: `Insufficient stock. Available: ${variant.stock}, Requested: ${item.quantity}`,
+            };
+          }
+          const translation = variant.product.translations?.[0] || variant.product.translations?.[0];
+          const variantTitle = variant.options
+            ?.map((opt: { attributeKey?: string | null; value?: string | null }) => `${opt.attributeKey ?? ""}: ${opt.value ?? ""}`)
+            .join(", ") ?? undefined;
+          const imageUrl = extractMediaUrl(variant.product.media) ?? undefined;
+          return {
+            variantId: variant.id,
+            productId: variant.product.id,
+            quantity: item.quantity,
+            price: Number(variant.price),
+            productTitle: translation?.title ?? "Unknown Product",
+            variantTitle,
+            sku: variant.sku ?? "",
+            imageUrl,
+          };
+        });
       } else {
         throw {
           status: 400,
@@ -318,16 +293,25 @@ class OrdersService {
       // Calculate totals
       const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const discountAmount = 0; // TODO: Implement discount/coupon logic
-      // Use provided shipping amount from frontend (calculated from delivery API), or 0 if not provided
-      const shippingAmount = providedShippingAmount !== undefined ? Number(providedShippingAmount) : 0;
+      // Shipping: computed server-side only (never trust client-provided amount)
+      let shippingAmount = 0;
+      if (shippingMethod === 'delivery' && shippingAddress?.city?.trim()) {
+        const country = (shippingAddress.countryCode ?? 'Armenia').toString();
+        shippingAmount = await adminDeliveryService.getDeliveryPrice(
+          shippingAddress.city.trim(),
+          country
+        );
+        if (shippingAmount < 0) shippingAmount = 0;
+      }
       const taxAmount = 0; // TODO: Calculate tax if needed
       const total = subtotal - discountAmount + shippingAmount + taxAmount;
 
       // Generate order number
       const orderNumber = generateOrderNumber();
 
-      // Create order with items in a transaction
-      const order = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Create order with items in a transaction (timeout to avoid hung connections)
+      const order = await db.$transaction(
+        async (tx: Prisma.TransactionClient) => {
         // Create order
         const newOrder = await tx.order.create({
           data: {
@@ -376,7 +360,7 @@ class OrdersService {
           },
         });
 
-        // Update stock for all variants
+        // Update stock atomically: only decrement if stock >= quantity (avoids race condition)
         logger.debug('Updating stock for variants', { count: cartItems.length });
         
         try {
@@ -391,70 +375,36 @@ class OrdersService {
               };
             }
 
-            // Get current stock before update for logging
-            const variantBefore = await tx.productVariant.findUnique({
-              where: { id: item.variantId },
-              select: { stock: true, sku: true },
-            });
-
-            if (!variantBefore) {
-              logger.error('Variant not found', { variantId: item.variantId });
+            const quantity = Number(item.quantity);
+            const variantId = item.variantId;
+            const updated = await tx.$executeRaw(
+              Prisma.sql`UPDATE product_variants SET stock = stock - ${quantity} WHERE id = ${variantId} AND stock >= ${quantity}`
+            );
+            if (updated === 0) {
+              const variant = await tx.productVariant.findUnique({
+                where: { id: variantId },
+                select: { sku: true, stock: true },
+              });
+              logger.error('Insufficient stock on atomic decrement', {
+                variantId,
+                sku: variant?.sku,
+                currentStock: variant?.stock,
+                requested: quantity,
+              });
               throw {
-                status: 404,
-                type: "https://api.shop.am/problems/not-found",
-                title: "Variant not found",
-                detail: `Variant with id '${item.variantId}' not found`,
+                status: 422,
+                type: "https://api.shop.am/problems/validation-error",
+                title: "Insufficient stock",
+                detail: `Insufficient stock for SKU ${variant?.sku ?? variantId}. Available: ${variant?.stock ?? 0}, requested: ${quantity}`,
               };
             }
-
-            logger.debug('Updating stock for variant', {
-              variantId: item.variantId,
-              sku: variantBefore.sku,
-              currentStock: variantBefore.stock,
-              quantityToDecrement: item.quantity,
-              newStock: variantBefore.stock - item.quantity,
-            });
-
-            // Update stock with decrement
-            const updatedVariant = await tx.productVariant.update({
-              where: { id: item.variantId },
-              data: {
-                stock: {
-                  decrement: item.quantity,
-                },
-              },
-              select: { stock: true, sku: true },
-            });
-
-            logger.debug('Stock updated for variant', {
-              variantId: item.variantId,
-              sku: updatedVariant.sku,
-              newStock: updatedVariant.stock,
-              expectedStock: variantBefore.stock - item.quantity,
-              match: updatedVariant.stock === (variantBefore.stock - item.quantity),
-            });
-
-            // Verify stock was actually decremented
-            if (updatedVariant.stock !== (variantBefore.stock - item.quantity)) {
-              logger.error('Stock update mismatch', {
-                variantId: item.variantId,
-                expectedStock: variantBefore.stock - item.quantity,
-                actualStock: updatedVariant.stock,
-                quantity: item.quantity,
-              });
-              // Don't throw here - transaction will rollback if needed
-            }
+            logger.debug('Stock decremented', { variantId, quantity });
           }
-          
           logger.info('All variant stocks updated successfully');
         } catch (stockError: unknown) {
-          const error = stockError as { message?: string; detail?: string };
-          logger.error('Error updating stock', {
-            error: stockError,
-            message: error?.message,
-            detail: error?.detail,
-          });
-          // Re-throw to rollback transaction
+          const err = stockError as { status?: number; type?: string };
+          if (err.status && err.type) throw stockError;
+          logger.error('Error updating stock', { error: stockError });
           throw stockError;
         }
 
@@ -478,7 +428,9 @@ class OrdersService {
         }
 
         return { order: newOrder, payment };
-      });
+      },
+        { timeout: 10000, maxWait: 5000 }
+      );
 
       // Return order and payment info
       return {
@@ -540,17 +492,26 @@ class OrdersService {
   }
 
   /**
-   * Get user orders list
+   * Get user orders list (paginated)
    */
-  async list(userId: string) {
-    const orders = await db.order.findMany({
-      where: { userId },
-      include: {
-        items: true,
-        payments: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+  async list(userId: string, options?: { page?: number; limit?: number }) {
+    const page = Math.max(1, options?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, options?.limit ?? 20));
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      db.order.findMany({
+        where: { userId },
+        include: {
+          items: { select: { id: true } },
+          payments: { select: { id: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      db.order.count({ where: { userId } }),
+    ]);
 
     return {
       data: orders.map((order: {
@@ -582,6 +543,12 @@ class OrdersService {
         createdAt: order.createdAt,
         itemsCount: order.items.length,
       })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 

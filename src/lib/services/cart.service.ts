@@ -1,4 +1,6 @@
 import { db } from "@white-shop/db";
+import { logger } from "../utils/logger";
+import { extractMediaUrl } from "../utils/extractMediaUrl";
 
 class CartService {
   /**
@@ -83,54 +85,46 @@ class CartService {
       });
     }
 
-    // Format items with details
-    const itemsWithDetails = await Promise.all(
-      cart.items.map(async (item: {
+    // Format items using already-loaded cart data (no N+1: no extra DB calls per item)
+    const itemsWithDetails = cart.items.map(
+      (item: {
         id: string;
         productId: string;
         variantId: string;
         quantity: number;
+        product: {
+          id: string;
+          media: unknown;
+          discountPercent?: number;
+          primaryCategoryId?: string | null;
+          brandId?: string | null;
+          translations: Array<{ locale: string; title?: string; slug?: string }>;
+        };
+        variant: {
+          id: string;
+          sku: string | null;
+          stock: number;
+          price: number;
+          compareAtPrice?: number | null;
+        };
       }) => {
-        const product = await db.product.findUnique({
-          where: { id: item.productId },
-          include: {
-            translations: true,
-            variants: {
-              where: { id: item.variantId },
-            },
-          },
-        });
-
-        const variant = product?.variants[0];
+        const product = item.product;
+        const variant = item.variant;
         const translation =
-          product?.translations.find((t: { locale: string }) => t.locale === locale) ||
-          product?.translations[0];
+          product?.translations?.find((t: { locale: string }) => t.locale === locale) ||
+          product?.translations?.[0];
 
-        let imageUrl = null;
-        if (product?.media && Array.isArray(product.media) && product.media.length > 0) {
-          const firstMedia = product.media[0];
-          if (typeof firstMedia === "string") {
-            imageUrl = firstMedia;
-          } else if ((firstMedia as any)?.url) {
-            imageUrl = (firstMedia as any).url;
-          } else if ((firstMedia as any)?.src) {
-            imageUrl = (firstMedia as any).src;
-          }
-        }
+        const imageUrl = extractMediaUrl(product?.media);
 
-        // Calculate discount and original price
-        // Always use the latest discount from the product, not the stored priceSnapshot
-        const productDiscount = product?.discountPercent || 0;
+        const productDiscount = product?.discountPercent ?? 0;
         let appliedDiscount = 0;
         if (productDiscount > 0) {
           appliedDiscount = productDiscount;
         } else {
-          // Check category discounts
           const primaryCategoryId = product?.primaryCategoryId;
           if (primaryCategoryId && categoryDiscounts[primaryCategoryId]) {
             appliedDiscount = categoryDiscounts[primaryCategoryId];
           } else {
-            // Check brand discounts
             const brandId = product?.brandId;
             if (brandId && brandDiscounts[brandId]) {
               appliedDiscount = brandDiscounts[brandId];
@@ -140,39 +134,35 @@ class CartService {
           }
         }
 
-        // Always calculate the latest price from variant.price with current discount
-        // This ensures that if product discount is updated, cart shows the latest price
-        const variantOriginalPrice = variant?.price || 0;
+        const variantOriginalPrice = variant?.price ?? 0;
         let finalPrice = variantOriginalPrice;
         let originalPrice: number | null = null;
-
         if (appliedDiscount > 0 && variantOriginalPrice > 0) {
-          // Calculate discounted price with latest discount
           finalPrice = variantOriginalPrice * (1 - appliedDiscount / 100);
           originalPrice = variantOriginalPrice;
-        } else if (variant?.compareAtPrice && variant.compareAtPrice > variantOriginalPrice) {
+        } else if (variant?.compareAtPrice != null && variant.compareAtPrice > variantOriginalPrice) {
           originalPrice = Number(variant.compareAtPrice);
         }
 
         return {
           id: item.id,
           variant: {
-            id: variant?.id || item.variantId,
-            sku: variant?.sku || "",
-            stock: variant?.stock || 0,
+            id: variant?.id ?? item.variantId,
+            sku: variant?.sku ?? "",
+            stock: variant?.stock ?? 0,
             product: {
-              id: product?.id || "",
-              title: translation?.title || "",
-              slug: translation?.slug || "",
+              id: product?.id ?? "",
+              title: translation?.title ?? "",
+              slug: translation?.slug ?? "",
               image: imageUrl,
             },
           },
           quantity: item.quantity,
           price: finalPrice,
-          originalPrice: originalPrice,
+          originalPrice,
           total: finalPrice * item.quantity,
         };
-      })
+      }
     );
 
     const subtotal = itemsWithDetails.reduce((sum, item) => sum + item.total, 0);
@@ -257,12 +247,12 @@ class CartService {
 
     // Check if total quantity exceeds available stock
     if (totalQuantity > variant.stock) {
-      console.log('🚫 [CART SERVICE] Stock limit exceeded:', {
+      logger.warn("Cart: stock limit exceeded", {
         variantId,
-        currentInCart: existingItem?.quantity || 0,
+        currentInCart: existingItem?.quantity ?? 0,
         requestedQuantity: quantity,
         totalQuantity,
-        availableStock: variant.stock
+        availableStock: variant.stock,
       });
       throw {
         status: 422,
@@ -274,11 +264,10 @@ class CartService {
 
     let item;
     if (existingItem) {
-      console.log('✅ [CART SERVICE] Updating existing cart item:', {
+      logger.debug("Cart: updating existing item", {
         itemId: existingItem.id,
         oldQuantity: existingItem.quantity,
         newQuantity: totalQuantity,
-        variantStock: variant.stock
       });
       item = await db.cartItem.update({
         where: { id: existingItem.id },
@@ -287,11 +276,7 @@ class CartService {
         },
       });
     } else {
-      console.log('✅ [CART SERVICE] Creating new cart item:', {
-        variantId,
-        quantity,
-        variantStock: variant.stock
-      });
+      logger.debug("Cart: creating new item", { variantId, quantity });
       item = await db.cartItem.create({
         data: {
           cartId: cart.id,

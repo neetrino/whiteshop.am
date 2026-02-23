@@ -35,7 +35,7 @@ export function useBrandAndCategoryCreation({
     error: boolean;
   }> => {
     const creationMessages: string[] = [];
-    let finalBrandIds = [...formData.brandIds];
+    const finalBrandIds = [...formData.brandIds];
     let finalPrimaryCategoryId = formData.primaryCategoryId;
 
     // Create new brand if provided

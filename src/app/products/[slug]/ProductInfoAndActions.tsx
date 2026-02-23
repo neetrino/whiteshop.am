@@ -5,6 +5,7 @@ import { Heart } from 'lucide-react';
 import { formatPrice, type CurrencyCode } from '../../../lib/currency';
 import { t, getProductText } from '../../../lib/i18n';
 import type { LanguageCode } from '../../../lib/language';
+import { sanitizeHtml } from '../../../lib/utils/sanitize';
 import { CompareIcon } from '../../../components/icons/CompareIcon';
 import { ProductAttributesSelector } from './ProductAttributesSelector';
 import type { Product, ProductVariant } from './types';
@@ -116,7 +117,7 @@ export function ProductInfoAndActions({
             )}
           </div>
         </div>
-        <div className="text-gray-600 mb-8 prose prose-sm" dangerouslySetInnerHTML={{ __html: getProductText(language, product.id, 'longDescription') || product.description || '' }} />
+        <div className="text-gray-600 mb-8 prose prose-sm" dangerouslySetInnerHTML={{ __html: sanitizeHtml(getProductText(language, product.id, 'longDescription') || product.description || '') }} />
 
         {/* Attributes Section */}
         <div className="mb-8">

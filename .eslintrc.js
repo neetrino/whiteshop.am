@@ -37,6 +37,15 @@ module.exports = {
         'import/no-default-export': 'off',
       },
     },
+    {
+      // Node scripts (run-migrations.js) - allow require and console
+      files: ['src/scripts/**/*.js'],
+      rules: {
+        '@typescript-eslint/no-require-imports': 'off',
+        'no-console': 'off',
+        'max-depth': 'off',
+      },
+    },
   ],
 };
 

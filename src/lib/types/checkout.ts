@@ -23,6 +23,7 @@ export interface CheckoutData {
     countryCode?: string;
     phone?: string;
   };
+  /** Ignored at checkout — server computes from shippingMethod + shippingAddress.city */
   shippingAmount?: number;
   paymentMethod?: string;
   billingAddress?: {
