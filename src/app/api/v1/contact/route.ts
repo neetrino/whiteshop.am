@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@white-shop/db";
 import { logger } from "@/lib/utils/logger";
+import { isValidEmail } from "@/lib/utils/email";
 
 /**
  * POST /api/v1/contact
@@ -64,9 +65,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Email validation (no regex on user input to avoid ReDoS)
+    if (!isValidEmail(email)) {
       return NextResponse.json(
         {
           type: "https://api.shop.am/problems/validation-error",

@@ -1,4 +1,5 @@
 import { db } from "@white-shop/db";
+import { toSlug } from "@/lib/utils/slug";
 
 class AdminCategoriesService {
   /**
@@ -62,11 +63,8 @@ class AdminCategoriesService {
       }
     }
     
-    // Generate slug from title
-    const slug = data.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    // Generate slug from title (ReDoS-safe)
+    const slug = toSlug(data.title);
 
     const category = await db.category.create({
       data: {
@@ -272,10 +270,7 @@ class AdminCategoriesService {
 
     // Update translation if title is provided
     if (data.title) {
-      const slug = data.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
+      const slug = toSlug(data.title);
 
       const categoryTranslations = Array.isArray(category.translations) ? category.translations : [];
       const existingTranslation = categoryTranslations.find((t: { locale: string }) => t.locale === locale);

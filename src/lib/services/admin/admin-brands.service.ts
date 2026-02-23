@@ -1,4 +1,5 @@
 import { db } from "@white-shop/db";
+import { toSlug } from "@/lib/utils/slug";
 
 class AdminBrandsService {
   /**
@@ -43,11 +44,8 @@ class AdminBrandsService {
   }) {
     const locale = data.locale || "en";
     
-    // Generate base slug from name
-    const baseSlug = data.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    // Generate base slug from name (ReDoS-safe)
+    const baseSlug = toSlug(data.name);
 
     // Generate unique slug by appending number if needed
     let slug = baseSlug;
