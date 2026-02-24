@@ -22,6 +22,7 @@ interface Product {
     id: string;
     name: string;
   } | null;
+  defaultVariantId?: string | null;
   labels?: import('./ProductLabels').ProductLabel[];
   compareAtPrice?: number | null;
   originalPrice?: number | null;
@@ -52,6 +53,8 @@ export function ProductCard({ product, viewMode = 'grid-3' }: ProductCardProps) 
     productId: product.id,
     productSlug: product.slug,
     inStock: product.inStock,
+    defaultVariantId: product.defaultVariantId ?? undefined,
+    price: product.price,
   });
   const [imageError, setImageError] = useState(false);
 

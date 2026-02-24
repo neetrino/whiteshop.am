@@ -31,7 +31,6 @@ async function getCurrencyRates(): Promise<Record<string, number>> {
       const rates = await response.json();
       currencyRatesCache = rates;
       currencyRatesCacheTime = Date.now();
-      console.log('✅ [CURRENCY] Currency rates loaded:', rates);
       return rates;
     } else {
       console.error('❌ [CURRENCY] API returned error:', response.status, response.statusText);
@@ -117,11 +116,6 @@ export function formatPrice(price: number, currency: CurrencyCode = 'USD'): stri
     maximumFractionDigits,
   }).format(convertedPrice);
   
-  // Debug logging (only in development)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log(`💱 [formatPrice] ${price} ${currencyInfo.code} × ${rate} = ${formatted}`);
-  }
-  
   return formatted;
 }
 
@@ -137,8 +131,7 @@ export async function initializeCurrencyRates(forceReload: boolean = false): Pro
     currencyRatesCacheTime = 0;
   }
   
-  const rates = await getCurrencyRates();
-  console.log('✅ [CURRENCY] Currency rates initialized:', rates);
+  await getCurrencyRates();
 }
 
 export function convertPrice(price: number, fromCurrency: CurrencyCode, toCurrency: CurrencyCode): number {

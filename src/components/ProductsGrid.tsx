@@ -16,6 +16,7 @@ interface Product {
     id: string;
     name: string;
   } | null;
+  defaultVariantId?: string | null;
 }
 
 type ViewMode = 'list' | 'grid-2' | 'grid-3';
@@ -56,7 +57,7 @@ export function ProductsGrid({ products, sortBy = 'default' }: ProductsGridProps
 
   // Sort products
   useEffect(() => {
-    let sorted = [...products];
+    const sorted = [...products];
 
     switch (sortBy) {
       case 'price-asc':

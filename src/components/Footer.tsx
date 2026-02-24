@@ -35,14 +35,6 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/categories"
-                  className="text-sm text-gray-300 hover:text-white transition-colors"
-                >
-                  {t('common.navigation.categories')}
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/about"
                   className="text-sm text-gray-300 hover:text-white transition-colors"
                 >

@@ -56,26 +56,31 @@ export async function getProductById(productId: string) {
   }
 
   // Безопасное получение translation с проверкой на существование массива
-  const translations = Array.isArray(product.translations) ? product.translations : [];
+  const productWithRelations = product as typeof product & {
+    translations?: Array<{ locale: string; title?: string; slug?: string; subtitle?: string | null; descriptionHtml?: string | null }>;
+    labels?: Array<{ id: string; type: string; value: string; position: string; color: string | null }>;
+    variants?: Array<unknown>;
+  };
+  const translations = Array.isArray(productWithRelations.translations) ? productWithRelations.translations : [];
   const translation = translations.find((t: { locale: string }) => t.locale === "en") || translations[0] || null;
 
   // Безопасное получение labels с проверкой на существование массива
-  const labels = Array.isArray(product.labels) ? product.labels : [];
+  const labels = Array.isArray(productWithRelations.labels) ? productWithRelations.labels : [];
   
   // Безопасное получение variants с проверкой на существование массива
-  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const variants = Array.isArray(productWithRelations.variants) ? productWithRelations.variants : [];
   
   // Get all attribute IDs from productAttributes relation
-  const productAttributes = Array.isArray((product as { productAttributes?: unknown[] }).productAttributes) 
-    ? (product as { productAttributes: Array<{ attributeId?: string; attribute?: { id: string } }> }).productAttributes 
+  const productAttributes = Array.isArray((product as { productAttributes?: unknown[] }).productAttributes)
+    ? (product as unknown as { productAttributes: Array<{ attributeId?: string; attribute?: { id: string } }> }).productAttributes
     : [];
   const attributeIds = productAttributes
     .map((pa) => pa.attributeId || pa.attribute?.id)
     .filter((id): id is string => !!id);
   
   // Also include attributeIds from product.attributeIds if available (backward compatibility)
-  const legacyAttributeIds = Array.isArray((product as { attributeIds?: unknown[] }).attributeIds) 
-    ? (product as { attributeIds: string[] }).attributeIds 
+  const legacyAttributeIds = Array.isArray((product as { attributeIds?: unknown[] }).attributeIds)
+    ? (product as { attributeIds: string[] }).attributeIds
     : [];
   
   // Merge both sources and remove duplicates
@@ -100,7 +105,7 @@ export async function getProductById(productId: string) {
       position: label.position,
       color: label.color,
     })),
-    variants: variants.map(formatVariantForAdmin),
+    variants: variants.map((v) => formatVariantForAdmin(v as Parameters<typeof formatVariantForAdmin>[0])),
   };
 }
 

@@ -8,187 +8,42 @@ import { apiClient } from '../lib/api-client';
 import { getStoredLanguage } from '../lib/language';
 import { useTranslation } from '../lib/i18n-client';
 
-interface Category {
+interface TopCategoryItem {
   id: string;
   slug: string;
   title: string;
-  fullPath: string;
-  children: Category[];
-}
-
-interface CategoriesResponse {
-  data: Category[];
-}
-
-interface Product {
-  id: string;
-  slug: string;
-  title: string;
+  productCount: number;
   image: string | null;
 }
 
-interface ProductsResponse {
-  data: Product[];
-  meta: {
-    total: number;
-  };
+interface TopCategoriesResponse {
+  data: TopCategoryItem[];
 }
 
-interface CategoryWithData {
-  category: Category;
-  productCount: number;
-  product: Product | null;
-}
-
-/**
- * Flatten categories tree to get all categories (root + children)
- */
-function flattenAllCategories(cats: Category[]): Category[] {
-  const result: Category[] = [];
-  cats.forEach((cat) => {
-    result.push(cat);
-    if (cat.children && cat.children.length > 0) {
-      result.push(...flattenAllCategories(cat.children));
-    }
-  });
-  return result;
-}
-
-/**
- * TopCategories Component
- * Displays top 5 categories with most products in circular icons
- */
 export function TopCategories() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [topCategories, setTopCategories] = useState<CategoryWithData[]>([]);
+  const [topCategories, setTopCategories] = useState<TopCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchTopCategories();
   }, []);
 
-  /**
-   * Fetch categories, get product counts, and select top 5
-   */
   const fetchTopCategories = async () => {
     try {
       setLoading(true);
-      console.log('📦 [TopCategories] Fetching categories...');
-      
       const language = getStoredLanguage();
-      console.log('📦 [TopCategories] Language:', language);
-      
-      const response = await apiClient.get<CategoriesResponse>('/api/v1/categories/tree', {
-        params: { lang: language },
+      const response = await apiClient.get<TopCategoriesResponse>('/api/v1/categories/top', {
+        params: { lang: language, limit: '5' },
       });
-
-      console.log('📦 [TopCategories] Response received:', response);
-      
-      // Validate response structure
-      if (!response) {
-        console.error('❌ [TopCategories] Empty response received');
-        setTopCategories([]);
-        return;
-      }
-      
-      if (!response.data) {
-        console.warn('⚠️ [TopCategories] Response missing "data" field:', response);
-        setTopCategories([]);
-        return;
-      }
-      
-      if (!Array.isArray(response.data)) {
-        console.error('❌ [TopCategories] Response.data is not an array:', typeof response.data, response.data);
-        setTopCategories([]);
-        return;
-      }
-      
-      const categoriesList = response.data;
-      console.log('📦 [TopCategories] Categories list:', categoriesList);
-      // Get all categories including children (flatten the tree)
-      const allCategories = flattenAllCategories(categoriesList);
-      
-      console.log('📦 [TopCategories] Total categories found:', allCategories.length);
-
-      // Fetch product counts and first product with image for each category
-      const categoryDataPromises = allCategories.map(async (category): Promise<CategoryWithData> => {
-        try {
-          // Fetch products to get count and find one with image
-          console.log(`🔍 [TopCategories] Fetching products for category: "${category.title}" (slug: "${category.slug}")`);
-          const productsResponse = await apiClient.get<ProductsResponse>('/api/v1/products', {
-            params: {
-              category: category.slug,
-              limit: '10', // Get more products to find one with image
-              lang: language,
-            },
-          });
-          
-          console.log(`📦 [TopCategories] Response for "${category.title}":`, {
-            total: productsResponse.meta?.total || 0,
-            productsCount: productsResponse.data?.length || 0,
-            firstProductId: productsResponse.data?.[0]?.id,
-            firstProductImage: productsResponse.data?.[0]?.image,
-          });
-          
-          // If category has 0 products, it might mean category was not found
-          if (productsResponse.meta?.total === 0) {
-            console.warn(`⚠️ [TopCategories] Category "${category.title}" (${category.slug}) has 0 products - category might not exist in database`);
-          }
-          
-          const productCount = productsResponse.meta?.total || 0;
-          // Get first product with image, or first product if no image available
-          // Only assign product if we have products for this category
-          const productWithImage = productsResponse.data && productsResponse.data.length > 0
-            ? (productsResponse.data.find(p => p.image) || productsResponse.data[0] || null)
-            : null;
-          
-          console.log(`✅ [TopCategories] Category "${category.title}" (${category.slug}): ${productCount} products, selected product: ${productWithImage?.id} (image: ${productWithImage?.image ? 'yes' : 'no'})`);
-          
-          return {
-            category,
-            productCount,
-            product: productWithImage,
-          };
-        } catch (err) {
-          console.error(`❌ [TopCategories] Error fetching products for category ${category.slug}:`, err);
-          return {
-            category,
-            productCount: 0,
-            product: null,
-          };
-        }
-      });
-      
-      // Wait for all category data to load
-      const allCategoryData = await Promise.all(categoryDataPromises);
-      
-      // Filter out categories with 0 products, sort by product count (descending), and take top 5
-      const sortedCategories = allCategoryData
-        .filter(item => item.productCount > 0)
-        .sort((a, b) => b.productCount - a.productCount)
-        .slice(0, 5);
-      
-      setTopCategories(sortedCategories);
-      console.log('✅ [TopCategories] Top 5 categories selected:', sortedCategories.map(c => `${c.category.title} (${c.productCount} products)`));
-    } catch (err: any) {
-      console.error('❌ [TopCategories] Error fetching categories:', err);
-      console.error('❌ [TopCategories] Error details:', {
-        message: err?.message,
-        status: err?.status,
-        statusText: err?.statusText,
-        data: err?.data,
-        stack: err?.stack,
-      });
-      // Set empty array to prevent infinite loading
+      setTopCategories(response.data || []);
+    } catch (err) {
+      console.error('[TopCategories] Error:', err);
       setTopCategories([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCategoryClick = (categorySlug: string) => {
-    router.push(`/products?category=${categorySlug}`);
   };
 
   if (loading) {
@@ -217,56 +72,46 @@ export function TopCategories() {
     <section className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-center gap-6 md:gap-8 lg:gap-12 xl:gap-16 flex-wrap">
-          {topCategories.map((item) => {
-            const { category, productCount, product } = item;
-            
-            return (
-              <Link
-                key={category.id}
-                href={`/products?category=${category.slug}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleCategoryClick(category.slug);
-                }}
-                className="flex flex-col items-center gap-3 group cursor-pointer transition-all duration-300 hover:scale-105 min-w-[120px] outline-none focus:outline-none hover:outline-none focus-visible:outline-none ring-0 focus:ring-0 hover:ring-0"
-              >
-                {/* Circular Icon with Product Image */}
-                <div className="transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1 relative outline-none">
-                  {product?.image ? (
-                    <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 shadow-md transition-all duration-300 flex items-center justify-center outline-none ring-0">
-                      <Image
-                        src={product.image}
-                        alt={category.title}
-                        width={96}
-                        height={96}
-                        className="w-full h-full object-cover scale-110 group-hover:scale-125 transition-transform duration-300 outline-none"
-                        unoptimized
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center shadow-md transition-all duration-300 outline-none ring-0">
-                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Category Name */}
-                <span className="text-sm font-semibold text-gray-900 text-center max-w-[140px] group-hover:text-gray-700 transition-colors">
-                  {category.title}
-                </span>
-                
-                {/* Product Count */}
-                <span className="text-xs text-gray-500 font-medium">
-                  {productCount} {productCount === 1 ? t('common.product.product') : t('common.product.products')}
-                </span>
-              </Link>
-            );
-          })}
+          {topCategories.map((item) => (
+            <Link
+              key={item.id}
+              href={`/products?category=${item.slug}`}
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(`/products?category=${item.slug}`);
+              }}
+              className="flex flex-col items-center gap-3 group cursor-pointer transition-all duration-300 hover:scale-105 min-w-[120px] outline-none focus:outline-none hover:outline-none focus-visible:outline-none ring-0 focus:ring-0 hover:ring-0"
+            >
+              <div className="transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1 relative outline-none">
+                {item.image ? (
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 shadow-md transition-all duration-300 flex items-center justify-center outline-none ring-0">
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover scale-110 group-hover:scale-125 transition-transform duration-300 outline-none"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center shadow-md transition-all duration-300 outline-none ring-0">
+                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <span className="text-sm font-semibold text-gray-900 text-center max-w-[140px] group-hover:text-gray-700 transition-colors">
+                {item.title}
+              </span>
+              <span className="text-xs text-gray-500 font-medium">
+                {item.productCount} {item.productCount === 1 ? t('common.product.product') : t('common.product.products')}
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </section>
   );
 }
-

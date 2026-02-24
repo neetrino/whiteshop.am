@@ -178,6 +178,9 @@
   "placeholders": {
     "search": "Search products"
   },
+  "search": {
+    "seeAll": "See all"
+  },
   "defaults": {
     "category": "Grocery"
   },

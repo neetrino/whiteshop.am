@@ -61,7 +61,7 @@ function calculateTopProducts(orders: Array<{
         translations?: Array<{ title: string }>;
         media?: Array<{ url?: string }>;
       };
-    };
+    } | null;
     productTitle?: string;
     sku?: string;
     quantity: number;
@@ -259,10 +259,10 @@ export async function getAnalytics(period: string = 'week', startDate?: string, 
     .reduce((sum: number, o: { total: number }) => sum + o.total, 0);
 
   // Calculate top products
-  const topProducts = calculateTopProducts(orders);
+  const topProducts = calculateTopProducts(orders as Parameters<typeof calculateTopProducts>[0]);
 
   // Calculate top categories
-  const topCategories = calculateTopCategories(orders);
+  const topCategories = calculateTopCategories(orders as Parameters<typeof calculateTopCategories>[0]);
 
   // Calculate orders by day
   const ordersByDay = calculateOrdersByDay(orders);

@@ -175,6 +175,9 @@
   "placeholders": {
     "search": "Поиск товаров"
   },
+  "search": {
+    "seeAll": "Показать все"
+  },
   "defaults": {
     "category": "Бакалея"
   },

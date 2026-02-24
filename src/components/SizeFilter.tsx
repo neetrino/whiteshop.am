@@ -6,6 +6,7 @@ import { Card } from '@shop/ui';
 import { apiClient } from '../lib/api-client';
 import { getStoredLanguage } from '../lib/language';
 import { useTranslation } from '../lib/i18n-client';
+import { useProductsFilters } from './ProductsFiltersProvider';
 
 interface SizeFilterProps {
   category?: string;
@@ -24,14 +25,24 @@ interface SizeOption {
 export function SizeFilter({ category, search, minPrice, maxPrice, selectedSizes = [] }: SizeFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const filtersContext = useProductsFilters();
   const { t } = useTranslation();
   const [sizes, setSizes] = useState<SizeOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string[]>(selectedSizes);
 
   useEffect(() => {
-    fetchSizes();
-  }, [category, search, minPrice, maxPrice]);
+    if (filtersContext?.data?.sizes) {
+      setSizes(filtersContext.data.sizes);
+      setLoading(false);
+      return;
+    }
+    if (filtersContext === null) {
+      fetchSizes();
+    } else {
+      setLoading(filtersContext.loading);
+    }
+  }, [category, search, minPrice, maxPrice, filtersContext?.data?.sizes, filtersContext?.loading, filtersContext === null]);
 
   useEffect(() => {
     setSelected(selectedSizes);

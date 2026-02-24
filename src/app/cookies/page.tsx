@@ -2,6 +2,7 @@
 
 import { Card } from '@shop/ui';
 import { useTranslation } from '../../lib/i18n-client';
+import { sanitizeHtml } from '../../lib/utils/sanitize';
 
 /**
  * Cookie Policy page - displays cookie policy information
@@ -100,7 +101,7 @@ export default function CookiesPage() {
                   .replace('{yourOnlineChoices}', `<a href="http://www.youronlinechoices.eu/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">${t('cookies.managingCookies.optOutTools.yourOnlineChoices')}</a>`)
                   .split(/(<a[^>]*>.*?<\/a>)/).map((part, idx) => {
                     if (part.startsWith('<a')) {
-                      return <span key={idx} dangerouslySetInnerHTML={{ __html: part }} />;
+                      return <span key={idx} dangerouslySetInnerHTML={{ __html: sanitizeHtml(part) }} />;
                     }
                     return <span key={idx}>{part}</span>;
                   })}

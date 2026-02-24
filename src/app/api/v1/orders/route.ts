@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateToken } from "@/lib/middleware/auth";
 import { ordersService } from "@/lib/services/orders.service";
+import { toApiError } from "@/lib/types/errors";
+import { logger } from "@/lib/utils/logger";
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,20 +20,17 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const result = await ordersService.list(user.id);
+    const page = req.nextUrl.searchParams.get("page");
+    const limit = req.nextUrl.searchParams.get("limit");
+    const result = await ordersService.list(user.id, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
     return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("❌ [ORDERS] Error:", error);
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+  } catch (error: unknown) {
+    logger.error("Orders list error", { error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status ?? 500 });
   }
 }
 

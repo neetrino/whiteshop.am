@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as any;
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+const globalForPrisma = globalThis as typeof globalThis & { prisma?: PrismaClient };
 
 // Ensure UTF-8 encoding for PostgreSQL connection
 // This fixes encoding issues with Armenian and other UTF-8 characters

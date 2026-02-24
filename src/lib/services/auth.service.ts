@@ -1,6 +1,7 @@
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { db } from "@white-shop/db";
+import { logger } from "../utils/logger";
 
 export interface RegisterData {
   email?: string;
@@ -33,9 +34,9 @@ class AuthService {
    * Register new user
    */
   async register(data: RegisterData): Promise<AuthResponse> {
-    console.log("🔐 [AUTH] Registration attempt:", {
-      email: data.email || "not provided",
-      phone: data.phone || "not provided",
+    logger.debug("Auth registration attempt", {
+      hasEmail: !!data.email,
+      hasPhone: !!data.phone,
       hasFirstName: !!data.firstName,
       hasLastName: !!data.lastName,
     });
@@ -71,10 +72,7 @@ class AuthService {
     });
 
     if (existingUser) {
-      console.log(
-        "❌ [AUTH] User already exists:",
-        existingUser.email || existingUser.phone
-      );
+      logger.info("Auth registration rejected: user already exists");
       throw {
         status: 409,
         type: "https://api.shop.am/problems/conflict",
@@ -84,12 +82,9 @@ class AuthService {
     }
 
     // Hash password
-    console.log("🔒 [AUTH] Hashing password...");
     const passwordHash = await bcrypt.hash(data.password, 10);
-    console.log("✅ [AUTH] Password hashed successfully");
 
     // Create user
-    console.log("💾 [AUTH] Creating user in database...");
     let user;
     try {
       user = await db.user.create({
@@ -111,10 +106,11 @@ class AuthService {
           roles: true,
         },
       });
-      console.log("✅ [AUTH] User created successfully");
-    } catch (error: any) {
-      console.error("❌ [AUTH] User creation failed:", error);
-      if (error.code === "P2002") {
+      logger.info("Auth user created", { userId: user.id });
+    } catch (error: unknown) {
+      const err = error as { code?: string };
+      logger.error("Auth user creation failed", { error: err });
+      if (err.code === "P2002") {
         // Prisma unique constraint error
         throw {
           status: 409,
@@ -128,7 +124,7 @@ class AuthService {
 
     // Generate JWT token
     if (!process.env.JWT_SECRET) {
-      console.error("❌ [AUTH] JWT_SECRET is not set!");
+      logger.error("Auth config error: JWT_SECRET is not set");
       throw {
         status: 500,
         type: "https://api.shop.am/problems/internal-error",
@@ -137,13 +133,12 @@ class AuthService {
       };
     }
 
-    console.log("🎫 [AUTH] Generating JWT token...");
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_SECRET as string,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" } as jwt.SignOptions
     );
-    console.log("✅ [AUTH] JWT token generated");
+    logger.info("Auth registration success", { userId: user.id });
 
     return {
       user: {
@@ -162,10 +157,7 @@ class AuthService {
    * Login user
    */
   async login(data: LoginData): Promise<AuthResponse> {
-    console.log("🔐 [AUTH] Login attempt:", {
-      email: data.email || "not provided",
-      phone: data.phone || "not provided",
-    });
+    logger.debug("Auth login attempt", { hasEmail: !!data.email, hasPhone: !!data.phone });
 
     if (!data.email && !data.phone) {
       throw {
@@ -186,7 +178,6 @@ class AuthService {
     }
 
     // Find user
-    console.log("🔍 [AUTH] Searching for user in database...");
     const user = await db.user.findFirst({
       where: {
         OR: [
@@ -208,7 +199,7 @@ class AuthService {
     });
 
     if (!user || !user.passwordHash) {
-      console.log("❌ [AUTH] User not found or no password set");
+      logger.debug("Auth login: user not found or no password");
       throw {
         status: 401,
         type: "https://api.shop.am/problems/unauthorized",
@@ -217,17 +208,14 @@ class AuthService {
       };
     }
 
-    console.log("✅ [AUTH] User found:", user.id);
-
     // Check password
-    console.log("🔒 [AUTH] Verifying password...");
     const isValidPassword = await bcrypt.compare(
       data.password,
       user.passwordHash
     );
 
     if (!isValidPassword) {
-      console.log("❌ [AUTH] Invalid password");
+      logger.debug("Auth login: invalid password");
       throw {
         status: 401,
         type: "https://api.shop.am/problems/unauthorized",
@@ -237,7 +225,7 @@ class AuthService {
     }
 
     if (user.blocked) {
-      console.log("❌ [AUTH] Account is blocked");
+      logger.info("Auth login rejected: account blocked", { userId: user.id });
       throw {
         status: 403,
         type: "https://api.shop.am/problems/forbidden",
@@ -262,7 +250,7 @@ class AuthService {
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" } as jwt.SignOptions
     );
 
-    console.log("✅ [AUTH] Login successful, token generated");
+    logger.info("Auth login success", { userId: user.id });
 
     return {
       user: {

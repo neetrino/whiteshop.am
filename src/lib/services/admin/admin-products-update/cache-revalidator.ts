@@ -1,10 +1,11 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { logger } from "../../../utils/logger";
+import { cacheService } from "../../cache.service";
 
 /**
  * Revalidate cache for product and related pages
  */
-export function revalidateProductCache(
+export async function revalidateProductCache(
   productId: string,
   productSlug: string | undefined
 ) {
@@ -19,8 +20,9 @@ export function revalidateProductCache(
     revalidateTag('products');
     // @ts-expect-error - revalidateTag type issue in Next.js
     revalidateTag(`product-${productId}`);
+
+    await cacheService.deletePattern('products:*');
   } catch (error: unknown) {
-    // Revalidation might fail in some environments (e.g., during build)
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.warn('Revalidation failed (expected in some environments)', { error: errorMessage });
   }

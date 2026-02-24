@@ -4,6 +4,7 @@ import { formatPrice } from '../../../lib/currency';
 import type { CurrencyCode } from '../../../lib/currency';
 import { getProductText } from '../../../lib/i18n';
 import type { LanguageCode } from '../../../lib/language';
+import { sanitizeHtml } from '../../../lib/utils/sanitize';
 import type { Product } from './types';
 
 interface ProductInfoProps {
@@ -59,7 +60,7 @@ export function ProductInfo({
             )}
           </div>
         </div>
-        <div className="text-gray-600 mb-8 prose prose-sm" dangerouslySetInnerHTML={{ __html: getProductText(language, product.id, 'longDescription') || product.description || '' }} />
+        <div className="text-gray-600 mb-8 prose prose-sm" dangerouslySetInnerHTML={{ __html: sanitizeHtml(getProductText(language, product.id, 'longDescription') || product.description || '') }} />
 
         <div className="mt-8 p-4 bg-white border border-gray-200 rounded-2xl space-y-4">
           {/* Rating Section */}

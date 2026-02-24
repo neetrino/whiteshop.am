@@ -228,7 +228,7 @@ export function formatOrderForDetail(order: {
   payments: Array<{
     id: string;
     provider: string;
-    method: string;
+    method: string | null;
     amount: number;
     currency: string;
     status: string;
@@ -270,7 +270,7 @@ export function formatOrderForDetail(order: {
       ? {
           id: primaryPayment.id,
           provider: primaryPayment.provider,
-          method: primaryPayment.method,
+          method: primaryPayment.method ?? "",
           amount: primaryPayment.amount,
           currency: primaryPayment.currency,
           status: primaryPayment.status,

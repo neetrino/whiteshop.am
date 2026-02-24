@@ -13,11 +13,11 @@ class AdminSettingsService {
       },
     });
     
-    const globalDiscountSetting = settings.find((s: { key: string; value: string }) => s.key === 'globalDiscount');
-    const categoryDiscountsSetting = settings.find((s: { key: string; value: string }) => s.key === 'categoryDiscounts');
-    const brandDiscountsSetting = settings.find((s: { key: string; value: string }) => s.key === 'brandDiscounts');
-    const defaultCurrencySetting = settings.find((s: { key: string; value: string }) => s.key === 'defaultCurrency');
-    const currencyRatesSetting = settings.find((s: { key: string; value: string }) => s.key === 'currencyRates');
+    const globalDiscountSetting = settings.find((s) => s.key === 'globalDiscount');
+    const categoryDiscountsSetting = settings.find((s) => s.key === 'categoryDiscounts');
+    const brandDiscountsSetting = settings.find((s) => s.key === 'brandDiscounts');
+    const defaultCurrencySetting = settings.find((s) => s.key === 'defaultCurrency');
+    const currencyRatesSetting = settings.find((s) => s.key === 'currencyRates');
     
     // Default currency rates (fallback)
     const defaultCurrencyRates = {

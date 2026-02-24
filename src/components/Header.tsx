@@ -6,6 +6,9 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import type { FormEvent, ReactNode, CSSProperties } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
+import { getStoredLanguage } from '../lib/language';
+import { useInstantSearch } from './hooks/useInstantSearch';
+import { SearchDropdown } from './SearchDropdown';
 import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
 import { CART_KEY, getCompareCount, getWishlistCount } from '../lib/storageCounts';
@@ -17,7 +20,7 @@ import { CartIcon } from './icons/CartIcon';
 // Navigation links will be translated dynamically using useTranslation hook
 const primaryNavLinks = [
   { href: '/', translationKey: 'common.navigation.home' },
-  { href: '/categories', translationKey: 'common.navigation.products' },
+  { href: '/products', translationKey: 'common.navigation.products' },
   { href: '/about', translationKey: 'common.navigation.about' },
   { href: '/contact', translationKey: 'common.navigation.contact' },
 ];
@@ -344,7 +347,6 @@ export function Header() {
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showCurrency, setShowCurrency] = useState(false);
   const [showMobileCurrency, setShowMobileCurrency] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -365,9 +367,25 @@ export function Header() {
   const searchModalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch cart data with debouncing
+  const {
+    query: searchQuery,
+    setQuery: setSearchQuery,
+    results: searchResults,
+    loading: searchLoading,
+    error: searchError,
+    isOpen: searchDropdownOpen,
+    setIsOpen: setSearchDropdownOpen,
+    selectedIndex: searchSelectedIndex,
+    handleKeyDown: searchHandleKeyDown,
+    clearSearch,
+  } = useInstantSearch({
+    debounceMs: 200,
+    minQueryLength: 1,
+    maxResults: 6,
+    lang: getStoredLanguage(),
+  });
+
   const fetchCart = async () => {
-    // Եթե օգտատերը գրանցված չէ, օգտագործում ենք localStorage
     if (!isLoggedIn) {
       if (typeof window === 'undefined') {
         setCartCount(0);
@@ -377,8 +395,8 @@ export function Header() {
 
       try {
         const stored = localStorage.getItem(CART_KEY);
-        const guestCart: Array<{ productId: string; productSlug?: string; variantId: string; quantity: number }> = stored ? JSON.parse(stored) : [];
-        
+        const guestCart: Array<{ productId: string; productSlug?: string; variantId: string; quantity: number; price?: number }> = stored ? JSON.parse(stored) : [];
+
         if (guestCart.length === 0) {
           setCartCount(0);
           setCartTotal(0);
@@ -386,74 +404,8 @@ export function Header() {
         }
 
         const itemsCount = guestCart.reduce((sum, item) => sum + item.quantity, 0);
+        const total = guestCart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
         setCartCount(itemsCount);
-
-        // Հաշվարկում ենք total-ը ապրանքների գների հիման վրա
-        // և հեռացնում ենք գոյություն չունեցող ապրանքները
-        let total = 0;
-        const validCartItems: typeof guestCart = [];
-        
-        try {
-          const itemsWithPrices = await Promise.all(
-            guestCart.map(async (item) => {
-              try {
-                if (!item.productSlug) {
-                  return { price: 0, isValid: false };
-                }
-
-                const productData = await apiClient.get<{
-                  variants?: Array<{
-                    _id: string;
-                    id: string;
-                    price: number;
-                  }>;
-                }>(`/api/v1/products/${item.productSlug}`);
-
-                const variant = productData.variants?.find(v => 
-                  (v._id?.toString() || v.id) === item.variantId
-                ) || productData.variants?.[0];
-
-                if (!variant) {
-                  return { price: 0, isValid: false };
-                }
-
-                // Ապրանքը գոյություն ունի, ավելացնում ենք validCartItems-ին
-                validCartItems.push(item);
-                return { price: variant.price * item.quantity, isValid: true };
-              } catch (error: any) {
-                // 404 սխալը նորմալ իրավիճակ է (ապրանքը հեռացված է կամ չհրապարակված)
-                if (error?.status === 404 || error?.statusCode === 404) {
-                  console.warn(`⚠️ [CART] Ապրանքը գոյություն չունի կամ հեռացված է: ${item.productSlug}`);
-                } else {
-                  // Այլ սխալների համար լոգավորում ենք
-                  console.error(`❌ [CART] Սխալ ապրանքը բեռնելիս ${item.productId}:`, error);
-                }
-                return { price: 0, isValid: false };
-              }
-            })
-          );
-
-          total = itemsWithPrices.reduce((sum, item) => sum + item.price, 0);
-          
-          // Եթե հեռացվել են ապրանքներ, թարմացնում ենք localStorage-ը
-          if (validCartItems.length !== guestCart.length) {
-            const removedCount = guestCart.length - validCartItems.length;
-            console.log(`🧹 [CART] Հեռացվել է ${removedCount} գոյություն չունեցող ապրանք զամբյուղից`);
-            
-            if (validCartItems.length > 0) {
-              localStorage.setItem(CART_KEY, JSON.stringify(validCartItems));
-            } else {
-              localStorage.removeItem(CART_KEY);
-            }
-            
-            // Թարմացնում ենք itemsCount-ը
-            const newItemsCount = validCartItems.reduce((sum, item) => sum + item.quantity, 0);
-            setCartCount(newItemsCount);
-          }
-        } catch (error) {
-          console.error('❌ [CART] Սխալ զամբյուղի ընդհանուր գումարը հաշվարկելիս:', error);
-        }
-
         setCartTotal(total);
       } catch (error) {
         console.error('Error loading guest cart:', error);
@@ -463,7 +415,6 @@ export function Header() {
       return;
     }
 
-    // Check if token exists in localStorage
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('auth_token');
       if (!token) {
@@ -472,9 +423,6 @@ export function Header() {
         return;
       }
     }
-
-    // Small delay to avoid simultaneous requests
-    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       const response = await apiClient.get<{
@@ -485,15 +433,14 @@ export function Header() {
           };
         };
       }>('/api/v1/cart');
-      
+
       setCartCount(response.cart?.itemsCount || 0);
       setCartTotal(response.cart?.totals?.total || 0);
-    } catch (error: any) {
-      // Only log non-authentication errors
-      if (error?.status !== 401 && error?.statusCode !== 401) {
+    } catch (error: unknown) {
+      const err = error as { status?: number; statusCode?: number };
+      if (err?.status !== 401 && err?.statusCode !== 401) {
         console.error('Error fetching cart:', error);
       }
-      // Silently handle 401 errors (user not logged in or token expired)
       setCartCount(0);
       setCartTotal(0);
     }
@@ -524,7 +471,18 @@ export function Header() {
       fetchCart();
     };
 
-    const handleCartUpdate = () => {
+    const handleCartUpdate = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail?.optimisticAdd) {
+        setCartCount((c) => c + (detail.optimisticAdd.quantity ?? 1));
+        setCartTotal((t) => t + (detail.optimisticAdd.price ?? 0) * (detail.optimisticAdd.quantity ?? 1));
+        return;
+      }
+      if (detail?.itemsCount !== undefined && detail?.total !== undefined) {
+        setCartCount(detail.itemsCount);
+        setCartTotal(detail.total);
+        return;
+      }
       fetchCart();
     };
 
@@ -568,7 +526,6 @@ export function Header() {
 
     // Listen for currency rates updates (when admin changes rates)
     const handleCurrencyRatesUpdate = () => {
-      console.log('🔄 [HEADER] Currency rates updated, reloading...');
       clearCurrencyRatesCache();
       // Force reload to get fresh rates from API
       initializeCurrencyRates(true).catch(console.error);
@@ -666,12 +623,15 @@ export function Header() {
     };
   }, []);
 
-  // Focus search input when modal opens
+  // Focus search input when modal opens; show dropdown if query present
   useEffect(() => {
     if (showSearchModal && searchInputRef.current) {
       searchInputRef.current.focus();
+      setSearchDropdownOpen(searchQuery.trim().length >= 1);
+    } else {
+      setSearchDropdownOpen(false);
     }
-  }, [showSearchModal]);
+  }, [showSearchModal, searchQuery]);
 
   // Close search modal on ESC key
   useEffect(() => {
@@ -698,16 +658,18 @@ export function Header() {
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     const query = searchQuery.trim();
+    const selected = searchSelectedIndex >= 0 && searchResults[searchSelectedIndex];
+    setShowSearchModal(false);
+    if (selected) {
+      router.push(`/products/${selected.slug}`);
+      clearSearch();
+      return;
+    }
     const params = new URLSearchParams();
-    
     if (query) {
       params.set('search', query);
     }
-    
-    // Note: Category selection is removed from search modal
-    // Users can use the categories icon button in header for category filtering
-    
-    setShowSearchModal(false);
+    clearSearch();
     const queryString = params.toString();
     router.push(queryString ? `/products?${queryString}` : '/products');
   };
@@ -910,7 +872,7 @@ export function Header() {
               }}
             >
               <Link
-                href="/categories"
+                href="/products"
                 className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap flex items-center gap-1"
               >
                 {t('common.navigation.products')}
@@ -921,13 +883,6 @@ export function Header() {
                   <div className="absolute top-full left-0 w-full h-2" />
                   <div className="absolute top-full left-0 pt-2 w-64 z-50">
                     <div className="bg-white rounded-xl shadow-2xl border border-gray-200/80 overflow-visible">
-                      <Link
-                        href="/products"
-                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-all duration-150 font-medium border-b border-gray-100"
-                        onClick={() => setShowProductsMenu(false)}
-                      >
-                        {t('common.navigation.products')}
-                      </Link>
                       {loadingCategories ? (
                         <div className="px-4 py-2 text-sm text-gray-500">{t('common.messages.loading')}</div>
                       ) : (
@@ -1216,7 +1171,7 @@ export function Header() {
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-start justify-center pt-20 px-4">
           <div 
             ref={searchModalRef}
-            className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200/80 p-4 animate-in fade-in slide-in-from-top-2 duration-200"
+            className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200/80 p-4 animate-in fade-in slide-in-from-top-2 duration-200 relative"
           >
             <form onSubmit={handleSearch} className="flex items-center gap-2">
               {/* Search Input */}
@@ -1224,9 +1179,17 @@ export function Header() {
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.trim().length >= 1) setSearchDropdownOpen(true);
+                }}
+                onFocus={() => { if (searchQuery.trim().length >= 1) setSearchDropdownOpen(true); }}
+                onKeyDown={searchHandleKeyDown}
                 placeholder={t('common.placeholders.search')}
                 className="flex-1 h-11 px-4 border-2 border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm placeholder:text-gray-400"
+                aria-controls="search-results"
+                aria-expanded={searchDropdownOpen && searchResults.length > 0}
+                aria-autocomplete="list"
               />
               
               {/* Search Button */}
@@ -1237,6 +1200,22 @@ export function Header() {
                 <SearchIcon />
               </button>
             </form>
+
+            <SearchDropdown
+              results={searchResults}
+              loading={searchLoading}
+              error={searchError}
+              isOpen={searchDropdownOpen}
+              selectedIndex={searchSelectedIndex}
+              query={searchQuery}
+              onResultClick={(result) => {
+                router.push(`/products/${result.slug}`);
+                setShowSearchModal(false);
+                clearSearch();
+              }}
+              onClose={() => setSearchDropdownOpen(false)}
+              onSeeAllClick={() => setShowSearchModal(false)}
+            />
           </div>
         </div>
       )}

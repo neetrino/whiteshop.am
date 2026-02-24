@@ -36,14 +36,12 @@ function ProductsHeaderContent({ total, perPage }: ProductsHeaderProps) {
     { value: 'name-desc', label: t('products.header.sort.nameDesc') },
   ];
 
-  // Derive current "show per page" value from URL or fallback to "all" (default)
+  // Per page: default 12 when not in URL (proper pagination)
   const limitFromUrl = searchParams.get('limit');
   const parsedLimit = limitFromUrl ? parseInt(limitFromUrl, 10) : null;
-  // If limit is very large (>= 1000), treat as "all"
-  // If no limit in URL, default to "all"
-  const currentLimit = parsedLimit 
-    ? (parsedLimit >= 1000 ? 'all' : parsedLimit)
-    : 'all';
+  const currentLimit = parsedLimit && parsedLimit >= 10 && parsedLimit <= 200
+    ? parsedLimit
+    : 12;
 
   const hasActiveFilters = (() => {
     const filterKeys = ['search', 'category', 'minPrice', 'maxPrice', 'colors', 'sizes', 'brand'];
@@ -126,20 +124,13 @@ function ProductsHeaderContent({ total, perPage }: ProductsHeaderProps) {
 
   const handleLimitChange = (value: string | number) => {
     const params = new URLSearchParams(searchParams.toString());
-    
-    if (value === 'all' || value === 'All') {
-      // For "all", set a very large limit (9999) or remove limit to show all
-      params.set('limit', '9999');
+    const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
+    if (!Number.isNaN(numValue) && numValue >= 10 && numValue <= 200) {
+      params.set('limit', numValue.toString());
     } else {
-      const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
-      if (!Number.isNaN(numValue)) {
-        params.set('limit', numValue.toString());
-      }
+      params.set('limit', '12');
     }
-    
-    // Reset page when page size changes
     params.delete('page');
-
     router.replace(`/products?${params.toString()}`, { scroll: false });
   };
 
@@ -186,15 +177,14 @@ function ProductsHeaderContent({ total, perPage }: ProductsHeaderProps) {
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-900">{t('products.header.show')}</span>
             <select
-              value={currentLimit === 'all' ? 'all' : currentLimit}
+              value={String(currentLimit)}
               onChange={(event) => handleLimitChange(event.target.value)}
               className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200 min-w-[70px]"
             >
-              <option value="all">{t('products.header.all')}</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
+              <option value="12">12</option>
+              <option value="24">24</option>
+              <option value="48">48</option>
+              <option value="96">96</option>
             </select>
           </div>
 
@@ -311,15 +301,14 @@ function ProductsHeaderContent({ total, perPage }: ProductsHeaderProps) {
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-600">{t('products.header.show')}</span>
             <select
-              value={currentLimit === 'all' ? 'all' : currentLimit}
+              value={String(currentLimit)}
               onChange={(event) => handleLimitChange(event.target.value)}
               className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-200"
             >
-              <option value="all">{t('products.header.all')}</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
+              <option value="12">12</option>
+              <option value="24">24</option>
+              <option value="48">48</option>
+              <option value="96">96</option>
             </select>
           </div>
         </div>

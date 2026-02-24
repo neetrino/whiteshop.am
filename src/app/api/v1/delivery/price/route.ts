@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminService } from "@/lib/services/admin.service";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * GET /api/v1/delivery/price
@@ -24,33 +25,27 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    console.log("🚚 [DELIVERY PRICE] GET request:", { city, country });
+    logger.debug("Delivery price request", { city, country });
     const price = await adminService.getDeliveryPrice(city, country);
-    console.log("✅ [DELIVERY PRICE] Delivery price fetched:", price);
 
     return NextResponse.json({ price });
-  } catch (error: any) {
-    console.error("❌ [DELIVERY PRICE] GET Error:", {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      code: error?.code,
-      meta: error?.meta,
-      type: error?.type,
-      title: error?.title,
-      status: error?.status,
-      detail: error?.detail,
-      fullError: error,
+  } catch (error: unknown) {
+    const err = error as { message?: string; stack?: string; code?: string; type?: string; title?: string; status?: number; detail?: string; meta?: unknown };
+    logger.error("Delivery price error", {
+      message: err?.message,
+      code: err?.code,
+      type: err?.type,
+      status: err?.status,
     });
     return NextResponse.json(
       {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
+        type: err?.type ?? "https://api.shop.am/problems/internal-error",
+        title: err?.title ?? "Internal Server Error",
+        status: err?.status ?? 500,
+        detail: err?.detail ?? err?.message ?? "An error occurred",
         instance: req.url,
       },
-      { status: error.status || 500 }
+      { status: err?.status ?? 500 }
     );
   }
 }

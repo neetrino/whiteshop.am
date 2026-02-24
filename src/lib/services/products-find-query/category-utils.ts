@@ -60,10 +60,11 @@ export async function findCategoryBySlug(
         published: true,
         deletedAt: null,
       },
+      include: { translations: true },
     });
     
     if (categoryDoc) {
-      const foundIn = categoryDoc.translations?.find((t: { slug: string; locale: string }) => t.slug === categorySlug)?.locale || 'unknown';
+      const foundIn = (categoryDoc as { translations?: Array<{ slug: string; locale: string }> }).translations?.find((t: { slug: string; locale: string }) => t.slug === categorySlug)?.locale || 'unknown';
       logger.info('Category found in different language', { 
         id: categoryDoc.id, 
         slug: categorySlug,

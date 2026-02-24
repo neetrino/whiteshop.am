@@ -54,10 +54,6 @@ class ProductsFindFilterService {
         (product: ProductWithRelations) => 
           product.brandId && brandList.includes(product.brandId)
       );
-      console.log('🔍 [PRODUCTS FIND FILTER SERVICE] Filtering by brands:', {
-        brands: brandList,
-        productsAfter: products.length
-      });
     }
 
     // Filter by colors and sizes together if both are provided.
@@ -70,7 +66,6 @@ class ProductsFindFilterService {
         const variants = Array.isArray(product.variants) ? product.variants : [];
         
         if (variants.length === 0) {
-          console.log('⚠️ [PRODUCTS FIND FILTER SERVICE] Product has no variants:', product.id);
           return false;
         }
         
