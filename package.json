@@ -21,9 +21,11 @@
     "db:push": "pnpm --filter @white-shop/db db:push",
     "db:migrate": "pnpm --filter @white-shop/db db:migrate",
     "db:studio": "pnpm --filter @white-shop/db db:studio",
+    "db:seed": "node shared/db/prisma/seed.cjs",
     "db:migrate:deploy": "node src/scripts/run-migrations.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.9.0",
     "@shop/design-tokens": "workspace:*",

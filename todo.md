@@ -1,0 +1,4 @@
+- [x] **Фото в R2.** Все загрузки через админку идут в Cloudflare R2 (API `upload-images`). В .env нужны: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL.
+- [x] **Плейсхолдер для товаров без фото.** Иконка (фото) вместо «битой» картинки: ProductCardImage, ProductImageGallery, RelatedProductCard — везде показывается иконка, если нет фото или ошибка загрузки.
+- [x] **Где в проекте фото.** См. docs/PHOTOS_USAGE.md — список файлов и приложений; что можно удалить (только public/ и неиспользуемые ассеты).
+- [ ] **Тестовые товары / Featured.** Заполнить базу тестовыми товарами (через админку или seed). Фото на товары — вручную.

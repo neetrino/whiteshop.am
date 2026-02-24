@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { ProductLabels } from '../ProductLabels';
-import type { ProductLabel } from '../ProductLabels';
+import Link from "next/link";
+import Image from "next/image";
+import { ProductLabels } from "../ProductLabels";
+import { ProductImagePlaceholder } from "../ProductImagePlaceholder";
+import type { ProductLabel } from "../ProductLabels";
 
 interface ProductCardImageProps {
   slug: string;
@@ -16,7 +17,8 @@ interface ProductCardImageProps {
 }
 
 /**
- * Component for displaying product image with labels
+ * Component for displaying product image with labels.
+ * Shows placeholder icon when no image or image failed to load.
  */
 export function ProductCardImage({
   slug,
@@ -27,10 +29,17 @@ export function ProductCardImage({
   onImageError,
   isCompact = false,
 }: ProductCardImageProps) {
+  const showPlaceholder = !image || imageError;
+
   return (
     <div className="aspect-square bg-gray-100 relative overflow-hidden">
       <Link href={`/products/${slug}`} className="block w-full h-full">
-        {image && !imageError ? (
+        {showPlaceholder ? (
+          <ProductImagePlaceholder
+            className="w-full h-full"
+            aria-label={title ? `No image for ${title}` : "No image"}
+          />
+        ) : (
           <Image
             src={image}
             alt={title}
@@ -40,14 +49,8 @@ export function ProductCardImage({
             unoptimized
             onError={onImageError}
           />
-        ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400 text-sm">No Image</span>
-          </div>
         )}
       </Link>
-      
-      {/* Product Labels - stacked per corner */}
       {labels && labels.length > 0 && <ProductLabels labels={labels} />}
     </div>
   );

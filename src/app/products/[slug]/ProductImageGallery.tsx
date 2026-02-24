@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Maximize2 } from 'lucide-react';
-import { ProductLabels } from '../../../components/ProductLabels';
-import { t } from '../../../lib/i18n';
-import type { LanguageCode } from '../../../lib/language';
-import type { Product } from './types';
+import { useState, useEffect } from "react";
+import { Maximize2 } from "lucide-react";
+import { ProductLabels } from "../../../components/ProductLabels";
+import { ProductImagePlaceholder } from "../../../components/ProductImagePlaceholder";
+import { t } from "../../../lib/i18n";
+import type { LanguageCode } from "../../../lib/language";
+import type { Product } from "./types";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -31,6 +32,14 @@ export function ProductImageGallery({
   onThumbnailStartIndexChange,
 }: ProductImageGalleryProps) {
   const [showZoom, setShowZoom] = useState(false);
+  const [failedIndices, setFailedIndices] = useState<Set<number>>(new Set());
+
+  const markFailed = (index: number) => {
+    setFailedIndices((prev) => new Set(prev).add(index));
+  };
+
+  const mainImageFailed = failedIndices.has(currentImageIndex);
+  const currentSrc = images[currentImageIndex];
 
   // Auto-scroll thumbnails to show selected image
   useEffect(() => {
@@ -63,15 +72,20 @@ export function ProductImageGallery({
                   onClick={() => onImageIndexChange(actualIndex)}
                   className={`relative w-full aspect-[3/4] rounded-lg overflow-hidden border bg-white transition-all duration-300 flex-shrink-0 ${
                     isActive 
-                      ? 'border-gray-400 shadow-[0_2px_8px_rgba(0,0,0,0.12)] ring-2 ring-gray-300' 
-                      : 'border-gray-200 hover:border-gray-300 hover:shadow-[0_2px_6px_rgba(0,0,0,0.08)]'
+                      ? "border-gray-400 shadow-[0_2px_8px_rgba(0,0,0,0.12)] ring-2 ring-gray-300" 
+                      : "border-gray-200 hover:border-gray-300 hover:shadow-[0_2px_6px_rgba(0,0,0,0.08)]"
                   }`}
                 >
-                  <img 
-                    src={image} 
-                    alt="" 
-                    className="w-full h-full object-cover transition-transform duration-300" 
-                  />
+                  {failedIndices.has(actualIndex) ? (
+                    <ProductImagePlaceholder className="w-full h-full" aria-label="" />
+                  ) : (
+                    <img 
+                      src={image} 
+                      alt="" 
+                      className="w-full h-full object-cover transition-transform duration-300" 
+                      onError={() => markFailed(actualIndex)}
+                    />
+                  )}
                 </button>
               );
             })}
@@ -153,14 +167,18 @@ export function ProductImageGallery({
         {/* Right Column - Main Image */}
         <div className="flex-1">
           <div className="relative aspect-square bg-white rounded-lg overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          {images.length > 0 ? (
+          {images.length > 0 && !mainImageFailed ? (
             <img 
-              src={images[currentImageIndex]} 
+              src={currentSrc} 
               alt={product.title} 
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+              onError={() => markFailed(currentImageIndex)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">{t(language, 'common.messages.noImage')}</div>
+            <ProductImagePlaceholder
+              className="w-full h-full"
+              aria-label={t(language, "common.messages.noImage")}
+            />
           )}
           
           {/* Discount Badge on Image - Blue circle in top-right */}
@@ -188,9 +206,9 @@ export function ProductImageGallery({
       </div>
 
       {/* Zoom Modal */}
-      {showZoom && images.length > 0 && (
+      {showZoom && images.length > 0 && !failedIndices.has(currentImageIndex) && (
         <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4" onClick={() => setShowZoom(false)}>
-          <img src={images[currentImageIndex]} alt="" className="max-w-full max-h-full object-contain" />
+          <img src={currentSrc} alt="" className="max-w-full max-h-full object-contain" />
           <button 
             className="absolute top-4 right-4 text-white text-2xl"
             aria-label={t(language, 'common.buttons.close')}
