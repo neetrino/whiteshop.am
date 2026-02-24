@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
         ? parseInt(searchParams.get("page")!)
         : 1,
       limit: Math.min(
-        searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 24,
+        searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 12,
         200
       ),
       lang: searchParams.get("lang") || "en",
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       ["new", "bestseller", "featured"].includes(filters.filter) &&
       !filters.category &&
       !filters.search &&
-      (filters.limit ?? 24) <= 24;
+      (filters.limit ?? 12) <= 24;
     const ttl = onlyFeatured ? FEATURED_CACHE_TTL : PRODUCTS_CACHE_TTL;
     await cacheService.setex(cacheKey, ttl, JSON.stringify(result));
 
