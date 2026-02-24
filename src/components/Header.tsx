@@ -6,6 +6,9 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import type { FormEvent, ReactNode, CSSProperties } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
+import { getStoredLanguage } from '../lib/language';
+import { useInstantSearch } from './hooks/useInstantSearch';
+import { SearchDropdown } from './SearchDropdown';
 import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
 import { CART_KEY, getCompareCount, getWishlistCount } from '../lib/storageCounts';
@@ -344,7 +347,6 @@ export function Header() {
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showCurrency, setShowCurrency] = useState(false);
   const [showMobileCurrency, setShowMobileCurrency] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -364,6 +366,24 @@ export function Header() {
   const productsMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchModalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    query: searchQuery,
+    setQuery: setSearchQuery,
+    results: searchResults,
+    loading: searchLoading,
+    error: searchError,
+    isOpen: searchDropdownOpen,
+    setIsOpen: setSearchDropdownOpen,
+    selectedIndex: searchSelectedIndex,
+    handleKeyDown: searchHandleKeyDown,
+    clearSearch,
+  } = useInstantSearch({
+    debounceMs: 200,
+    minQueryLength: 1,
+    maxResults: 6,
+    lang: getStoredLanguage(),
+  });
 
   const fetchCart = async () => {
     if (!isLoggedIn) {
@@ -603,12 +623,15 @@ export function Header() {
     };
   }, []);
 
-  // Focus search input when modal opens
+  // Focus search input when modal opens; show dropdown if query present
   useEffect(() => {
     if (showSearchModal && searchInputRef.current) {
       searchInputRef.current.focus();
+      setSearchDropdownOpen(searchQuery.trim().length >= 1);
+    } else {
+      setSearchDropdownOpen(false);
     }
-  }, [showSearchModal]);
+  }, [showSearchModal, searchQuery]);
 
   // Close search modal on ESC key
   useEffect(() => {
@@ -635,16 +658,18 @@ export function Header() {
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     const query = searchQuery.trim();
+    const selected = searchSelectedIndex >= 0 && searchResults[searchSelectedIndex];
+    setShowSearchModal(false);
+    if (selected) {
+      router.push(`/products/${selected.slug}`);
+      clearSearch();
+      return;
+    }
     const params = new URLSearchParams();
-    
     if (query) {
       params.set('search', query);
     }
-    
-    // Note: Category selection is removed from search modal
-    // Users can use the categories icon button in header for category filtering
-    
-    setShowSearchModal(false);
+    clearSearch();
     const queryString = params.toString();
     router.push(queryString ? `/products?${queryString}` : '/products');
   };
@@ -1146,7 +1171,7 @@ export function Header() {
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-start justify-center pt-20 px-4">
           <div 
             ref={searchModalRef}
-            className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200/80 p-4 animate-in fade-in slide-in-from-top-2 duration-200"
+            className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200/80 p-4 animate-in fade-in slide-in-from-top-2 duration-200 relative"
           >
             <form onSubmit={handleSearch} className="flex items-center gap-2">
               {/* Search Input */}
@@ -1154,9 +1179,17 @@ export function Header() {
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.trim().length >= 1) setSearchDropdownOpen(true);
+                }}
+                onFocus={() => { if (searchQuery.trim().length >= 1) setSearchDropdownOpen(true); }}
+                onKeyDown={searchHandleKeyDown}
                 placeholder={t('common.placeholders.search')}
                 className="flex-1 h-11 px-4 border-2 border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm placeholder:text-gray-400"
+                aria-controls="search-results"
+                aria-expanded={searchDropdownOpen && searchResults.length > 0}
+                aria-autocomplete="list"
               />
               
               {/* Search Button */}
@@ -1167,6 +1200,22 @@ export function Header() {
                 <SearchIcon />
               </button>
             </form>
+
+            <SearchDropdown
+              results={searchResults}
+              loading={searchLoading}
+              error={searchError}
+              isOpen={searchDropdownOpen}
+              selectedIndex={searchSelectedIndex}
+              query={searchQuery}
+              onResultClick={(result) => {
+                router.push(`/products/${result.slug}`);
+                setShowSearchModal(false);
+                clearSearch();
+              }}
+              onClose={() => setSearchDropdownOpen(false)}
+              onSeeAllClick={() => setShowSearchModal(false)}
+            />
           </div>
         </div>
       )}

@@ -176,6 +176,9 @@
   "placeholders": {
     "search": "Որոնել ապրանքներ"
   },
+  "search": {
+    "seeAll": "Տեսնել բոլորը"
+  },
   "defaults": {
     "category": "Մթերք"
   },
