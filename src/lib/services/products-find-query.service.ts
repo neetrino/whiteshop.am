@@ -15,10 +15,8 @@ class ProductsFindQueryService {
   }> {
     const { limit = 24 } = filters;
 
-    // Build where clause
     const { where, bestsellerProductIds } = await buildWhereClause(filters);
 
-    // If where is null (category not found), return empty result
     if (where === null) {
       return {
         products: [],
@@ -26,8 +24,14 @@ class ProductsFindQueryService {
       };
     }
 
-    // Execute query with comprehensive error handling
-    const products = await executeProductQuery(where, limit);
+    const needOverFetch =
+      Boolean(filters.category || filters.search) ||
+      filters.minPrice != null ||
+      filters.maxPrice != null ||
+      Boolean(filters.colors || filters.sizes || filters.brand);
+    const fetchLimit = needOverFetch ? Math.min(limit * 10, 200) : limit;
+
+    const products = await executeProductQuery(where, fetchLimit);
 
     return {
       products,

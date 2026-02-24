@@ -122,7 +122,7 @@ export async function executeProductQuery(
         ...getProductAttributesInclude(),
       },
       skip: 0,
-      take: limit * 10, // Get more to filter in memory
+      take: limit,
     });
     logger.info(`Found ${products.length} products from database (with productAttributes)`);
     return products as ProductWithRelations[];
@@ -143,7 +143,7 @@ export async function executeProductQuery(
           where,
           include: baseInclude,
           skip: 0,
-          take: limit * 10,
+          take: limit,
         });
         logger.info(`Found ${products.length} products from database (after creating attributes column)`);
         return products as ProductWithRelations[];
@@ -177,7 +177,7 @@ async function executeWithoutProductAttributes(
       where,
       include: baseInclude,
       skip: 0,
-      take: limit * 10,
+      take: limit,
     });
     logger.info(`Found ${products.length} products from database (without productAttributes)`);
     return products as ProductWithRelations[];
@@ -190,7 +190,7 @@ async function executeWithoutProductAttributes(
           where,
           include: baseInclude,
           skip: 0,
-          take: limit * 10,
+          take: limit,
         });
         logger.info(`Found ${products.length} products from database (after creating attributes column)`);
         return products as ProductWithRelations[];
@@ -245,7 +245,7 @@ async function executeWithoutAttributeValue(
         ...getProductAttributesInclude(),
       },
       skip: 0,
-      take: limit * 10,
+      take: limit,
     });
     logger.info(`Found ${products.length} products from database (without attributeValue, with productAttributes)`);
     return products as ProductWithRelations[];
@@ -256,7 +256,7 @@ async function executeWithoutAttributeValue(
         where,
         include: baseIncludeWithoutAttributeValue,
         skip: 0,
-        take: limit * 10,
+        take: limit,
       });
       logger.info(`Found ${products.length} products from database (without attributeValue and productAttributes)`);
       return products as ProductWithRelations[];

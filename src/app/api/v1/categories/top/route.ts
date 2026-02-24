@@ -14,8 +14,9 @@ export async function GET(req: NextRequest) {
 
     const cacheKey = `categories:top:${lang}:${limit}`;
     const cached = await cacheService.get(cacheKey);
-    if (cached) {
-      return NextResponse.json(JSON.parse(cached), {
+    if (cached !== null && cached !== undefined) {
+      const data = typeof cached === "string" ? JSON.parse(cached) : cached;
+      return NextResponse.json(data, {
         headers: { "X-Cache": "HIT" },
       });
     }

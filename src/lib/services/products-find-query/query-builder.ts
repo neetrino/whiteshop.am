@@ -241,8 +241,6 @@ export async function buildWhereClause(
   where = filterResult.where;
   bestsellerProductIds.push(...filterResult.bestsellerProductIds);
 
-  logger.debug('Fetching products with where clause', { where: JSON.stringify(where, null, 2) });
-
   return {
     where,
     bestsellerProductIds,
