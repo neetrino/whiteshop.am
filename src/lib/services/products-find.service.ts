@@ -24,9 +24,10 @@ class ProductsFindService {
       bestsellerProductIds
     );
 
-    // Step 3: Apply pagination
+    // Step 3: Apply pagination (use page for offset)
     const total = filteredProducts.length;
-    const paginatedProducts = filteredProducts.slice(0, limit);
+    const start = (page - 1) * limit;
+    const paginatedProducts = filteredProducts.slice(start, start + limit);
 
     // Step 4: Transform products to response format
     const data = await productsFindTransformService.transformProducts(paginatedProducts, lang);

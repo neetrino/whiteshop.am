@@ -365,9 +365,7 @@ export function Header() {
   const searchModalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch cart data with debouncing
   const fetchCart = async () => {
-    // Եթե օգտատերը գրանցված չէ, օգտագործում ենք localStorage
     if (!isLoggedIn) {
       if (typeof window === 'undefined') {
         setCartCount(0);
@@ -377,8 +375,8 @@ export function Header() {
 
       try {
         const stored = localStorage.getItem(CART_KEY);
-        const guestCart: Array<{ productId: string; productSlug?: string; variantId: string; quantity: number }> = stored ? JSON.parse(stored) : [];
-        
+        const guestCart: Array<{ productId: string; productSlug?: string; variantId: string; quantity: number; price?: number }> = stored ? JSON.parse(stored) : [];
+
         if (guestCart.length === 0) {
           setCartCount(0);
           setCartTotal(0);
@@ -386,74 +384,8 @@ export function Header() {
         }
 
         const itemsCount = guestCart.reduce((sum, item) => sum + item.quantity, 0);
+        const total = guestCart.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
         setCartCount(itemsCount);
-
-        // Հաշվարկում ենք total-ը ապրանքների գների հիման վրա
-        // և հեռացնում ենք գոյություն չունեցող ապրանքները
-        let total = 0;
-        const validCartItems: typeof guestCart = [];
-        
-        try {
-          const itemsWithPrices = await Promise.all(
-            guestCart.map(async (item) => {
-              try {
-                if (!item.productSlug) {
-                  return { price: 0, isValid: false };
-                }
-
-                const productData = await apiClient.get<{
-                  variants?: Array<{
-                    _id: string;
-                    id: string;
-                    price: number;
-                  }>;
-                }>(`/api/v1/products/${item.productSlug}`);
-
-                const variant = productData.variants?.find(v => 
-                  (v._id?.toString() || v.id) === item.variantId
-                ) || productData.variants?.[0];
-
-                if (!variant) {
-                  return { price: 0, isValid: false };
-                }
-
-                // Ապրանքը գոյություն ունի, ավելացնում ենք validCartItems-ին
-                validCartItems.push(item);
-                return { price: variant.price * item.quantity, isValid: true };
-              } catch (error: any) {
-                // 404 սխալը նորմալ իրավիճակ է (ապրանքը հեռացված է կամ չհրապարակված)
-                if (error?.status === 404 || error?.statusCode === 404) {
-                  console.warn(`⚠️ [CART] Ապրանքը գոյություն չունի կամ հեռացված է: ${item.productSlug}`);
-                } else {
-                  // Այլ սխալների համար լոգավորում ենք
-                  console.error(`❌ [CART] Սխալ ապրանքը բեռնելիս ${item.productId}:`, error);
-                }
-                return { price: 0, isValid: false };
-              }
-            })
-          );
-
-          total = itemsWithPrices.reduce((sum, item) => sum + item.price, 0);
-          
-          // Եթե հեռացվել են ապրանքներ, թարմացնում ենք localStorage-ը
-          if (validCartItems.length !== guestCart.length) {
-            const removedCount = guestCart.length - validCartItems.length;
-            console.log(`🧹 [CART] Հեռացվել է ${removedCount} գոյություն չունեցող ապրանք զամբյուղից`);
-            
-            if (validCartItems.length > 0) {
-              localStorage.setItem(CART_KEY, JSON.stringify(validCartItems));
-            } else {
-              localStorage.removeItem(CART_KEY);
-            }
-            
-            // Թարմացնում ենք itemsCount-ը
-            const newItemsCount = validCartItems.reduce((sum, item) => sum + item.quantity, 0);
-            setCartCount(newItemsCount);
-          }
-        } catch (error) {
-          console.error('❌ [CART] Սխալ զամբյուղի ընդհանուր գումարը հաշվարկելիս:', error);
-        }
-
         setCartTotal(total);
       } catch (error) {
         console.error('Error loading guest cart:', error);
@@ -463,7 +395,6 @@ export function Header() {
       return;
     }
 
-    // Check if token exists in localStorage
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('auth_token');
       if (!token) {
@@ -472,9 +403,6 @@ export function Header() {
         return;
       }
     }
-
-    // Small delay to avoid simultaneous requests
-    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       const response = await apiClient.get<{
@@ -485,15 +413,14 @@ export function Header() {
           };
         };
       }>('/api/v1/cart');
-      
+
       setCartCount(response.cart?.itemsCount || 0);
       setCartTotal(response.cart?.totals?.total || 0);
-    } catch (error: any) {
-      // Only log non-authentication errors
-      if (error?.status !== 401 && error?.statusCode !== 401) {
+    } catch (error: unknown) {
+      const err = error as { status?: number; statusCode?: number };
+      if (err?.status !== 401 && err?.statusCode !== 401) {
         console.error('Error fetching cart:', error);
       }
-      // Silently handle 401 errors (user not logged in or token expired)
       setCartCount(0);
       setCartTotal(0);
     }
@@ -524,7 +451,18 @@ export function Header() {
       fetchCart();
     };
 
-    const handleCartUpdate = () => {
+    const handleCartUpdate = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail?.optimisticAdd) {
+        setCartCount((c) => c + (detail.optimisticAdd.quantity ?? 1));
+        setCartTotal((t) => t + (detail.optimisticAdd.price ?? 0) * (detail.optimisticAdd.quantity ?? 1));
+        return;
+      }
+      if (detail?.itemsCount !== undefined && detail?.total !== undefined) {
+        setCartCount(detail.itemsCount);
+        setCartTotal(detail.total);
+        return;
+      }
       fetchCart();
     };
 
@@ -568,7 +506,6 @@ export function Header() {
 
     // Listen for currency rates updates (when admin changes rates)
     const handleCurrencyRatesUpdate = () => {
-      console.log('🔄 [HEADER] Currency rates updated, reloading...');
       clearCurrencyRatesCache();
       // Force reload to get fresh rates from API
       initializeCurrencyRates(true).catch(console.error);

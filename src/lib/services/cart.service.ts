@@ -203,33 +203,29 @@ class CartService {
       };
     }
 
-    // Get or create cart
-    let cart = await db.cart.findFirst({
-      where: { userId },
-      include: { items: true },
-    });
+    const [cart, variant] = await Promise.all([
+      db.cart.findFirst({
+        where: { userId },
+        include: { items: true },
+      }),
+      db.productVariant.findUnique({
+        where: { id: variantId },
+        select: { id: true, published: true, productId: true, stock: true, price: true },
+      }),
+    ]);
 
-    if (!cart) {
-      cart = await db.cart.create({
+    let resolvedCart = cart;
+    if (!resolvedCart) {
+      resolvedCart = await db.cart.create({
         data: {
           userId,
           locale,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          items: {
-            create: [],
-          },
+          items: { create: [] },
         },
         include: { items: true },
       });
     }
-
-    // Get variant
-    const variant = await db.productVariant.findUnique({
-      where: { id: variantId },
-      include: {
-        product: true,
-      },
-    });
 
     if (!variant || !variant.published || variant.productId !== productId) {
       throw {
@@ -239,8 +235,7 @@ class CartService {
       };
     }
 
-    // Check if item already exists
-    const existingItem = cart.items.find((item: { variantId: string }) => item.variantId === variantId);
+    const existingItem = resolvedCart.items.find((item: { variantId: string }) => item.variantId === variantId);
 
     // Calculate total quantity that will be in cart after adding
     const totalQuantity = existingItem ? existingItem.quantity + quantity : quantity;
@@ -275,27 +270,40 @@ class CartService {
           quantity: totalQuantity,
         },
       });
+      // Summary from current state: other items + this updated item (no extra DB query)
+      const otherItems = resolvedCart.items.filter((i: { id: string }) => i.id !== existingItem.id);
+      const itemsForSum = [
+        ...otherItems.map((i: { quantity: number; priceSnapshot: unknown }) => ({ q: i.quantity, p: Number(i.priceSnapshot) })),
+        { q: totalQuantity, p: Number(item.priceSnapshot) },
+      ];
+      const itemsCount = itemsForSum.reduce((sum, i) => sum + i.q, 0);
+      const total = itemsForSum.reduce((sum, i) => sum + i.q * i.p, 0);
+      return {
+        item: { id: item.id, variantId, quantity: item.quantity, price: Number(item.priceSnapshot) },
+        cartSummary: { itemsCount, total },
+      };
     } else {
       logger.debug("Cart: creating new item", { variantId, quantity });
       item = await db.cartItem.create({
         data: {
-          cartId: cart.id,
+          cartId: resolvedCart.id,
           variantId,
           productId,
           quantity,
           priceSnapshot: variant.price,
         },
       });
+      const itemsForSum = [
+        ...resolvedCart.items.map((i: { quantity: number; priceSnapshot: unknown }) => ({ q: i.quantity, p: Number(i.priceSnapshot) })),
+        { q: quantity, p: Number(variant.price) },
+      ];
+      const itemsCount = itemsForSum.reduce((sum, i) => sum + i.q, 0);
+      const total = itemsForSum.reduce((sum, i) => sum + i.q * i.p, 0);
+      return {
+        item: { id: item.id, variantId, quantity: item.quantity, price: Number(item.priceSnapshot) },
+        cartSummary: { itemsCount, total },
+      };
     }
-
-    return {
-      item: {
-        id: item.id,
-        variantId: variantId,
-        quantity: item.quantity,
-        price: Number(item.priceSnapshot),
-      },
-    };
   }
 
   /**

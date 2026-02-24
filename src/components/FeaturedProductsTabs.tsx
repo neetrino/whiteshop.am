@@ -100,9 +100,7 @@ export function FeaturedProductsTabs() {
     try {
       setLoading(true);
       setError(null);
-      console.log('📦 [FeaturedProductsTabs] Fetching products with filter:', filter);
 
-      // Use current language from state (always up-to-date)
       const currentLang = language;
       const params: Record<string, string> = {
         page: '1',
@@ -119,12 +117,9 @@ export function FeaturedProductsTabs() {
         params,
       });
 
-      console.log(`✅ [FeaturedProductsTabs] Loaded ${response.data.length} products`);
-      // Ограничиваем до 10 продуктов максимум
       setProducts((response.data || []).slice(0, PRODUCTS_PER_PAGE));
-    } catch (err: any) {
-      console.error('❌ [FeaturedProductsTabs] Error fetching products:', err);
-      // Use current language from state for error message
+    } catch (err) {
+      console.error('[FeaturedProductsTabs] Error:', err);
       setError(t(language, 'home.featured_products.errorLoading'));
       setProducts([]);
     } finally {
@@ -144,7 +139,6 @@ export function FeaturedProductsTabs() {
   // Load products on mount (default "NEW")
   useEffect(() => {
     fetchProducts('new');
-    console.log('🧱 [FeaturedProductsTabs] Mobile grid locked to 2 columns on phones');
   }, [fetchProducts]);
 
   return (

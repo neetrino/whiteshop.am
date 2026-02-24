@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { productsService } from "@/lib/services/products.service";
+import { cacheService } from "@/lib/services/cache.service";
+
+const PRODUCTS_CACHE_TTL = 120; // 2 minutes
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,32 +24,40 @@ export async function GET(req: NextRequest) {
       page: searchParams.get("page")
         ? parseInt(searchParams.get("page")!)
         : 1,
-      limit: searchParams.get("limit")
-        ? parseInt(searchParams.get("limit")!)
-        : 24,
+      limit: Math.min(
+        searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 24,
+        200
+      ),
       lang: searchParams.get("lang") || "en",
     };
 
-    console.log('🔍 [PRODUCTS API] Filters received:', filters);
+    const cacheKey = `products:${searchParams.toString()}`;
+    const cached = await cacheService.get(cacheKey);
+    if (cached) {
+      return NextResponse.json(JSON.parse(cached), {
+        headers: { "X-Cache": "HIT" },
+      });
+    }
+
     const result = await productsService.findAll(filters);
-    console.log('✅ [PRODUCTS API] Result:', {
-      dataLength: result.data?.length || 0,
-      total: result.meta?.total || 0,
-      page: result.meta?.page || 0,
-      totalPages: result.meta?.totalPages || 0
+
+    await cacheService.setex(cacheKey, PRODUCTS_CACHE_TTL, JSON.stringify(result));
+
+    return NextResponse.json(result, {
+      headers: { "X-Cache": "MISS" },
     });
-    return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { type?: string; title?: string; status?: number; detail?: string; message?: string };
     console.error("❌ [PRODUCTS] Error:", error);
     return NextResponse.json(
       {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
+        type: err.type || "https://api.shop.am/problems/internal-error",
+        title: err.title || "Internal Server Error",
+        status: err.status || 500,
+        detail: err.detail || err.message || "An error occurred",
         instance: req.url,
       },
-      { status: error.status || 500 }
+      { status: err.status || 500 }
     );
   }
 }

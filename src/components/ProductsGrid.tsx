@@ -16,6 +16,7 @@ interface Product {
     id: string;
     name: string;
   } | null;
+  defaultVariantId?: string | null;
 }
 
 type ViewMode = 'list' | 'grid-2' | 'grid-3';

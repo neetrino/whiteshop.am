@@ -65,7 +65,6 @@ class ProductsFindTransformService {
       // IMPORTANT: Process ALL variants to get ALL colors, not just the first variant
       const colorMap = new Map<string, { value: string; imageUrl?: string | null; colors?: string[] | null }>();
       
-      console.log(`🎨 [PRODUCTS FIND TRANSFORM SERVICE] Processing ${variants.length} variants for product ${product.id} to collect colors`);
       
       // Process all variants to collect all unique colors
       variants.forEach((v) => {
@@ -135,7 +134,6 @@ class ProductsFindTransformService {
         }
       });
       
-      console.log(`🎨 [PRODUCTS FIND TRANSFORM SERVICE] Collected ${colorMap.size} unique colors from ${variants.length} variants for product ${product.id}`);
       
       // Also check productAttributes for color attribute values with imageUrl and colors
       // IMPORTANT: Only update colors that already exist in variants (already in colorMap)
@@ -214,6 +212,7 @@ class ProductsFindTransformService {
         id: product.id,
         slug: translation?.slug || "",
         title: translation?.title || "",
+        defaultVariantId: variant?.id ?? null,
         brand: product.brand
           ? {
               id: product.brand.id,
@@ -274,7 +273,6 @@ class ProductsFindTransformService {
                 color: '#6B7280', // Gray color for out of stock
               });
               
-              console.log(`🏷️ [PRODUCTS FIND TRANSFORM SERVICE] Added "Out of Stock" label to product ${product.id} (${lang})`);
             }
           }
           

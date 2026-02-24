@@ -87,8 +87,6 @@ async function getProducts(
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
     const targetUrl = `${baseUrl}/api/v1/products?${queryString}`;
-    console.log("🌐 [PRODUCTS] Fetch products", { targetUrl, baseUrl });
-
     const res = await fetch(targetUrl, {
       cache: "no-store"
     });
@@ -124,11 +122,7 @@ export default async function ProductsPage({ searchParams }: any) {
   const parsedLimit = limitParam && !Number.isNaN(parseInt(limitParam, 10))
     ? parseInt(limitParam, 10)
     : null;
-  // Default to 9999 (all) if no limit specified, or use the parsed limit
-  // If limit is >= 1000, treat as "all" (show all products)
-  const perPage = parsedLimit 
-    ? (parsedLimit >= 1000 ? 9999 : parsedLimit)
-    : 9999;
+  const perPage = parsedLimit ? Math.min(parsedLimit, 200) : 24;
 
   const productsData = await getProducts(
     page,
@@ -155,6 +149,7 @@ export default async function ProductsPage({ searchParams }: any) {
     image: p.image ?? null,
     inStock: p.inStock ?? true,      // ⭐ FIXED
     brand: p.brand ?? null,
+    defaultVariantId: p.defaultVariantId ?? null,
     colors: p.colors ?? [],          // ⭐ Add colors array
     labels: p.labels ?? []            // ⭐ Add labels array (includes "Out of Stock" label)
   }));
