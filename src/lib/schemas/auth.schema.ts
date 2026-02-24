@@ -31,10 +31,10 @@ export function parseRegisterBody(body: unknown): RegisterInput {
   return registerSchema.parse(body);
 }
 
-export function safeParseLogin(body: unknown): z.SafeParseReturnType<unknown, LoginInput> {
+export function safeParseLogin(body: unknown): ReturnType<typeof loginSchema.safeParse> {
   return loginSchema.safeParse(body);
 }
 
-export function safeParseRegister(body: unknown): z.SafeParseReturnType<unknown, RegisterInput> {
+export function safeParseRegister(body: unknown): ReturnType<typeof registerSchema.safeParse> {
   return registerSchema.safeParse(body);
 }

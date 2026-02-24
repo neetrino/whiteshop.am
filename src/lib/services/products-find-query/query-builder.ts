@@ -126,7 +126,7 @@ async function buildFilterFilter(
 
   if (filter === "bestseller") {
     type BestsellerVariant = { variantId: string | null; _sum: { quantity: number | null } };
-    const bestsellerVariants: BestsellerVariant[] = await db.orderItem.groupBy({
+    const raw = await db.orderItem.groupBy({
       by: ["variantId"],
       _sum: { quantity: true },
       where: {
@@ -136,11 +136,12 @@ async function buildFilterFilter(
       },
       orderBy: {
         _sum: {
-          quantity: "desc",
+          quantity: "desc" as const,
         },
       },
       take: 200,
     });
+    const bestsellerVariants: BestsellerVariant[] = raw as BestsellerVariant[];
 
     const variantIds = bestsellerVariants
       .map((item) => item.variantId)

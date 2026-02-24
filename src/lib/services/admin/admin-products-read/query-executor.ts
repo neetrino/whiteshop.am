@@ -14,7 +14,7 @@ const getProductListInclude = () => ({
   variants: {
     where: { published: true },
     take: 1,
-    orderBy: { price: "asc" },
+    orderBy: { price: "asc" as const },
   },
   labels: true,
 });
@@ -48,7 +48,7 @@ const getProductDetailInclude = () => ({
       },
     },
     orderBy: {
-      position: 'asc',
+      position: "asc" as const,
     },
   },
   labels: true,

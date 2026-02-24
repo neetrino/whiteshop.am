@@ -71,7 +71,7 @@ export async function getTopProducts(limit: number = 5) {
         translations?: Array<{ title: string }>; 
         media?: unknown[] 
       } 
-    } 
+    } | null
   }) => {
     if (!item.variant) return;
 

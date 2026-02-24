@@ -127,9 +127,9 @@ class ProductsFiltersService {
 
       // Get products with variants (capped for filter computation)
       const FILTERS_PRODUCTS_LIMIT = 500;
-      let products;
+      let products: ProductWithRelations[] = [];
       try {
-        products = await db.product.findMany({
+        products = (await db.product.findMany({
           where,
           take: FILTERS_PRODUCTS_LIMIT,
           include: {
@@ -169,7 +169,7 @@ class ProductsFiltersService {
               },
             },
           },
-        });
+        })) as unknown as ProductWithRelations[];
       } catch (dbError) {
         console.error('❌ [PRODUCTS FILTERS SERVICE] Error fetching products in getFilters:', dbError);
         throw dbError;

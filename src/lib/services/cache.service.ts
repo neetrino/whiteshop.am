@@ -9,7 +9,12 @@
 // Redis client will be initialized lazily
 let redisClient: any = null;
 /** Upstash REST client when UPSTASH_REDIS_REST_* env vars are set */
-let upstashClient: { get: (k: string) => Promise<string | null>; set: (k: string, v: string, opts?: { ex?: number }) => Promise<string>; del: (...keys: string[]) => Promise<number>; keys: (pattern: string) => Promise<string[]> } | null = null;
+let upstashClient: {
+  get: (k: string) => Promise<string | null>;
+  set: (k: string, v: string, opts?: Record<string, unknown>) => Promise<string | "OK" | null>;
+  del: (...keys: string[]) => Promise<number>;
+  keys: (pattern: string) => Promise<string[]>;
+} | null = null;
 let redisAvailable = false;
 let connectionAttempted = false;
 let errorLogged = false;
