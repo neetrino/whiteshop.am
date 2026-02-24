@@ -45,7 +45,7 @@ export function HeroCarousel() {
   };
 
   const handleBrowseCategories = () => {
-    router.push('/categories');
+    router.push('/products');
   };
 
   return (

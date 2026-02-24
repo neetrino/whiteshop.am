@@ -17,7 +17,7 @@ import { CartIcon } from './icons/CartIcon';
 // Navigation links will be translated dynamically using useTranslation hook
 const primaryNavLinks = [
   { href: '/', translationKey: 'common.navigation.home' },
-  { href: '/categories', translationKey: 'common.navigation.products' },
+  { href: '/products', translationKey: 'common.navigation.products' },
   { href: '/about', translationKey: 'common.navigation.about' },
   { href: '/contact', translationKey: 'common.navigation.contact' },
 ];
@@ -847,7 +847,7 @@ export function Header() {
               }}
             >
               <Link
-                href="/categories"
+                href="/products"
                 className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap flex items-center gap-1"
               >
                 {t('common.navigation.products')}
@@ -858,13 +858,6 @@ export function Header() {
                   <div className="absolute top-full left-0 w-full h-2" />
                   <div className="absolute top-full left-0 pt-2 w-64 z-50">
                     <div className="bg-white rounded-xl shadow-2xl border border-gray-200/80 overflow-visible">
-                      <Link
-                        href="/products"
-                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-all duration-150 font-medium border-b border-gray-100"
-                        onClick={() => setShowProductsMenu(false)}
-                      >
-                        {t('common.navigation.products')}
-                      </Link>
                       {loadingCategories ? (
                         <div className="px-4 py-2 text-sm text-gray-500">{t('common.messages.loading')}</div>
                       ) : (
