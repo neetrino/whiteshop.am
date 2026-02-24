@@ -7,6 +7,7 @@ import { apiClient } from '../lib/api-client';
 import { getStoredLanguage } from '../lib/language';
 import { getStoredCurrency, formatPrice as formatCurrencyPrice, type CurrencyCode } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
+import { useProductsFilters } from './ProductsFiltersProvider';
 
 interface PriceFilterProps {
   currentMinPrice?: string;
@@ -25,6 +26,7 @@ interface PriceRange {
 export function PriceFilter({ currentMinPrice, currentMaxPrice, category }: PriceFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const filtersContext = useProductsFilters();
   const { t } = useTranslation();
   const [priceRange, setPriceRange] = useState<PriceRange>({
     min: 0,
@@ -63,8 +65,17 @@ export function PriceFilter({ currentMinPrice, currentMaxPrice, category }: Pric
   }, []);
 
   useEffect(() => {
-    fetchPriceRange();
-  }, [category]);
+    if (filtersContext?.data?.priceRange) {
+      const pr = filtersContext.data.priceRange;
+      setPriceRange(pr as PriceRange);
+      if (!currentMinPrice) setMinPrice(pr.min);
+      if (!currentMaxPrice) setMaxPrice(pr.max);
+      return;
+    }
+    if (filtersContext === null) {
+      fetchPriceRange();
+    }
+  }, [category, filtersContext?.data?.priceRange, filtersContext === null]);
 
   useEffect(() => {
     if (currentMinPrice) {

@@ -7,6 +7,7 @@ import { apiClient } from '../lib/api-client';
 import { getStoredLanguage } from '../lib/language';
 import { getColorHex } from '../lib/colorMap';
 import { useTranslation } from '../lib/i18n-client';
+import { useProductsFilters } from './ProductsFiltersProvider';
 
 interface ColorFilterProps {
   category?: string;
@@ -27,14 +28,24 @@ interface ColorOption {
 export function ColorFilter({ category, search, minPrice, maxPrice, selectedColors = [] }: ColorFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const filtersContext = useProductsFilters();
   const { t } = useTranslation();
   const [colors, setColors] = useState<ColorOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string[]>(selectedColors);
 
   useEffect(() => {
-    fetchColors();
-  }, [category, search, minPrice, maxPrice]);
+    if (filtersContext?.data?.colors) {
+      setColors(filtersContext.data.colors);
+      setLoading(false);
+      return;
+    }
+    if (filtersContext === null) {
+      fetchColors();
+    } else {
+      setLoading(filtersContext.loading);
+    }
+  }, [category, search, minPrice, maxPrice, filtersContext?.data?.colors, filtersContext?.loading, filtersContext === null]);
 
   useEffect(() => {
     setSelected(selectedColors);

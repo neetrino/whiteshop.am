@@ -6,6 +6,7 @@ import { Card, Input } from '@shop/ui';
 import { apiClient } from '../lib/api-client';
 import { getStoredLanguage } from '../lib/language';
 import { useTranslation } from '../lib/i18n-client';
+import { useProductsFilters } from './ProductsFiltersProvider';
 
 interface BrandFilterProps {
   category?: string;
@@ -21,27 +22,10 @@ interface BrandOption {
   count: number;
 }
 
-interface Product {
-  id: string;
-  brand?: {
-    id: string;
-    name: string;
-  } | null;
-}
-
-interface ProductsResponse {
-  data?: Product[];
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
 export function BrandFilter({ category, search, minPrice, maxPrice, selectedBrands = [] }: BrandFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const filtersContext = useProductsFilters();
   const { t } = useTranslation();
   const [brands, setBrands] = useState<BrandOption[]>([]);
   const [filteredBrands, setFilteredBrands] = useState<BrandOption[]>([]);
@@ -49,8 +33,18 @@ export function BrandFilter({ category, search, minPrice, maxPrice, selectedBran
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBrands();
-  }, [category, search, minPrice, maxPrice]);
+    if (filtersContext?.data?.brands) {
+      setBrands(filtersContext.data.brands);
+      setFilteredBrands(filtersContext.data.brands);
+      setLoading(false);
+      return;
+    }
+    if (filtersContext === null) {
+      fetchBrands();
+    } else {
+      setLoading(filtersContext.loading);
+    }
+  }, [category, search, minPrice, maxPrice, filtersContext?.data?.brands, filtersContext?.loading, filtersContext === null]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -67,41 +61,16 @@ export function BrandFilter({ category, search, minPrice, maxPrice, selectedBran
     try {
       setLoading(true);
       const language = getStoredLanguage();
-      const params: Record<string, string> = {
-        lang: language,
-      };
-      
+      const params: Record<string, string> = { lang: language };
       if (category) params.category = category;
       if (search) params.search = search;
       if (minPrice) params.minPrice = minPrice;
       if (maxPrice) params.maxPrice = maxPrice;
-
-      // Fetch products to extract brands
-      const response = await apiClient.get<ProductsResponse>('/api/v1/products', { params: { ...params, limit: '1000' } });
-      
-      // Extract unique brands from products
-      const brandCountMap = new Map<string, { id: string; name: string; count: number }>();
-      
-      response.data?.forEach((product) => {
-        if (product.brand?.id && product.brand?.name) {
-          const brandId = product.brand.id;
-          const brandName = product.brand.name;
-          const existing = brandCountMap.get(brandId);
-          brandCountMap.set(brandId, {
-            id: brandId,
-            name: brandName,
-            count: (existing?.count || 0) + 1,
-          });
-        }
-      });
-
-      const brandOptions: BrandOption[] = Array.from(brandCountMap.values())
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      setBrands(brandOptions);
-      setFilteredBrands(brandOptions);
-    } catch (error) {
-      console.error('Error fetching brands:', error);
+      const response = await apiClient.get<{ brands: BrandOption[] }>('/api/v1/products/filters', { params });
+      const list = response.brands ?? [];
+      setBrands(list);
+      setFilteredBrands(list);
+    } catch (err) {
       setBrands([]);
       setFilteredBrands([]);
     } finally {
@@ -110,40 +79,18 @@ export function BrandFilter({ category, search, minPrice, maxPrice, selectedBran
   };
 
   const handleBrandSelect = (brandId: string) => {
-    console.log('🎯 [BRAND FILTER] Brand clicked:', { brandId, currentSelectedBrands: selectedBrands });
-    
-    // Ստեղծում ենք նոր URLSearchParams URL-ի հիման վրա, որպեսզի պահպանենք բոլոր params-ները
     const params = new URLSearchParams(searchParams.toString());
-    
-    // Ստեղծում ենք ընտրված brand-երի array
     const currentBrands = selectedBrands || [];
-    let newBrands: string[];
-    
-    if (currentBrands.includes(brandId)) {
-      // Եթե brand-ը արդեն ընտրված է, հեռացնում ենք
-      newBrands = currentBrands.filter(id => id !== brandId);
-      console.log('➖ [BRAND FILTER] Brand deselected:', { brandId, newBrands });
-    } else {
-      // Եթե brand-ը ընտրված չէ, ավելացնում ենք
-      newBrands = [...currentBrands, brandId];
-      console.log('➕ [BRAND FILTER] Brand selected:', { brandId, newBrands });
-    }
-    
-    // URL-ում պահում ենք comma-separated string
+    const newBrands = currentBrands.includes(brandId)
+      ? currentBrands.filter((id) => id !== brandId)
+      : [...currentBrands, brandId];
     if (newBrands.length > 0) {
       params.set('brand', newBrands.join(','));
-      console.log('✅ [BRAND FILTER] Setting brand param:', newBrands.join(','));
     } else {
       params.delete('brand');
-      console.log('🗑️ [BRAND FILTER] Removing brand param');
     }
-    
-    // Reset page to 1 when filters change
     params.delete('page');
-
-    const newUrl = `/products?${params.toString()}`;
-    console.log('🔗 [BRAND FILTER] Navigating to:', newUrl);
-    router.push(newUrl);
+    router.push(`/products?${params.toString()}`);
   };
 
   if (loading) {

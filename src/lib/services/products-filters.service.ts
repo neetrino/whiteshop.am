@@ -100,14 +100,8 @@ class ProductsFiltersService {
             // Get all child categories (subcategories) recursively
             const childCategoryIds = await this.getAllChildCategoryIds(categoryDoc.id);
             const allCategoryIds = [categoryDoc.id, ...childCategoryIds];
-            
-            console.log('📂 [PRODUCTS FILTERS SERVICE] Category IDs to include in filters:', {
-              parent: categoryDoc.id,
-              children: childCategoryIds,
-              total: allCategoryIds.length
-            });
-            
-            // Build OR conditions for all categories (parent + children)
+
+            // Build OR conditions
             const categoryConditions = allCategoryIds.flatMap((catId: string) => [
               { primaryCategoryId: catId },
               { categoryIds: { has: catId } },
@@ -131,12 +125,19 @@ class ProductsFiltersService {
         }
       }
 
-      // Get products with variants
+      // Get products with variants (capped for filter computation)
+      const FILTERS_PRODUCTS_LIMIT = 500;
       let products;
       try {
         products = await db.product.findMany({
           where,
+          take: FILTERS_PRODUCTS_LIMIT,
           include: {
+            brand: {
+              include: {
+                translations: true,
+              },
+            },
             variants: {
               where: {
                 published: true,
@@ -205,11 +206,27 @@ class ProductsFiltersService {
       colors?: string[] | null;
     }>();
     const sizeMap = new Map<string, number>();
+    const brandMap = new Map<string, { id: string; name: string; count: number }>();
+    let rangeMin = Infinity;
+    let rangeMax = 0;
 
-    products.forEach((product: ProductWithRelations) => {
+    products.forEach((product: ProductWithRelations & { brand?: { id: string; translations?: Array<{ locale: string; name?: string }>; name?: string } | null }) => {
       if (!product || !product.variants || !Array.isArray(product.variants)) {
         return;
       }
+      if (product.brand?.id) {
+        const name = (product.brand as { translations?: Array<{ locale: string; name?: string }>; name?: string }).translations?.find((t: { locale: string }) => t.locale === lang)?.name || (product.brand as { name?: string }).name || '';
+        if (name) {
+          const existing = brandMap.get(product.brand.id);
+          brandMap.set(product.brand.id, { id: product.brand.id, name, count: (existing?.count || 0) + 1 });
+        }
+      }
+      product.variants.forEach((v: { price?: number }) => {
+        if (typeof v?.price === 'number') {
+          if (v.price < rangeMin) rangeMin = v.price;
+          if (v.price > rangeMax) rangeMax = v.price;
+        }
+      });
       product.variants.forEach((variant: any) => {
         if (!variant || !variant.options || !Array.isArray(variant.options)) {
           return;
@@ -352,16 +369,39 @@ class ProductsFiltersService {
       // Sort colors alphabetically
       colors.sort((a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label));
 
+      const brands = Array.from(brandMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      const priceMin = rangeMin === Infinity ? 0 : Math.floor(rangeMin / 1000) * 1000;
+      const priceMax = rangeMax === 0 ? 100000 : Math.ceil(rangeMax / 1000) * 1000;
+      let stepSize: number | null = null;
+      let stepSizePerCurrency: Record<string, number> | null = null;
+      try {
+        const settings = await adminService.getPriceFilterSettings();
+        stepSize = settings.stepSize ?? null;
+        if (settings.stepSizePerCurrency) {
+          stepSizePerCurrency = {
+            USD: settings.stepSizePerCurrency.USD ?? undefined,
+            AMD: settings.stepSizePerCurrency.AMD ?? undefined,
+            RUB: settings.stepSizePerCurrency.RUB ?? undefined,
+            GEL: settings.stepSizePerCurrency.GEL ?? undefined,
+          } as Record<string, number>;
+        }
+      } catch {
+        // use defaults
+      }
+
       return {
         colors,
         sizes,
+        brands,
+        priceRange: { min: priceMin, max: priceMax, stepSize, stepSizePerCurrency },
       };
     } catch (error) {
       console.error('❌ [PRODUCTS FILTERS SERVICE] Error in getFilters:', error);
-      // Return empty arrays on error
       return {
         colors: [],
         sizes: [],
+        brands: [],
+        priceRange: { min: 0, max: 100000, stepSize: null, stepSizePerCurrency: null },
       };
     }
   }

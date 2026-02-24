@@ -12,6 +12,7 @@ import { ProductsHeader } from '../../components/ProductsHeader';
 import { ProductsGrid } from '../../components/ProductsGrid';
 import { CategoryNavigation } from '../../components/CategoryNavigation';
 import { MobileFiltersDrawer } from '../../components/MobileFiltersDrawer';
+import { ProductsFiltersProvider } from '../../components/ProductsFiltersProvider';
 import { MOBILE_FILTERS_EVENT } from '../../lib/events';
 
 const PAGE_CONTAINER = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
@@ -107,7 +108,7 @@ async function getProducts(
     console.error("❌ PRODUCT ERROR", e);
     return {
       data: [],
-      meta: { total: 0, page: 1, limit: 24, totalPages: 0 }
+      meta: { total: 0, page: 1, limit: 12, totalPages: 0 }
     };
   }
 }
@@ -208,6 +209,12 @@ export default async function ProductsPage({ searchParams }: any) {
       </div>
 
       <div className="max-w-7xl mx-auto pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-4 sm:pr-6 lg:pr-8 flex flex-col lg:flex-row gap-8">
+        <ProductsFiltersProvider
+          category={params?.category}
+          search={params?.search}
+          minPrice={params?.minPrice}
+          maxPrice={params?.maxPrice}
+        >
         <aside className="w-64 hidden lg:block bg-gray-50 rounded-xl flex-shrink-0">
           <div className="sticky top-4 p-4 space-y-6">
             <Suspense fallback={<div>{t(language, 'common.messages.loadingFilters')}</div>}>
@@ -297,8 +304,7 @@ export default async function ProductsPage({ searchParams }: any) {
           )}
 
         </div>
-      </div>
-      
+
       {/* Mobile Filters Drawer */}
       <MobileFiltersDrawer openEventName={MOBILE_FILTERS_EVENT}>
         <div className="p-4 space-y-6">
@@ -310,6 +316,8 @@ export default async function ProductsPage({ searchParams }: any) {
           </Suspense>
         </div>
       </MobileFiltersDrawer>
+        </ProductsFiltersProvider>
+      </div>
     </div>
   );
 }

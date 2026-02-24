@@ -33,12 +33,7 @@ export async function GET(req: NextRequest) {
       lang: searchParams.get("lang") || "en",
     };
 
-    console.log("🔍 [PRODUCTS FILTERS] Calling getFilters with:", filters);
     const result = await productsService.getFilters(filters);
-    console.log("✅ [PRODUCTS FILTERS] Result:", { 
-      colorsCount: result.colors?.length || 0, 
-      sizesCount: result.sizes?.length || 0 
-    });
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("❌ [PRODUCTS FILTERS] Error:", error);
