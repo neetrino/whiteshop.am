@@ -10,6 +10,7 @@
  * Prisma client: pnpm run db:generate first if needed.
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const path = require("path");
 const fs = require("fs");
 
@@ -43,9 +44,9 @@ async function main() {
   }
 
   if (arg === "--all") {
-    const count = await db.product.updateMany({ data: { media: [] } });
+    const result = await db.product.updateMany({ data: { media: [] } });
     await db.productVariant.updateMany({ data: { imageUrl: null } });
-    console.log("Cleared media for all products and imageUrl for all variants.");
+    console.log("Cleared media for all products (" + result.count + ") and imageUrl for all variants.");
     await db.$disconnect();
     return;
   }
