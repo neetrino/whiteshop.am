@@ -1,8 +1,8 @@
 {
-  "name": "marco.am",
+  "name": "whiteshop.am",
   "version": "1.0.0",
   "private": true,
-  "description": "Marco.am — Next.js app at root, pnpm workspace",
+  "description": "WhiteShop.am — Next.js app at root, pnpm workspace",
   "scripts": {
     "dev": "next dev",
     "dev:webpack": "next dev --no-turbo",

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { productsService } from "@/lib/services/products.service";
 
 const DEFAULT_TITLE = "Product";
-const SITE_NAME = "Marco.am";
+const SITE_NAME = "WhiteShop.am";
 
 type Props = {
   params: Promise<{ slug: string }>;
