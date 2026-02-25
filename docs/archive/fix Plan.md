@@ -2,7 +2,7 @@
 
 ---
 
-# ТЕХНИЧЕСКИЙ АУДИТ: marco.am (E-commerce)
+# ТЕХНИЧЕСКИЙ АУДИТ: whiteshop.am (E-commerce)
 
 **Стек проекта:**
 - Frontend: Next.js 16 (App Router), React 18, Tailwind CSS 3.4
