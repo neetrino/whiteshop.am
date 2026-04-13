@@ -15,7 +15,6 @@ node_modules/
 dist/
 build/
 coverage/
-*.tsbuildinfo
 
 # Logs and temp
 *.log
@@ -29,3 +28,4 @@ temp/
 # .vscode/
 # *.swp
 # *.swo
+#docs/reference/payment integration/Example only
