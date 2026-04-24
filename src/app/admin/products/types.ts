@@ -14,6 +14,8 @@ export interface Product {
   }>;
   image: string | null;
   createdAt: string;
+  /** Comma-separated category titles (EN locale), primary first */
+  categorySummary: string;
 }
 
 export interface ProductsResponse {

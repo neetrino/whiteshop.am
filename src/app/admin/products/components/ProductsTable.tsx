@@ -205,6 +205,9 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
+                  <th className={ADMIN_TABLE_TH}>{t('admin.products.category')}</th>
+                  <th className={ADMIN_TABLE_TH_CENTER}>{t('admin.products.featured')}</th>
+                  <th className={`${ADMIN_TABLE_TH} pl-6`}>{t('admin.products.actions')}</th>
                   <th className="p-0 align-middle">
                     <button
                       type="button"
@@ -240,8 +243,6 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
-                  <th className={ADMIN_TABLE_TH_CENTER}>{t('admin.products.featured')}</th>
-                  <th className={`${ADMIN_TABLE_TH} pl-6`}>{t('admin.products.actions')}</th>
                 </tr>
               </thead>
               <tbody className={ADMIN_TABLE_TBODY}>
@@ -310,8 +311,14 @@ export function ProductsTable({
                         ) : null}
                       </div>
                     </td>
-                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left tabular-nums text-gray-600`}>
-                      {new Date(product.createdAt).toLocaleDateString('hy-AM')}
+                    <td className={`${ADMIN_TABLE_TD} min-w-0 max-w-[14rem] text-left text-gray-900`}>
+                      {product.categorySummary ? (
+                        <span className="block truncate" title={product.categorySummary}>
+                          {product.categorySummary}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </td>
                     <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-center`}>
                       <button
@@ -383,6 +390,9 @@ export function ProductsTable({
                           />
                         </button>
                       </div>
+                    </td>
+                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left tabular-nums text-gray-600`}>
+                      {new Date(product.createdAt).toLocaleDateString('hy-AM')}
                     </td>
                   </tr>
                 ))}
