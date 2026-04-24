@@ -6,6 +6,7 @@ import { useAuth } from '../../../lib/auth/AuthContext';
 import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
 import { getStoredCurrency, initializeCurrencyRates, type CurrencyCode } from '../../../lib/currency';
+import { ProductBulkSelectionBar } from './components/ProductBulkSelectionBar';
 import { ProductFilters } from './components/ProductFilters';
 import { ProductsTable } from './components/ProductsTable';
 import { useProductHandlers } from './hooks/useProductHandlers';
@@ -343,11 +344,7 @@ export default function ProductsPage() {
               setMinPrice={setMinPrice}
               maxPrice={maxPrice}
               setMaxPrice={setMaxPrice}
-              selectedIds={selectedIds}
               handleSearch={handlers.handleSearch}
-              handleBulkDelete={handlers.handleBulkDelete}
-              handleClearFilters={handleClearFilters}
-              bulkDeleting={bulkDeleting}
               setPage={setPage}
             />
 
@@ -363,6 +360,12 @@ export default function ProductsPage() {
                 {t('admin.products.addNewProduct')}
               </button>
             </div>
+
+            <ProductBulkSelectionBar
+              selectedCount={selectedIds.size}
+              onBulkDelete={handlers.handleBulkDelete}
+              bulkDeleting={bulkDeleting}
+            />
 
             {/* Products Table */}
             <ProductsTable

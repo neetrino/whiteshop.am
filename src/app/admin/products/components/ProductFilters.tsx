@@ -1,7 +1,6 @@
 'use client';
 
 import type { FormEvent } from 'react';
-import { Button } from '@shop/ui';
 import { useTranslation } from '../../../../lib/i18n-client';
 import type { Category } from '../types';
 
@@ -22,11 +21,7 @@ interface ProductFiltersProps {
   setMinPrice: (price: string) => void;
   maxPrice: string;
   setMaxPrice: (price: string) => void;
-  selectedIds: Set<string>;
   handleSearch: (e: FormEvent) => void;
-  handleBulkDelete: () => void;
-  handleClearFilters: () => void;
-  bulkDeleting: boolean;
   setPage: (page: number | ((prev: number) => number)) => void;
 }
 
@@ -47,11 +42,7 @@ export function ProductFilters({
   setMinPrice,
   maxPrice,
   setMaxPrice,
-  selectedIds,
   handleSearch,
-  handleBulkDelete,
-  handleClearFilters,
-  bulkDeleting,
   setPage,
 }: ProductFiltersProps) {
   const { t } = useTranslation();
@@ -186,23 +177,6 @@ export function ProductFilters({
           </select>
         </div>
       </div>
-
-      {/* Selected Products and Delete */}
-      {selectedIds.size > 0 && (
-        <div className="px-4 py-3 flex items-center justify-between border border-gray-200 rounded-md bg-white">
-          <div className="text-sm text-gray-700">
-            {t('admin.products.selectedProducts').replace('{count}', selectedIds.size.toString())}
-          </div>
-          <Button
-            variant="outline"
-            onClick={handleBulkDelete}
-            disabled={bulkDeleting}
-            className="text-sm"
-          >
-            {bulkDeleting ? t('admin.products.deleting') : t('admin.products.deleteSelected')}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
