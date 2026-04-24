@@ -581,9 +581,11 @@
     "payment": "Payment",
     "total": "Total",
     "items": "Items",
+    "itemsQtyHeader": "Qty",
     "date": "Date",
     "unknownCustomer": "Unknown Customer",
     "viewOrderDetails": "View Order Details",
+    "viewOrderDetailsShort": "Details",
     "selectAllOrders": "Select all orders",
     "selectOrder": "Select order {number}",
     "orderDetails": {

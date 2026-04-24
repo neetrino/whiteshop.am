@@ -23,7 +23,7 @@ export function OrdersPagination({
   }
 
   return (
-    <div className="mt-6 flex items-center justify-between">
+    <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-3">
       <div className="text-sm text-gray-700">
         {t('admin.orders.showingPage')
           .replace('{page}', page.toString())

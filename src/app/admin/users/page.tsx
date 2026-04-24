@@ -276,7 +276,7 @@ export default function UsersPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3">
+                      <th className="px-4 py-3 text-center align-middle">
                         <input
                           type="checkbox"
                           aria-label={t('admin.users.selectAll')}
@@ -284,22 +284,22 @@ export default function UsersPage() {
                           onChange={toggleSelectAll}
                         />
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.users.user')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.users.contact')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.users.orders')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.users.roles')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.users.status')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.users.created')}
                       </th>
                     </tr>
@@ -307,7 +307,7 @@ export default function UsersPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3 text-center align-middle">
                           <input
                             type="checkbox"
                             aria-label={t('admin.users.selectUser').replace('{email}', user.email)}
@@ -315,22 +315,22 @@ export default function UsersPage() {
                             onChange={() => toggleSelect(user.id)}
                           />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
                           <div className="text-sm font-medium text-gray-900">
                             {user.firstName} {user.lastName}
                           </div>
                           <div className="text-sm text-gray-500">{user.id}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
                           <div className="text-sm text-gray-900">{user.email}</div>
                           {user.phone && (
                             <div className="text-sm text-gray-500">{user.phone}</div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-900">
                           {user.ordersCount ?? 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
                           <div className="flex gap-2">
                             {user.roles?.map((role) => (
                               <span
@@ -342,7 +342,7 @@ export default function UsersPage() {
                             ))}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
                           <button
                             type="button"
                             onClick={() =>
@@ -368,7 +368,7 @@ export default function UsersPage() {
                             />
                           </button>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-500">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
                       </tr>

@@ -47,12 +47,24 @@ export function OrderDetailsItems({
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-3 py-2 text-left font-medium text-gray-500">{t('admin.orders.orderDetails.product')}</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-500">{t('admin.orders.orderDetails.sku')}</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-500">{t('admin.orders.orderDetails.colorSize')}</th>
-              <th className="px-3 py-2 text-right font-medium text-gray-500">{t('admin.orders.orderDetails.qty')}</th>
-              <th className="px-3 py-2 text-right font-medium text-gray-500">{t('admin.orders.orderDetails.price')}</th>
-              <th className="px-3 py-2 text-right font-medium text-gray-500">{t('admin.orders.orderDetails.totalCol')}</th>
+              <th className="px-3 py-2 text-left align-middle font-medium text-gray-500">
+                {t('admin.orders.orderDetails.product')}
+              </th>
+              <th className="px-3 py-2 text-left align-middle font-medium text-gray-500">
+                {t('admin.orders.orderDetails.sku')}
+              </th>
+              <th className="px-3 py-2 text-left align-middle font-medium text-gray-500">
+                {t('admin.orders.orderDetails.colorSize')}
+              </th>
+              <th className="px-3 py-2 text-right align-middle font-medium text-gray-500">
+                {t('admin.orders.orderDetails.qty')}
+              </th>
+              <th className="px-3 py-2 text-right align-middle font-medium text-gray-500">
+                {t('admin.orders.orderDetails.price')}
+              </th>
+              <th className="px-3 py-2 text-right align-middle font-medium text-gray-500">
+                {t('admin.orders.orderDetails.totalCol')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
@@ -60,9 +72,9 @@ export function OrderDetailsItems({
               const allOptions = item.variantOptions || [];
               return (
                 <tr key={item.id}>
-                  <td className="px-3 py-2">{item.productTitle}</td>
-                  <td className="px-3 py-2 text-gray-500">{item.sku}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-2 align-middle text-left">{item.productTitle}</td>
+                  <td className="px-3 py-2 align-middle text-left text-gray-500">{item.sku}</td>
+                  <td className="px-3 py-2 align-middle text-left">
                     {allOptions.length > 0 ? (
                       <div className="flex flex-wrap gap-2 items-center">
                         {allOptions.map((opt, optIndex) => {
@@ -100,11 +112,11 @@ export function OrderDetailsItems({
                       <span className="text-xs text-gray-400">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right">{item.quantity}</td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-3 py-2 align-middle text-right tabular-nums">{item.quantity}</td>
+                  <td className="px-3 py-2 align-middle text-right tabular-nums">
                     {formatCurrency(item.unitPrice, orderDetails.currency || 'AMD', 'USD')}
                   </td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-3 py-2 align-middle text-right tabular-nums">
                     {formatCurrency(item.total, orderDetails.currency || 'AMD', 'USD')}
                   </td>
                 </tr>

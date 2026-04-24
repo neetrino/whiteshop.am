@@ -74,7 +74,7 @@ export function ProductsTable({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3">
+                  <th className="px-4 py-3 text-center align-middle">
                     <input
                       type="checkbox"
                       aria-label={t('admin.products.selectAll')}
@@ -82,7 +82,7 @@ export function ProductsTable({
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('title')}
@@ -117,7 +117,7 @@ export function ProductsTable({
                       </span>
                     </button> 
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('stock')}
@@ -152,7 +152,7 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('price')}
@@ -187,7 +187,7 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('createdAt')}
@@ -222,10 +222,10 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
-                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-center align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                     {t('admin.products.featured')}
                   </th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider pl-6">
+                  <th className="px-3 py-3 pl-6 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                     {t('admin.products.actions')}
                   </th>
                 </tr>
@@ -233,7 +233,7 @@ export function ProductsTable({
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3 text-center align-middle">
                       <input
                         type="checkbox"
                         aria-label={t('admin.products.selectProduct').replace('{title}', product.title)}
@@ -241,7 +241,7 @@ export function ProductsTable({
                         onChange={() => toggleSelect(product.id)}
                       />
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 align-middle whitespace-nowrap text-left">
                       <div className="flex items-center">
                         {product.image && (
                           <img
@@ -256,7 +256,7 @@ export function ProductsTable({
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-4">
+                    <td className="px-3 py-3 align-middle text-left">
                       {product.colorStocks && product.colorStocks.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {product.colorStocks.map((colorStock) => (
@@ -275,7 +275,7 @@ export function ProductsTable({
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 align-middle whitespace-nowrap text-left">
                       <div className="flex flex-col">
                         <div className="text-sm font-medium text-gray-900">
                           {formatPrice(product.price, currency)}
@@ -293,10 +293,10 @@ export function ProductsTable({
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-500">
                       {new Date(product.createdAt).toLocaleDateString('hy-AM')}
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-center">
+                    <td className="px-3 py-3 align-middle whitespace-nowrap text-center">
                       <button
                         onClick={() => handleToggleFeatured(product.id, product.featured || false, product.title)}
                         className="inline-flex items-center justify-center w-8 h-8 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
@@ -320,7 +320,7 @@ export function ProductsTable({
                         </svg>
                       </button>
                     </td>
-                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-3 py-3 pl-6 align-middle whitespace-nowrap text-left text-sm font-medium">
                       <div className="flex items-center gap-1 flex-wrap">
                         <Button
                           variant="ghost"

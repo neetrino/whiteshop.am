@@ -159,7 +159,7 @@ export default function MessagesPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3">
+                      <th className="px-4 py-3 text-center align-middle">
                         <input
                           type="checkbox"
                           aria-label={t('admin.messages.selectAll')}
@@ -167,19 +167,19 @@ export default function MessagesPage() {
                           onChange={toggleSelectAll}
                         />
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.messages.name')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.messages.email')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.messages.subject')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.messages.message')}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('admin.messages.date')}
                       </th>
                     </tr>
@@ -187,7 +187,7 @@ export default function MessagesPage() {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {messages.map((message) => (
                       <tr key={message.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-3 text-center align-middle">
                           <input
                             type="checkbox"
                             aria-label={t('admin.messages.selectMessage').replace('{email}', message.email)}
@@ -195,21 +195,21 @@ export default function MessagesPage() {
                             onChange={() => toggleSelect(message.id)}
                           />
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
                           <div className="text-sm font-medium text-gray-900">
                             {message.name}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
                           <div className="text-sm text-gray-900">{message.email}</div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-3 align-middle text-left">
                           <div className="text-sm text-gray-900">{message.subject}</div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 max-w-md truncate">{message.message}</div>
+                        <td className="px-6 py-3 align-middle text-left">
+                          <div className="max-w-md truncate text-sm text-gray-900">{message.message}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-500">
                           {new Date(message.createdAt).toLocaleDateString()}
                         </td>
                       </tr>

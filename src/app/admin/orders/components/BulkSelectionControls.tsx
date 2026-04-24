@@ -19,14 +19,15 @@ export function BulkSelectionControls({
   const deleteDisabled = !hasSelection || bulkDeleting;
 
   return (
-    <Card className="mb-6 p-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="text-sm text-gray-700">
+    <Card className="mb-6 w-full min-w-0 p-4">
+      <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0 flex-1 text-sm text-gray-700">
           {t('admin.orders.selectedOrders').replace('{count}', selectedCount.toString())}
         </div>
         <Button
           variant="outline"
           type="button"
+          className="shrink-0"
           onClick={onBulkDelete}
           disabled={deleteDisabled}
         >

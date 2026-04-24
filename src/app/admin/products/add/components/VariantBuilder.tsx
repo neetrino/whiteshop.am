@@ -157,28 +157,28 @@ export function VariantBuilder({
                       return attribute ? (
                         <th
                           key={attributeId}
-                          className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-2 py-2 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500"
                         >
                           {attribute.name}
                         </th>
                       ) : null;
                     })}
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-2 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('admin.products.add.price')}
                     </th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-2 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('admin.products.add.compareAtPrice')}
                     </th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-2 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('admin.products.add.stock')}
                     </th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-2 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('admin.products.add.sku')}
                     </th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-2 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('admin.products.add.image')}
                     </th>
-                    <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    <th className="w-20 px-2 py-2 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('admin.products.add.actions') || 'Actions'}
                     </th>
                   </tr>
@@ -213,7 +213,7 @@ export function VariantBuilder({
                             .filter((v): v is NonNullable<typeof v> => v !== null);
 
                           return (
-                            <td key={attributeId} className="px-2 py-2 whitespace-nowrap">
+                            <td key={attributeId} className="px-2 py-2 align-middle whitespace-nowrap text-left">
                               <div className="relative">
                                 <button
                                   type="button"
@@ -261,7 +261,7 @@ export function VariantBuilder({
                             </td>
                           );
                         })}
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 align-middle whitespace-nowrap text-left">
                           <div className="flex items-center gap-1">
                             <Input
                               type="number"
@@ -279,7 +279,7 @@ export function VariantBuilder({
                             <span className="text-xs text-gray-500">{CURRENCIES[defaultCurrency].symbol}</span>
                           </div>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 align-middle whitespace-nowrap text-left">
                           <div className="flex items-center gap-1">
                             <Input
                               type="number"
@@ -297,7 +297,7 @@ export function VariantBuilder({
                             <span className="text-xs text-gray-500">{CURRENCIES[defaultCurrency].symbol}</span>
                           </div>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 align-middle whitespace-nowrap text-left">
                           <Input
                             type="number"
                             value={variant.stock}
@@ -311,7 +311,7 @@ export function VariantBuilder({
                             min="0"
                           />
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 align-middle whitespace-nowrap text-left">
                           <Input
                             type="text"
                             value={variant.sku}
@@ -324,7 +324,7 @@ export function VariantBuilder({
                             className="w-24 text-xs"
                           />
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 align-middle whitespace-nowrap text-left">
                           <div className="flex items-center gap-2">
                             {variant.image ? (
                               <div className="relative inline-block">
@@ -380,7 +380,7 @@ export function VariantBuilder({
                             />
                           </div>
                         </td>
-                        <td className="px-2 py-2 whitespace-nowrap">
+                        <td className="px-2 py-2 align-middle whitespace-nowrap text-left">
                           <button
                             type="button"
                             onClick={() => onVariantDelete(variant.id)}

@@ -581,9 +581,11 @@
     "payment": "Оплата",
     "total": "Итого",
     "items": "Товары",
+    "itemsQtyHeader": "Кол.",
     "date": "Дата",
     "unknownCustomer": "Неизвестный клиент",
     "viewOrderDetails": "Просмотр деталей заказа",
+    "viewOrderDetailsShort": "Подробнее",
     "selectAllOrders": "Выбрать все заказы",
     "selectOrder": "Выбрать заказ {number}",
     "orderDetails": {

@@ -71,10 +71,10 @@ export function OrdersFilters({
   };
 
   return (
-    <Card className="p-4 mb-6">
-      <div className="flex gap-4 items-center flex-wrap">
+    <Card className="mb-6 w-full min-w-0 p-4">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-4">
         <select
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="shrink-0 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={statusFilter}
           onChange={(e) => handleStatusChange(e.target.value)}
         >
@@ -85,7 +85,7 @@ export function OrdersFilters({
           <option value="cancelled">{t('admin.orders.cancelled')}</option>
         </select>
         <select
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="shrink-0 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={paymentStatusFilter}
           onChange={(e) => handlePaymentStatusChange(e.target.value)}
         >
@@ -97,13 +97,13 @@ export function OrdersFilters({
         <input
           type="text"
           placeholder={t('admin.orders.searchPlaceholder')}
-          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 min-w-[200px]"
+          className="min-w-0 w-full flex-1 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 basis-full sm:basis-0 sm:min-w-[12rem]"
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
         {updateMessage && (
           <div
-            className={`px-4 py-2 rounded-md text-sm ${
+            className={`w-full min-w-0 rounded-md px-4 py-2 text-sm sm:w-auto ${
               updateMessage.type === 'success'
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
