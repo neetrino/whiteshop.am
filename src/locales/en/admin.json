@@ -14,6 +14,10 @@
     "delivery": "Delivery",
     "settings": "Settings"
   },
+  "sidebar": {
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar"
+  },
   "dashboard": {
     "title": "Admin Page",
     "welcome": "Welcome back, {name}!",

@@ -14,6 +14,10 @@
     "delivery": "Առաքում",
     "settings": "Կարգավորումներ"
   },
+  "sidebar": {
+    "expand": "Բացել sidebar-ը",
+    "collapse": "Փակել sidebar-ը"
+  },
   "dashboard": {
     "title": "Ադմին էջ",
     "welcome": "Բարի վերադարձ, {name}!",

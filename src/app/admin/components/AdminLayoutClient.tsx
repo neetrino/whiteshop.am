@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { AdminSidebarCollapseProvider } from '../context/AdminSidebarCollapseContext';
 import { AdminSidebar } from './AdminSidebar';
 import {
   ADMIN_MAIN_COLUMN,
@@ -14,11 +15,13 @@ type AdminLayoutClientProps = {
 
 export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   return (
-    <div className={ADMIN_PAGE_SHELL}>
-      <AdminSidebar />
-      <div className={ADMIN_MAIN_COLUMN}>
-        <div className={ADMIN_MAIN_INNER}>{children}</div>
+    <AdminSidebarCollapseProvider>
+      <div className={ADMIN_PAGE_SHELL}>
+        <AdminSidebar />
+        <div className={ADMIN_MAIN_COLUMN}>
+          <div className={ADMIN_MAIN_INNER}>{children}</div>
+        </div>
       </div>
-    </div>
+    </AdminSidebarCollapseProvider>
   );
 }

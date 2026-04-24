@@ -10,6 +10,7 @@ import {
   ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP,
   ADMIN_SIDEBAR_NAV,
 } from '../admin-sidebar-classes';
+import { useAdminSidebarCollapse } from '../context/AdminSidebarCollapseContext';
 import { AdminSidebarBrand } from './AdminSidebarBrand';
 
 export function AdminSidebar() {
@@ -17,6 +18,9 @@ export function AdminSidebar() {
   const router = useRouter();
   const pathname = usePathname() ?? '/admin';
   const adminTabs = getAdminMenuTABS(t);
+  const { collapsed } = useAdminSidebarCollapse();
+
+  const asideWidthClass = collapsed ? 'lg:w-16' : 'lg:w-64';
 
   return (
     <>
@@ -26,9 +30,11 @@ export function AdminSidebar() {
           <AdminMenuDrawer tabs={adminTabs} currentPath={pathname} />
         </div>
       </div>
-      <aside className={ADMIN_SIDEBAR_ASIDE}>
+      <aside className={`${ADMIN_SIDEBAR_ASIDE} ${asideWidthClass}`}>
         <AdminSidebarBrand />
-        <nav className={ADMIN_SIDEBAR_NAV}>
+        <nav
+          className={`${ADMIN_SIDEBAR_NAV} ${collapsed ? 'px-1' : 'px-2'}`}
+        >
           {adminTabs.map((tab) => {
             const isActive =
               pathname === tab.path ||
@@ -38,12 +44,13 @@ export function AdminSidebar() {
               <button
                 key={tab.id}
                 type="button"
+                title={tab.label}
                 onClick={() => {
                   router.push(tab.path);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-all ${
-                  tab.isSubCategory ? 'pl-12' : ''
-                } ${
+                className={`flex w-full items-center rounded-md text-sm font-medium transition-all ${
+                  collapsed ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3'
+                } ${tab.isSubCategory && !collapsed ? 'pl-12' : ''} ${
                   isActive
                     ? 'bg-gray-900 text-white'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -52,7 +59,7 @@ export function AdminSidebar() {
                 <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-500'}`}>
                   {tab.icon}
                 </span>
-                <span className="text-left">{tab.label}</span>
+                {!collapsed ? <span className="min-w-0 text-left">{tab.label}</span> : null}
               </button>
             );
           })}

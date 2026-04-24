@@ -2,8 +2,9 @@
 export const ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP =
   'lg:hidden mb-6 shrink-0 px-4 pt-8 sm:px-6 lg:pt-0';
 
+/** Width is set in `AdminSidebar` (expanded vs collapsed). */
 export const ADMIN_SIDEBAR_ASIDE =
-  'hidden lg:flex lg:h-full lg:w-64 lg:shrink-0 lg:flex-col bg-white border-r border-gray-200';
+  'hidden lg:flex lg:h-full lg:shrink-0 lg:flex-col border-r border-gray-200 bg-white transition-[width] duration-200 ease-out';
 
 export const ADMIN_SIDEBAR_NAV =
   'flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain py-6 px-2 space-y-1';

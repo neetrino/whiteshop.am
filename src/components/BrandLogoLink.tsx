@@ -1,9 +1,25 @@
 import Link from 'next/link';
 import type { ComponentProps } from 'react';
 
-export type BrandLogoLinkProps = Omit<ComponentProps<typeof Link>, 'href' | 'children'>;
+export type BrandLogoLinkProps = Omit<ComponentProps<typeof Link>, 'href' | 'children'> & {
+  /** Icon-sized mark for narrow sidebars (e.g. admin rail). */
+  compact?: boolean;
+};
 
-export function BrandLogoLink({ className = '', ...rest }: BrandLogoLinkProps) {
+export function BrandLogoLink({ className = '', compact = false, ...rest }: BrandLogoLinkProps) {
+  if (compact) {
+    return (
+      <Link
+        href="/"
+        title="White-Shop"
+        className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-gray-900 text-[0.65rem] font-bold leading-none tracking-tight text-white transition-colors hover:bg-gray-800 ${className}`}
+        {...rest}
+      >
+        WS
+      </Link>
+    );
+  }
+
   return (
     <Link
       href="/"
