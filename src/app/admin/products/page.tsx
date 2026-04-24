@@ -1,22 +1,10 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth/AuthContext';
 import { apiClient } from '../../../lib/api-client';
-import { AdminMenuDrawer } from '../../../components/AdminMenuDrawer';
-import { BrandLogoLink } from '../../../components/BrandLogoLink';
-import { getAdminMenuTABS } from '../admin-menu.config';
 import { useTranslation } from '../../../lib/i18n-client';
-import {
-  ADMIN_MAIN_COLUMN,
-  ADMIN_MAIN_INNER,
-  ADMIN_PAGE_SHELL,
-  ADMIN_SIDEBAR_ASIDE,
-  ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP,
-  ADMIN_SIDEBAR_NAV,
-} from '../admin-sidebar-classes';
-import { AdminSidebarBrand } from '../components/AdminSidebarBrand';
 import { getStoredCurrency, initializeCurrencyRates, type CurrencyCode } from '../../../lib/currency';
 import { ProductFilters } from './components/ProductFilters';
 import { ProductsTable } from './components/ProductsTable';
@@ -27,7 +15,6 @@ export default function ProductsPage() {
   const { t } = useTranslation();
   const { isLoggedIn, isAdmin, isLoading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -310,9 +297,9 @@ export default function ProductsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900" />
           <p className="text-gray-600">{t('admin.common.loading')}</p>
         </div>
       </div>
@@ -323,74 +310,22 @@ export default function ProductsPage() {
     return null;
   }
 
-  const adminTabs = getAdminMenuTABS(t);
-  const currentPath = pathname || '/admin/products';
-
   return (
-    <div className={ADMIN_PAGE_SHELL}>
-      <div className={ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP}>
-        <div className="flex items-center justify-between gap-3">
-          <BrandLogoLink className="min-w-0 shrink" />
-          <AdminMenuDrawer tabs={adminTabs} currentPath={currentPath} />
+    <>
+      <div className="mb-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">{t('admin.products.title')}</h1>
+          {(search || selectedCategories.size > 0 || skuSearch || stockFilter !== 'all') && (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="text-sm text-gray-600 underline hover:text-gray-900"
+            >
+              {t('admin.products.clearAll')}
+            </button>
+          )}
         </div>
       </div>
-
-      <aside className={ADMIN_SIDEBAR_ASIDE}>
-        <AdminSidebarBrand />
-        <nav className={ADMIN_SIDEBAR_NAV}>
-          {adminTabs.map((tab) => {
-            const isActive = currentPath === tab.path || 
-              (tab.path === '/admin' && currentPath === '/admin') ||
-              (tab.path !== '/admin' && currentPath.startsWith(tab.path));
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  router.push(tab.path);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-all ${
-                  tab.isSubCategory ? 'pl-12' : ''
-                } ${
-                  isActive
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-500'}`}>
-                  {tab.icon}
-                </span>
-                <span className="text-left">{tab.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
-
-      <div className={ADMIN_MAIN_COLUMN}>
-        <div className={ADMIN_MAIN_INNER}>
-          <div className="mb-6">
-            <button
-              onClick={() => router.push('/admin')}
-              className="text-gray-600 hover:text-gray-900 mb-2 flex items-center text-sm"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              {t('admin.products.backToAdmin')}
-            </button>
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{t('admin.products.title')}</h1>
-              {(search || selectedCategories.size > 0 || skuSearch || stockFilter !== 'all') && (
-                <button
-                  type="button"
-                  onClick={handleClearFilters}
-                  className="text-sm text-gray-600 hover:text-gray-900 underline"
-                >
-                  {t('admin.products.clearAll')}
-                </button>
-              )}
-            </div>
-          </div>
             <ProductFilters
               search={search}
               setSearch={setSearch}
@@ -447,8 +382,6 @@ export default function ProductsPage() {
               page={page}
               setPage={setPage}
             />
-        </div>
-      </div>
-    </div>
+    </>
   );
 }

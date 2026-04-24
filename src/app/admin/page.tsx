@@ -1,23 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useTranslation } from '../../lib/i18n-client';
-import { AdminSidebar } from './components/AdminSidebar';
 import { StatsGrid } from './components/StatsGrid';
 import { RecentOrdersCard } from './components/RecentOrdersCard';
 import { TopProductsCard } from './components/TopProductsCard';
 import { UserActivityCard } from './components/UserActivityCard';
 import { QuickActionsCard } from './components/QuickActionsCard';
 import { useAdminDashboard } from './hooks/useAdminDashboard';
-import { ADMIN_MAIN_COLUMN, ADMIN_MAIN_INNER, ADMIN_PAGE_SHELL } from './admin-sidebar-classes';
 
 export default function AdminPanel() {
   const { t } = useTranslation();
   const { isLoggedIn, isAdmin, isLoading, user } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   const {
     stats,
@@ -49,19 +46,11 @@ export default function AdminPanel() {
     }
   }, [isLoggedIn, isAdmin, isLoading, router]);
 
-  const [currentPath, setCurrentPath] = useState(pathname || '/admin');
-
-  useEffect(() => {
-    if (pathname) {
-      setCurrentPath(pathname);
-    }
-  }, [pathname]);
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900" />
           <p className="text-gray-600">{t('admin.common.loading')}</p>
         </div>
       </div>
@@ -73,30 +62,24 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className={ADMIN_PAGE_SHELL}>
-      <AdminSidebar currentPath={currentPath} router={router} t={t} />
-
-      <div className={ADMIN_MAIN_COLUMN}>
-        <div className={ADMIN_MAIN_INNER}>
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
-            <p className="text-gray-600 mt-2">
-              {t('admin.dashboard.welcome').replace('{name}', user?.firstName || t('admin.dashboard.title'))}
-            </p>
-          </div>
-
-          <StatsGrid stats={stats} statsLoading={statsLoading} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <RecentOrdersCard recentOrders={recentOrders} recentOrdersLoading={recentOrdersLoading} />
-            <TopProductsCard topProducts={topProducts} topProductsLoading={topProductsLoading} />
-          </div>
-
-          <UserActivityCard userActivity={userActivity} userActivityLoading={userActivityLoading} />
-
-          <QuickActionsCard />
-        </div>
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
+        <p className="text-gray-600 mt-2">
+          {t('admin.dashboard.welcome').replace('{name}', user?.firstName || t('admin.dashboard.title'))}
+        </p>
       </div>
-    </div>
+
+      <StatsGrid stats={stats} statsLoading={statsLoading} />
+
+      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <RecentOrdersCard recentOrders={recentOrders} recentOrdersLoading={recentOrdersLoading} />
+        <TopProductsCard topProducts={topProducts} topProductsLoading={topProductsLoading} />
+      </div>
+
+      <UserActivityCard userActivity={userActivity} userActivityLoading={userActivityLoading} />
+
+      <QuickActionsCard />
+    </>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AdminMenuDrawer } from '../../../components/AdminMenuDrawer';
 import { BrandLogoLink } from '../../../components/BrandLogoLink';
+import { useTranslation } from '../../../lib/i18n-client';
 import { getAdminMenuTABS } from '../admin-menu.config';
 import {
   ADMIN_SIDEBAR_ASIDE,
@@ -11,13 +12,10 @@ import {
 } from '../admin-sidebar-classes';
 import { AdminSidebarBrand } from './AdminSidebarBrand';
 
-interface AdminSidebarProps {
-  currentPath: string;
-  router: ReturnType<typeof useRouter>;
-  t: ReturnType<typeof import('../../../lib/i18n-client').useTranslation>['t'];
-}
-
-export function AdminSidebar({ currentPath, router, t }: AdminSidebarProps) {
+export function AdminSidebar() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const pathname = usePathname() ?? '/admin';
   const adminTabs = getAdminMenuTABS(t);
 
   return (
@@ -25,19 +23,21 @@ export function AdminSidebar({ currentPath, router, t }: AdminSidebarProps) {
       <div className={ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP}>
         <div className="flex items-center justify-between gap-3">
           <BrandLogoLink className="min-w-0 shrink" />
-          <AdminMenuDrawer tabs={adminTabs} currentPath={currentPath} />
+          <AdminMenuDrawer tabs={adminTabs} currentPath={pathname} />
         </div>
       </div>
       <aside className={ADMIN_SIDEBAR_ASIDE}>
         <AdminSidebarBrand />
         <nav className={ADMIN_SIDEBAR_NAV}>
           {adminTabs.map((tab) => {
-            const isActive = currentPath === tab.path || 
-              (tab.path === '/admin' && currentPath === '/admin') ||
-              (tab.path !== '/admin' && currentPath.startsWith(tab.path));
+            const isActive =
+              pathname === tab.path ||
+              (tab.path === '/admin' && pathname === '/admin') ||
+              (tab.path !== '/admin' && pathname.startsWith(tab.path));
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => {
                   router.push(tab.path);
                 }}
@@ -61,4 +61,3 @@ export function AdminSidebar({ currentPath, router, t }: AdminSidebarProps) {
     </>
   );
 }
-

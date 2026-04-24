@@ -52,20 +52,15 @@ export function AttributesPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-            <p className="text-sm text-gray-600">{t('admin.attributes.loadingAttributes')}</p>
-          </div>
-        </div>
+      <div className="py-12 text-center">
+        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+        <p className="text-sm text-gray-600">{t('admin.attributes.loadingAttributes')}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -409,9 +404,8 @@ export function AttributesPageContent() {
             })}
           </div>
         )}
-      </div>
 
-    </div>
+    </>
   );
 }
 
