@@ -11,6 +11,7 @@ import { TopProductsCard } from './components/TopProductsCard';
 import { UserActivityCard } from './components/UserActivityCard';
 import { QuickActionsCard } from './components/QuickActionsCard';
 import { useAdminDashboard } from './hooks/useAdminDashboard';
+import { ADMIN_MAIN_COLUMN, ADMIN_MAIN_INNER, ADMIN_PAGE_SHELL } from './admin-sidebar-classes';
 
 export default function AdminPanel() {
   const { t } = useTranslation();
@@ -72,33 +73,28 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
-          <p className="text-gray-600 mt-2">
-            {t('admin.dashboard.welcome').replace('{name}', user?.firstName || t('admin.dashboard.title'))}
-          </p>
-        </div>
+    <div className={ADMIN_PAGE_SHELL}>
+      <AdminSidebar currentPath={currentPath} router={router} t={t} />
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          <AdminSidebar currentPath={currentPath} router={router} t={t} />
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            <StatsGrid stats={stats} statsLoading={statsLoading} />
-
-            {/* Dashboard Sections */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <RecentOrdersCard recentOrders={recentOrders} recentOrdersLoading={recentOrdersLoading} />
-              <TopProductsCard topProducts={topProducts} topProductsLoading={topProductsLoading} />
-            </div>
-
-            <UserActivityCard userActivity={userActivity} userActivityLoading={userActivityLoading} />
-
-            <QuickActionsCard />
+      <div className={ADMIN_MAIN_COLUMN}>
+        <div className={ADMIN_MAIN_INNER}>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
+            <p className="text-gray-600 mt-2">
+              {t('admin.dashboard.welcome').replace('{name}', user?.firstName || t('admin.dashboard.title'))}
+            </p>
           </div>
+
+          <StatsGrid stats={stats} statsLoading={statsLoading} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <RecentOrdersCard recentOrders={recentOrders} recentOrdersLoading={recentOrdersLoading} />
+            <TopProductsCard topProducts={topProducts} topProductsLoading={topProductsLoading} />
+          </div>
+
+          <UserActivityCard userActivity={userActivity} userActivityLoading={userActivityLoading} />
+
+          <QuickActionsCard />
         </div>
       </div>
     </div>

@@ -3,6 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { AdminMenuDrawer } from '../../../../components/AdminMenuDrawer';
 import { getAdminMenuTABS } from '../../admin-menu.config';
+import {
+  ADMIN_SIDEBAR_ASIDE,
+  ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP,
+  ADMIN_SIDEBAR_NAV,
+} from '../../admin-sidebar-classes';
 
 interface AdminSidebarProps {
   currentPath: string;
@@ -15,11 +20,11 @@ export function AdminSidebar({ currentPath, router, t }: AdminSidebarProps) {
 
   return (
     <>
-      <div className="lg:hidden mb-6">
+      <div className={ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP}>
         <AdminMenuDrawer tabs={adminTabs} currentPath={currentPath} />
       </div>
-      <aside className="hidden lg:block lg:w-64 flex-shrink-0">
-        <nav className="bg-white border border-gray-200 rounded-lg p-2 space-y-1">
+      <aside className={ADMIN_SIDEBAR_ASIDE}>
+        <nav className={ADMIN_SIDEBAR_NAV}>
           {adminTabs.map((tab) => {
             const isActive = currentPath === tab.path || 
               (tab.path === '/admin' && currentPath === '/admin') ||
