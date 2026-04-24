@@ -313,20 +313,17 @@ export default function ProductsPage() {
 
   return (
     <>
-      <div className="mb-6">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">{t('admin.products.title')}</h1>
-          {(search || selectedCategories.size > 0 || skuSearch || stockFilter !== 'all') && (
-            <button
-              type="button"
-              onClick={handleClearFilters}
-              className="text-sm text-gray-600 underline hover:text-gray-900"
-            >
-              {t('admin.products.clearAll')}
-            </button>
-          )}
+      {(search || selectedCategories.size > 0 || skuSearch || stockFilter !== 'all') && (
+        <div className="mb-6 flex justify-end">
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="text-sm text-gray-600 underline hover:text-gray-900"
+          >
+            {t('admin.products.clearAll')}
+          </button>
         </div>
-      </div>
+      )}
             <ProductFilters
               search={search}
               setSearch={setSearch}

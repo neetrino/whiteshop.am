@@ -141,8 +141,6 @@ export default function MessagesPage() {
 
   return (
     <>
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">{t('admin.messages.title')}</h1>
-
         <Card className="p-6">
           {loading ? (
             <div className="text-center py-8">

@@ -251,8 +251,7 @@ export default function PriceFilterSettingsPage() {
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{t('admin.priceFilter.title')}</h1>
-        <p className="mt-2 text-gray-600">{t('admin.priceFilter.subtitle')}</p>
+        <p className="text-gray-600">{t('admin.priceFilter.subtitle')}</p>
       </div>
 
             <Card className="p-6">

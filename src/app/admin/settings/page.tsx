@@ -144,8 +144,6 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">{t('admin.settings.title')}</h1>
-
         <Card className="mb-6 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('admin.settings.generalSettings')}</h2>
           <div className="space-y-4">

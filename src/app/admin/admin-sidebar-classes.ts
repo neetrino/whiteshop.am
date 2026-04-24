@@ -14,6 +14,6 @@ export const ADMIN_PAGE_SHELL =
   'flex min-h-screen flex-col bg-gray-50 lg:h-dvh lg:max-h-dvh lg:flex-row lg:overflow-hidden';
 
 export const ADMIN_MAIN_COLUMN =
-  'min-w-0 flex-1 py-8 px-4 sm:px-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain lg:px-8';
+  'min-w-0 flex-1 pt-12 pb-8 px-4 sm:px-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain lg:px-8';
 
 export const ADMIN_MAIN_INNER = 'max-w-7xl mx-auto w-full';

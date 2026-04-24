@@ -4,7 +4,6 @@ import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../../lib/auth/AuthContext';
 import { useTranslation } from '../../../../lib/i18n-client';
-import { PageHeader } from './components/PageHeader';
 import { ValueSelectionModal } from './components/ValueSelectionModal';
 import { AddProductFormContent } from './components/AddProductFormContent';
 import { useProductFormState } from './hooks/useProductFormState';
@@ -188,8 +187,6 @@ function AddProductPageContent() {
 
   return (
     <>
-          <PageHeader isEditMode={isEditMode} />
-
           <AddProductFormContent
             formData={formState.formData}
             productType={formState.productType}

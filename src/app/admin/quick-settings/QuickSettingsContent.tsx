@@ -80,8 +80,7 @@ export function QuickSettingsContent({
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{t('admin.quickSettings.title')}</h1>
-        <p className="mt-2 text-gray-600">{t('admin.quickSettings.subtitle')}</p>
+        <p className="text-gray-600">{t('admin.quickSettings.subtitle')}</p>
       </div>
 
       <Card className="mb-8 border-gray-200 bg-white p-6">

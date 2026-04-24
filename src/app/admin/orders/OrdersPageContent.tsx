@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslation } from '../../../lib/i18n-client';
 import { useOrders } from './useOrders';
 import { OrdersFilters } from './components/OrdersFilters';
 import { BulkSelectionControls } from './components/BulkSelectionControls';
@@ -8,7 +7,6 @@ import { OrdersTable } from './components/OrdersTable';
 import { OrderDetailsModal } from './components/OrderDetailsModal';
 
 export function OrdersPageContent() {
-  const { t } = useTranslation();
   const {
     orders,
     loading,
@@ -47,10 +45,6 @@ export function OrdersPageContent() {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{t('admin.orders.title')}</h1>
-      </div>
-
       <OrdersFilters
         statusFilter={statusFilter}
         paymentStatusFilter={paymentStatusFilter}

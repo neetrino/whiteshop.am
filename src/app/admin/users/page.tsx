@@ -186,8 +186,6 @@ export default function UsersPage() {
 
   return (
     <>
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">{t('admin.users.title')}</h1>
-
         <Card className="mb-6 p-4">
           <form onSubmit={handleSearch} className="flex flex-col gap-4">
             <div className="flex gap-4">

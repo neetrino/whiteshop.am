@@ -7,7 +7,6 @@ import { Card, Button } from '@shop/ui';
 import { useTranslation } from '../../../lib/i18n-client';
 import { useCategories } from './hooks/useCategories';
 import { useCategoryActions } from './hooks/useCategoryActions';
-import { CategoriesHeader } from './components/CategoriesHeader';
 import { CategoriesList } from './components/CategoriesList';
 import { AddCategoryModal } from './components/AddCategoryModal';
 import { EditCategoryModal } from './components/EditCategoryModal';
@@ -59,8 +58,6 @@ export default function CategoriesPage() {
 
   return (
     <>
-      <CategoriesHeader />
-
       <Card className="p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">{t('admin.categories.title')}</h2>

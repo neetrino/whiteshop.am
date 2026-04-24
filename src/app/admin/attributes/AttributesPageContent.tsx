@@ -64,8 +64,7 @@ export function AttributesPageContent() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t('admin.attributes.title')}</h1>
-            <p className="text-gray-600 mt-2">{t('admin.attributes.subtitle')}</p>
+            <p className="text-gray-600">{t('admin.attributes.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowAddForm(!showAddForm)}

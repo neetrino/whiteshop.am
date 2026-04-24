@@ -295,7 +295,6 @@ export default function BrandsPage() {
 
   return (
     <>
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">{t('admin.brands.title')}</h1>
       <Card className="p-6">
         <BrandsSection />
       </Card>

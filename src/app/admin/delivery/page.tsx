@@ -111,8 +111,6 @@ export default function DeliveryPage() {
 
   return (
     <>
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">{t('admin.delivery.title')}</h1>
-
             <Card className="p-6 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">{t('admin.delivery.deliveryPricesByLocation')}</h2>
