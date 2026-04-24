@@ -128,7 +128,7 @@ export function OrdersTable({
                 <span className="whitespace-nowrap">{t('admin.orders.orderNumber')}</span>
               </th>
               <th
-                className="w-full min-w-[11rem] px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 sm:text-xs"
+                className="min-w-[10rem] max-w-xs px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 sm:max-w-sm sm:text-xs"
                 title={t('admin.orders.customer')}
               >
                 <span className="block min-w-0 truncate">{t('admin.orders.customer')}</span>

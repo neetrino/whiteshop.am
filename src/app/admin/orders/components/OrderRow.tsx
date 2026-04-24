@@ -20,30 +20,6 @@ interface OrderRowProps {
 const selectClass =
   'inline-block w-auto max-w-full min-w-0 cursor-pointer rounded-md border-0 px-2 py-1.5 text-left text-xs font-medium leading-snug focus:outline-none focus:ring-2 focus:ring-blue-500';
 
-function OrderDetailsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      aria-hidden
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-      />
-    </svg>
-  );
-}
-
 export function OrderRow({
   order,
   selected,
@@ -60,8 +36,7 @@ export function OrderRow({
   const customerName =
     [order.customerFirstName, order.customerLastName].filter(Boolean).join(' ') ||
     t('admin.orders.unknownCustomer');
-  const detailsLabelFull = t('admin.orders.viewOrderDetails');
-  const detailsLabelShort = t('admin.orders.viewOrderDetailsShort');
+  const rowDetailsLabel = t('admin.orders.viewOrderDetails');
 
   const calculateTotalWithoutShipping = () => {
     if (order.subtotal !== undefined && order.discountAmount !== undefined && order.taxAmount !== undefined) {
@@ -78,8 +53,16 @@ export function OrderRow({
   };
 
   return (
-    <tr className="hover:bg-gray-50">
-      <td className="w-px whitespace-nowrap px-3 py-2.5 align-middle">
+    <tr
+      className="cursor-pointer hover:bg-gray-50"
+      onClick={onViewDetails}
+      aria-label={rowDetailsLabel}
+    >
+      <td
+        className="w-px whitespace-nowrap px-3 py-2.5 align-middle"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="flex min-w-0 justify-center">
           <input
             type="checkbox"
@@ -90,48 +73,24 @@ export function OrderRow({
           />
         </div>
       </td>
-      <td
-        className="min-w-0 cursor-pointer whitespace-nowrap px-3 py-2.5 text-left align-middle"
-        onClick={onViewDetails}
-        title={order.number}
-      >
+      <td className="min-w-0 whitespace-nowrap px-3 py-2.5 text-left align-middle" title={order.number}>
         <span className="text-sm font-semibold text-gray-900">{order.number}</span>
       </td>
-      <td
-        className="w-full min-w-[11rem] cursor-pointer px-3 py-2.5 text-left align-middle"
-        onClick={onViewDetails}
-      >
-        <div className="min-w-0 w-full space-y-1">
-          <div
-            className="w-full min-w-0 truncate text-left text-sm font-medium text-gray-900"
-            title={[customerName, order.customerPhone].filter(Boolean).join(' · ')}
-          >
+      <td className="min-w-[10rem] max-w-xs px-3 py-2.5 text-left align-middle sm:max-w-sm">
+        <div className="min-w-0 max-w-full space-y-1">
+          <div className="min-w-0 max-w-full truncate text-left text-sm font-medium text-gray-900" title={customerName}>
             {customerName}
-            {order.customerPhone ? (
-              <span className="font-normal text-gray-500">
-                {' '}
-                · <span className="tabular-nums">{order.customerPhone}</span>
-              </span>
-            ) : null}
           </div>
-          <button
-            type="button"
-            className="inline-flex max-w-full min-w-0 items-center gap-1 truncate text-left text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline"
-            title={detailsLabelFull}
-            aria-label={detailsLabelFull}
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails();
-            }}
+          <div
+            className="min-w-0 max-w-full truncate text-left text-xs tabular-nums text-gray-600"
+            title={order.customerPhone ?? undefined}
           >
-            <OrderDetailsIcon className="h-3.5 w-3.5 shrink-0 text-blue-600" />
-            <span className="min-w-0 truncate">{detailsLabelShort}</span>
-          </button>
+            {order.customerPhone ? order.customerPhone : '—'}
+          </div>
         </div>
       </td>
       <td
-        className="min-w-0 cursor-pointer whitespace-nowrap px-3 py-2.5 text-left align-middle text-sm font-semibold text-gray-900"
-        onClick={onViewDetails}
+        className="min-w-0 whitespace-nowrap px-3 py-2.5 text-left align-middle text-sm font-semibold text-gray-900"
         title={calculateTotalWithoutShipping()}
       >
         {calculateTotalWithoutShipping()}
@@ -139,7 +98,11 @@ export function OrderRow({
       <td className="min-w-0 whitespace-nowrap px-3 py-2.5 text-center align-middle text-sm tabular-nums text-gray-600">
         {order.itemsCount}
       </td>
-      <td className="min-w-0 px-3 py-2.5 text-left align-middle">
+      <td
+        className="min-w-0 px-3 py-2.5 text-left align-middle"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {updatingStatus ? (
           <div
             className="flex w-full min-w-0 items-center justify-center py-1"
@@ -164,7 +127,11 @@ export function OrderRow({
           </div>
         )}
       </td>
-      <td className="min-w-0 px-3 py-2.5 text-left align-middle">
+      <td
+        className="min-w-0 px-3 py-2.5 text-left align-middle"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {updatingPaymentStatus ? (
           <div
             className="flex w-full min-w-0 items-center justify-center py-1"
