@@ -15,21 +15,20 @@ export function BulkSelectionControls({
   bulkDeleting,
 }: BulkSelectionControlsProps) {
   const { t } = useTranslation();
-
-  if (selectedCount === 0) {
-    return null;
-  }
+  const hasSelection = selectedCount > 0;
+  const deleteDisabled = !hasSelection || bulkDeleting;
 
   return (
-    <Card className="p-4 mb-6">
-      <div className="flex items-center justify-between">
+    <Card className="mb-6 p-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="text-sm text-gray-700">
           {t('admin.orders.selectedOrders').replace('{count}', selectedCount.toString())}
         </div>
         <Button
           variant="outline"
+          type="button"
           onClick={onBulkDelete}
-          disabled={bulkDeleting}
+          disabled={deleteDisabled}
         >
           {bulkDeleting ? t('admin.orders.deleting') : t('admin.orders.deleteSelected')}
         </Button>
