@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ClientProviders } from '../components/ClientProviders';
-import { Header } from '../components/Header';
+import { ConditionalHeader } from '../components/ConditionalHeader';
 import { Footer } from '../components/Footer';
-import { Breadcrumb } from '../components/Breadcrumb';
+import { ConditionalBreadcrumb } from '../components/ConditionalBreadcrumb';
 import { MobileBottomNav } from '../components/MobileBottomNav';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -26,8 +26,8 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <ClientProviders>
             <div className="flex min-h-screen flex-col pb-16 lg:pb-0">
-              <Header />
-              <Breadcrumb />
+              <ConditionalHeader />
+              <ConditionalBreadcrumb />
               <main className="flex-1 w-full">
                 {children}
               </main>

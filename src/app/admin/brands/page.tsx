@@ -6,6 +6,7 @@ import { useAuth } from '../../../lib/auth/AuthContext';
 import { Card, Button } from '@shop/ui';
 import { apiClient } from '../../../lib/api-client';
 import { AdminMenuDrawer } from '../../../components/AdminMenuDrawer';
+import { BrandLogoLink } from '../../../components/BrandLogoLink';
 import { getAdminMenuTABS } from '../admin-menu.config';
 import { useTranslation } from '../../../lib/i18n-client';
 import {
@@ -16,6 +17,7 @@ import {
   ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP,
   ADMIN_SIDEBAR_NAV,
 } from '../admin-sidebar-classes';
+import { AdminSidebarBrand } from '../components/AdminSidebarBrand';
 
 interface Brand {
   id: string;
@@ -317,10 +319,14 @@ export default function BrandsPage() {
   return (
     <div className={ADMIN_PAGE_SHELL}>
       <div className={ADMIN_SIDEBAR_MOBILE_DRAWER_WRAP}>
-        <AdminMenuDrawer tabs={adminTabs} currentPath={currentPath} />
+        <div className="flex items-center justify-between gap-3">
+          <BrandLogoLink className="min-w-0 shrink" />
+          <AdminMenuDrawer tabs={adminTabs} currentPath={currentPath} />
+        </div>
       </div>
 
       <aside className={ADMIN_SIDEBAR_ASIDE}>
+        <AdminSidebarBrand />
         <nav className={ADMIN_SIDEBAR_NAV}>
           {adminTabs.map((tab) => {
             const isActive = currentPath === tab.path || 

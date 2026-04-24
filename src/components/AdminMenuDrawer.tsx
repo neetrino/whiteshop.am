@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { BrandLogoLink } from './BrandLogoLink';
 
 export interface AdminMenuItem {
   id: string;
@@ -76,8 +77,8 @@ export function AdminMenuDrawer({ tabs, currentPath }: AdminMenuDrawerProps) {
             aria-modal="true"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-              <p className="text-lg font-semibold text-gray-900">Admin Navigation</p>
+            <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-4">
+              <BrandLogoLink className="min-w-0" />
               <button
                 type="button"
                 onClick={() => {
