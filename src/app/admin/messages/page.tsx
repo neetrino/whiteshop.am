@@ -6,6 +6,22 @@ import { useAuth } from '../../../lib/auth/AuthContext';
 import { Card, Button } from '@shop/ui';
 import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
+import {
+  ADMIN_TABLE,
+  ADMIN_TABLE_CARD,
+  ADMIN_TABLE_CHECKBOX,
+  ADMIN_TABLE_FOOTER,
+  ADMIN_TABLE_FOOTER_ROUNDED_B,
+  ADMIN_TABLE_OUTER_SCROLL,
+  ADMIN_TABLE_ROW,
+  ADMIN_TABLE_STATE_INSET,
+  ADMIN_TABLE_TBODY,
+  ADMIN_TABLE_TD,
+  ADMIN_TABLE_TD_CHECK,
+  ADMIN_TABLE_TH,
+  ADMIN_TABLE_TH_CHECK,
+  ADMIN_TABLE_THEAD,
+} from '../constants/admin-table-classes';
 
 interface Message {
   id: string;
@@ -141,73 +157,67 @@ export default function MessagesPage() {
 
   return (
     <>
-        <Card className="p-6">
+        <Card
+          className={loading || messages.length === 0 ? ADMIN_TABLE_STATE_INSET : ADMIN_TABLE_CARD}
+        >
           {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-              <p className="text-gray-600">{t('admin.messages.loadingMessages')}</p>
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+              <p className="text-sm text-gray-600">{t('admin.messages.loadingMessages')}</p>
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600">{t('admin.messages.noMessages')}</p>
+            <div className="py-8 text-center">
+              <p className="text-sm text-gray-600">{t('admin.messages.noMessages')}</p>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className={ADMIN_TABLE_OUTER_SCROLL}>
+                <table className={ADMIN_TABLE}>
+                  <thead className={ADMIN_TABLE_THEAD}>
                     <tr>
-                      <th className="px-4 py-3 text-center align-middle">
+                      <th className={ADMIN_TABLE_TH_CHECK}>
                         <input
                           type="checkbox"
+                          className={ADMIN_TABLE_CHECKBOX}
                           aria-label={t('admin.messages.selectAll')}
                           checked={messages.length > 0 && messages.every(m => selectedIds.has(m.id))}
                           onChange={toggleSelectAll}
                         />
                       </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.messages.name')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.messages.email')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.messages.subject')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.messages.message')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.messages.date')}
-                      </th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.messages.name')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.messages.email')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.messages.subject')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.messages.message')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.messages.date')}</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={ADMIN_TABLE_TBODY}>
                     {messages.map((message) => (
-                      <tr key={message.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-center align-middle">
-                          <input
-                            type="checkbox"
-                            aria-label={t('admin.messages.selectMessage').replace('{email}', message.email)}
-                            checked={selectedIds.has(message.id)}
-                            onChange={() => toggleSelect(message.id)}
-                          />
-                        </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
-                          <div className="text-sm font-medium text-gray-900">
-                            {message.name}
+                      <tr key={message.id} className={ADMIN_TABLE_ROW}>
+                        <td className={ADMIN_TABLE_TD_CHECK}>
+                          <div className="flex min-w-0 justify-center">
+                            <input
+                              type="checkbox"
+                              className={ADMIN_TABLE_CHECKBOX}
+                              aria-label={t('admin.messages.selectMessage').replace('{email}', message.email)}
+                              checked={selectedIds.has(message.id)}
+                              onChange={() => toggleSelect(message.id)}
+                            />
                           </div>
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
-                          <div className="text-sm text-gray-900">{message.email}</div>
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left font-medium text-gray-900`}>
+                          {message.name}
                         </td>
-                        <td className="px-6 py-3 align-middle text-left">
-                          <div className="text-sm text-gray-900">{message.subject}</div>
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left text-gray-900`}>
+                          {message.email}
                         </td>
-                        <td className="px-6 py-3 align-middle text-left">
-                          <div className="max-w-md truncate text-sm text-gray-900">{message.message}</div>
+                        <td className={`${ADMIN_TABLE_TD} text-left text-gray-900`}>
+                          {message.subject}
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-500">
+                        <td className={`${ADMIN_TABLE_TD} text-left text-gray-900`}>
+                          <div className="max-w-md truncate">{message.message}</div>
+                        </td>
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left tabular-nums text-gray-600`}>
                           {new Date(message.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -218,7 +228,7 @@ export default function MessagesPage() {
 
               {/* Pagination */}
               {meta && meta.totalPages > 1 && (
-                <div className="mt-6 flex items-center justify-between">
+                <div className={`${ADMIN_TABLE_FOOTER} flex items-center justify-between`}>
                   <div className="text-sm text-gray-700">
                     {t('admin.messages.showingPage').replace('{page}', meta.page.toString()).replace('{totalPages}', meta.totalPages.toString()).replace('{total}', meta.total.toString())}
                   </div>
@@ -240,7 +250,7 @@ export default function MessagesPage() {
                   </div>
                 </div>
               )}
-              <div className="mt-4 flex items-center justify-between">
+              <div className={`${ADMIN_TABLE_FOOTER_ROUNDED_B} flex items-center justify-between`}>
                 <div className="text-sm text-gray-700">{t('admin.messages.selectedMessages').replace('{count}', selectedIds.size.toString())}</div>
                 <Button
                   variant="outline"

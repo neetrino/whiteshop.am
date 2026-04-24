@@ -4,6 +4,23 @@ import { useRouter } from 'next/navigation';
 import { Card, Button } from '@shop/ui';
 import { useTranslation } from '../../../../lib/i18n-client';
 import { formatPrice, type CurrencyCode } from '../../../../lib/currency';
+import {
+  ADMIN_TABLE,
+  ADMIN_TABLE_CARD,
+  ADMIN_TABLE_CHECKBOX,
+  ADMIN_TABLE_FOOTER_ROUNDED_B,
+  ADMIN_TABLE_OUTER_SCROLL,
+  ADMIN_TABLE_ROW,
+  ADMIN_TABLE_STATE_INSET,
+  ADMIN_TABLE_TBODY,
+  ADMIN_TABLE_TD,
+  ADMIN_TABLE_TD_CHECK,
+  ADMIN_TABLE_TH,
+  ADMIN_TABLE_TH_CENTER,
+  ADMIN_TABLE_TH_CHECK,
+  ADMIN_TABLE_TH_SORTABLE,
+  ADMIN_TABLE_THEAD,
+} from '../../constants/admin-table-classes';
 import type { Product, ProductsResponse } from '../types';
 
 interface ProductsTableProps {
@@ -58,35 +75,36 @@ export function ProductsTable({
   const router = useRouter();
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={loading || sortedProducts.length === 0 ? ADMIN_TABLE_STATE_INSET : ADMIN_TABLE_CARD}>
       {loading ? (
-        <div className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">{t('admin.products.loadingProducts')}</p>
+        <div className="py-8 text-center">
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+          <p className="text-sm text-gray-600">{t('admin.products.loadingProducts')}</p>
         </div>
       ) : sortedProducts.length === 0 ? (
-        <div className="p-8 text-center">
-          <p className="text-gray-600">{t('admin.products.noProducts')}</p>
+        <div className="py-8 text-center">
+          <p className="text-sm text-gray-600">{t('admin.products.noProducts')}</p>
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className={ADMIN_TABLE_OUTER_SCROLL}>
+            <table className={ADMIN_TABLE}>
+              <thead className={ADMIN_TABLE_THEAD}>
                 <tr>
-                  <th className="px-4 py-3 text-center align-middle">
+                  <th className={ADMIN_TABLE_TH_CHECK}>
                     <input
                       type="checkbox"
+                      className={ADMIN_TABLE_CHECKBOX}
                       aria-label={t('admin.products.selectAll')}
                       checked={products.length > 0 && products.every(p => selectedIds.has(p.id))}
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="p-0 align-middle">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('title')}
-                      className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-800"
+                      className={`${ADMIN_TABLE_TH_SORTABLE} inline-flex w-full items-center gap-1`}
                     >
                       <span>{t('admin.products.product')}</span>
                       <span className="flex flex-col gap-0.5">
@@ -115,13 +133,13 @@ export function ProductsTable({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </span>
-                    </button> 
+                    </button>
                   </th>
-                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="p-0 align-middle">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('stock')}
-                      className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-800"
+                      className={`${ADMIN_TABLE_TH_SORTABLE} inline-flex w-full items-center gap-1`}
                     >
                       <span>{t('admin.products.stock')}</span>
                       <span className="flex flex-col gap-0.5">
@@ -152,11 +170,11 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
-                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="p-0 align-middle">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('price')}
-                      className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-800"
+                      className={`${ADMIN_TABLE_TH_SORTABLE} inline-flex w-full items-center gap-1`}
                     >
                       <span>{t('admin.products.price')}</span>
                       <span className="flex flex-col gap-0.5">
@@ -187,11 +205,11 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
-                  <th className="px-3 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="p-0 align-middle">
                     <button
                       type="button"
                       onClick={() => handleHeaderSort('createdAt')}
-                      className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-800"
+                      className={`${ADMIN_TABLE_TH_SORTABLE} inline-flex w-full items-center gap-1`}
                     >
                       <span>{t('admin.products.created')}</span>
                       <span className="flex flex-col gap-0.5">
@@ -222,26 +240,25 @@ export function ProductsTable({
                       </span>
                     </button>
                   </th>
-                  <th className="px-3 py-3 text-center align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                    {t('admin.products.featured')}
-                  </th>
-                  <th className="px-3 py-3 pl-6 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                    {t('admin.products.actions')}
-                  </th>
+                  <th className={ADMIN_TABLE_TH_CENTER}>{t('admin.products.featured')}</th>
+                  <th className={`${ADMIN_TABLE_TH} pl-6`}>{t('admin.products.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={ADMIN_TABLE_TBODY}>
                 {sortedProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-center align-middle">
-                      <input
-                        type="checkbox"
-                        aria-label={t('admin.products.selectProduct').replace('{title}', product.title)}
-                        checked={selectedIds.has(product.id)}
-                        onChange={() => toggleSelect(product.id)}
-                      />
+                  <tr key={product.id} className={ADMIN_TABLE_ROW}>
+                    <td className={ADMIN_TABLE_TD_CHECK}>
+                      <div className="flex min-w-0 justify-center">
+                        <input
+                          type="checkbox"
+                          className={ADMIN_TABLE_CHECKBOX}
+                          aria-label={t('admin.products.selectProduct').replace('{title}', product.title)}
+                          checked={selectedIds.has(product.id)}
+                          onChange={() => toggleSelect(product.id)}
+                        />
+                      </div>
                     </td>
-                    <td className="px-3 py-3 align-middle whitespace-nowrap text-left">
+                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left text-gray-900`}>
                       <div className="flex items-center">
                         {product.image && (
                           <img
@@ -256,7 +273,7 @@ export function ProductsTable({
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-middle text-left">
+                    <td className={`${ADMIN_TABLE_TD} text-left text-gray-900`}>
                       {product.colorStocks && product.colorStocks.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {product.colorStocks.map((colorStock) => (
@@ -275,7 +292,7 @@ export function ProductsTable({
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-3 align-middle whitespace-nowrap text-left">
+                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left font-semibold text-gray-900`}>
                       <div className="flex flex-col">
                         <div className="text-sm font-medium text-gray-900">
                           {formatPrice(product.price, currency)}
@@ -293,10 +310,10 @@ export function ProductsTable({
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-500">
+                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left tabular-nums text-gray-600`}>
                       {new Date(product.createdAt).toLocaleDateString('hy-AM')}
                     </td>
-                    <td className="px-3 py-3 align-middle whitespace-nowrap text-center">
+                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-center`}>
                       <button
                         onClick={() => handleToggleFeatured(product.id, product.featured || false, product.title)}
                         className="inline-flex items-center justify-center w-8 h-8 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
@@ -320,7 +337,7 @@ export function ProductsTable({
                         </svg>
                       </button>
                     </td>
-                    <td className="px-3 py-3 pl-6 align-middle whitespace-nowrap text-left text-sm font-medium">
+                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap pl-6 text-left font-medium text-gray-900`}>
                       <div className="flex items-center gap-1 flex-wrap">
                         <Button
                           variant="ghost"
@@ -371,7 +388,7 @@ export function ProductsTable({
 
           {/* Pagination */}
           {meta && meta.totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className={`${ADMIN_TABLE_FOOTER_ROUNDED_B} flex items-center justify-between`}>
               <div className="text-sm text-gray-700">
                 {t('admin.products.showingPage').replace('{page}', meta.page.toString()).replace('{totalPages}', meta.totalPages.toString()).replace('{total}', meta.total.toString())}
               </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { ADMIN_TABLE_CHECKBOX, ADMIN_TABLE_TD_CHECK } from '../../constants/admin-table-classes';
 import { useTranslation } from '../../../../lib/i18n-client';
 import { convertPrice, CurrencyCode } from '../../../../lib/currency';
 import { getStatusColor, getPaymentStatusColor } from '../utils/orderUtils';
@@ -59,14 +60,14 @@ export function OrderRow({
       aria-label={rowDetailsLabel}
     >
       <td
-        className="w-px whitespace-nowrap px-3 py-2.5 align-middle"
+        className={ADMIN_TABLE_TD_CHECK}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex min-w-0 justify-center">
           <input
             type="checkbox"
-            className="h-4 w-4 shrink-0 rounded border-gray-300"
+            className={ADMIN_TABLE_CHECKBOX}
             aria-label={t('admin.orders.selectOrder').replace('{number}', order.number)}
             checked={selected}
             onChange={onToggleSelect}

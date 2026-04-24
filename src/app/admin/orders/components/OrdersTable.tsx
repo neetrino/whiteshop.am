@@ -3,6 +3,20 @@
 import { useTranslation } from '../../../../lib/i18n-client';
 import { Card } from '@shop/ui';
 import { CurrencyCode } from '../../../../lib/currency';
+import {
+  ADMIN_TABLE,
+  ADMIN_TABLE_CARD,
+  ADMIN_TABLE_CHECKBOX,
+  ADMIN_TABLE_FOOTER_ROUNDED_B,
+  ADMIN_TABLE_OUTER_CLIP,
+  ADMIN_TABLE_STATE_INSET,
+  ADMIN_TABLE_TBODY,
+  ADMIN_TABLE_THEAD,
+  ADMIN_TABLE_TH,
+  ADMIN_TABLE_TH_CENTER,
+  ADMIN_TABLE_TH_CHECK,
+  ADMIN_TABLE_TH_SORTABLE,
+} from '../../constants/admin-table-classes';
 import { OrderRow } from './OrderRow';
 import { OrdersPagination } from './OrdersPagination';
 import type { Order } from '../useOrders';
@@ -87,7 +101,7 @@ export function OrdersTable({
 
   if (loading) {
     return (
-      <Card className="p-4 sm:p-5">
+      <Card className={ADMIN_TABLE_STATE_INSET}>
         <div className="py-8 text-center">
           <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
           <p className="text-sm text-gray-600">{t('admin.orders.loadingOrders')}</p>
@@ -98,7 +112,7 @@ export function OrdersTable({
 
   if (orders.length === 0) {
     return (
-      <Card className="p-4 sm:p-5">
+      <Card className={ADMIN_TABLE_STATE_INSET}>
         <div className="py-8 text-center">
           <p className="text-sm text-gray-600">{t('admin.orders.noOrders')}</p>
         </div>
@@ -107,34 +121,31 @@ export function OrdersTable({
   }
 
   return (
-    <Card className="overflow-hidden p-0">
-      <div className="w-full min-w-0 overflow-hidden rounded-t-lg">
-        <table className="w-full min-w-full table-auto border-collapse text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50">
+    <Card className={ADMIN_TABLE_CARD}>
+      <div className={ADMIN_TABLE_OUTER_CLIP}>
+        <table className={ADMIN_TABLE}>
+          <thead className={ADMIN_TABLE_THEAD}>
             <tr>
-              <th className="w-px whitespace-nowrap px-2 py-2.5 align-middle text-center">
+              <th className={ADMIN_TABLE_TH_CHECK}>
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300"
+                  className={ADMIN_TABLE_CHECKBOX}
                   aria-label={t('admin.orders.selectAllOrders')}
                   checked={orders.length > 0 && orders.every((o) => selectedIds.has(o.id))}
                   onChange={onToggleSelectAll}
                 />
               </th>
-              <th
-                className="min-w-0 whitespace-nowrap px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 sm:text-xs"
-                title={t('admin.orders.orderNumber')}
-              >
+              <th className={ADMIN_TABLE_TH} title={t('admin.orders.orderNumber')}>
                 <span className="whitespace-nowrap">{t('admin.orders.orderNumber')}</span>
               </th>
               <th
-                className="min-w-[10rem] max-w-xs px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 sm:max-w-sm sm:text-xs"
+                className={`${ADMIN_TABLE_TH} min-w-[10rem] max-w-xs sm:max-w-sm`}
                 title={t('admin.orders.customer')}
               >
                 <span className="block min-w-0 truncate">{t('admin.orders.customer')}</span>
               </th>
               <th
-                className="min-w-0 whitespace-nowrap cursor-pointer select-none px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 hover:bg-gray-100 sm:text-xs"
+                className={ADMIN_TABLE_TH_SORTABLE}
                 title={t('admin.orders.total')}
                 onClick={() => onSort('total')}
               >
@@ -143,26 +154,17 @@ export function OrdersTable({
                   <SortChevrons active={sortBy === 'total'} direction={sortOrder} />
                 </div>
               </th>
-              <th
-                className="min-w-0 whitespace-nowrap px-3 py-2.5 text-center align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 sm:text-xs"
-                title={t('admin.orders.items')}
-              >
+              <th className={ADMIN_TABLE_TH_CENTER} title={t('admin.orders.items')}>
                 <span className="whitespace-nowrap">{t('admin.orders.itemsQtyHeader')}</span>
               </th>
-              <th
-                className="min-w-0 whitespace-nowrap px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 sm:text-xs"
-                title={t('admin.orders.status')}
-              >
+              <th className={ADMIN_TABLE_TH} title={t('admin.orders.status')}>
                 <span className="whitespace-nowrap">{t('admin.orders.status')}</span>
               </th>
-              <th
-                className="min-w-0 whitespace-nowrap px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 sm:text-xs"
-                title={t('admin.orders.payment')}
-              >
+              <th className={ADMIN_TABLE_TH} title={t('admin.orders.payment')}>
                 <span className="whitespace-nowrap">{t('admin.orders.payment')}</span>
               </th>
               <th
-                className="min-w-0 whitespace-nowrap cursor-pointer select-none px-3 py-2.5 text-left align-middle text-[11px] font-semibold uppercase leading-snug tracking-wide text-gray-500 hover:bg-gray-100 sm:text-xs"
+                className={ADMIN_TABLE_TH_SORTABLE}
                 title={t('admin.orders.date')}
                 onClick={() => onSort('createdAt')}
               >
@@ -173,7 +175,7 @@ export function OrdersTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white [&_td]:align-middle">
+          <tbody className={ADMIN_TABLE_TBODY}>
             {orders.map((order) => (
               <OrderRow
                 key={order.id}
@@ -193,7 +195,7 @@ export function OrdersTable({
       </div>
 
       {meta && meta.totalPages > 1 && (
-        <div className="rounded-b-lg border-t border-gray-200 px-4 py-3 sm:px-5">
+        <div className={ADMIN_TABLE_FOOTER_ROUNDED_B}>
           <OrdersPagination
             page={page}
             totalPages={meta.totalPages}

@@ -6,6 +6,21 @@ import { useAuth } from '../../../lib/auth/AuthContext';
 import { Card, Button, Input } from '@shop/ui';
 import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
+import {
+  ADMIN_TABLE,
+  ADMIN_TABLE_CARD,
+  ADMIN_TABLE_CHECKBOX,
+  ADMIN_TABLE_FOOTER_ROUNDED_B,
+  ADMIN_TABLE_OUTER_SCROLL,
+  ADMIN_TABLE_ROW,
+  ADMIN_TABLE_STATE_INSET,
+  ADMIN_TABLE_TBODY,
+  ADMIN_TABLE_TD,
+  ADMIN_TABLE_TD_CHECK,
+  ADMIN_TABLE_TH,
+  ADMIN_TABLE_TH_CHECK,
+  ADMIN_TABLE_THEAD,
+} from '../constants/admin-table-classes';
 
 interface User {
   id: string;
@@ -257,78 +272,97 @@ export default function UsersPage() {
           </form>
         </Card>
 
+        {!loading && filteredUsers.length > 0 && (
+          <Card className="mb-6 w-full min-w-0 p-4">
+            <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0 flex-1 text-sm text-gray-700">
+                {t('admin.users.selectedUsers').replace('{count}', selectedIds.size.toString())}
+              </div>
+              <Button
+                variant="outline"
+                type="button"
+                className="shrink-0"
+                onClick={handleBulkDelete}
+                disabled={selectedIds.size === 0 || bulkDeleting}
+              >
+                {bulkDeleting ? t('admin.users.deleting') : t('admin.users.deleteSelected')}
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {/* Users Table */}
-        <Card className="p-6">
+        <Card
+          className={
+            loading || filteredUsers.length === 0 ? ADMIN_TABLE_STATE_INSET : ADMIN_TABLE_CARD
+          }
+        >
           {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-              <p className="text-gray-600">{t('admin.users.loadingUsers')}</p>
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+              <p className="text-sm text-gray-600">{t('admin.users.loadingUsers')}</p>
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600">{t('admin.users.noUsers')}</p>
+            <div className="py-8 text-center">
+              <p className="text-sm text-gray-600">{t('admin.users.noUsers')}</p>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div
+                className={`${ADMIN_TABLE_OUTER_SCROLL} ${
+                  meta && meta.totalPages > 1 ? '' : 'rounded-b-lg'
+                }`}
+              >
+                <table className={ADMIN_TABLE}>
+                  <thead className={ADMIN_TABLE_THEAD}>
                     <tr>
-                      <th className="px-4 py-3 text-center align-middle">
+                      <th className={ADMIN_TABLE_TH_CHECK}>
                         <input
                           type="checkbox"
+                          className={ADMIN_TABLE_CHECKBOX}
                           aria-label={t('admin.users.selectAll')}
                           checked={users.length > 0 && users.every(u => selectedIds.has(u.id))}
                           onChange={toggleSelectAll}
                         />
                       </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.users.user')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.users.contact')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.users.orders')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.users.roles')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.users.status')}
-                      </th>
-                      <th className="px-6 py-3 text-left align-middle text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t('admin.users.created')}
-                      </th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.users.user')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.users.contact')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.users.orders')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.users.roles')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.users.status')}</th>
+                      <th className={ADMIN_TABLE_TH}>{t('admin.users.created')}</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className={ADMIN_TABLE_TBODY}>
                     {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-center align-middle">
-                          <input
-                            type="checkbox"
-                            aria-label={t('admin.users.selectUser').replace('{email}', user.email)}
-                            checked={selectedIds.has(user.id)}
-                            onChange={() => toggleSelect(user.id)}
-                          />
+                      <tr key={user.id} className={ADMIN_TABLE_ROW}>
+                        <td className={ADMIN_TABLE_TD_CHECK}>
+                          <div className="flex min-w-0 justify-center">
+                            <input
+                              type="checkbox"
+                              className={ADMIN_TABLE_CHECKBOX}
+                              aria-label={t('admin.users.selectUser').replace('{email}', user.email)}
+                              checked={selectedIds.has(user.id)}
+                              onChange={() => toggleSelect(user.id)}
+                            />
+                          </div>
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left text-gray-900`}>
                           <div className="text-sm font-medium text-gray-900">
                             {user.firstName} {user.lastName}
                           </div>
-                          <div className="text-sm text-gray-500">{user.id}</div>
+                          <div className="text-xs text-gray-500">{user.id}</div>
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
-                          <div className="text-sm text-gray-900">{user.email}</div>
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left`}>
+                          <div className="text-gray-900">{user.email}</div>
                           {user.phone && (
-                            <div className="text-sm text-gray-500">{user.phone}</div>
+                            <div className="text-xs text-gray-600">{user.phone}</div>
                           )}
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-900">
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left font-semibold tabular-nums text-gray-900`}>
                           {user.ordersCount ?? 0}
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left`}>
                           <div className="flex gap-2">
                             {user.roles?.map((role) => (
                               <span
@@ -340,7 +374,7 @@ export default function UsersPage() {
                             ))}
                           </div>
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left">
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left`}>
                           <button
                             type="button"
                             onClick={() =>
@@ -366,7 +400,7 @@ export default function UsersPage() {
                             />
                           </button>
                         </td>
-                        <td className="px-6 py-3 align-middle whitespace-nowrap text-left text-sm text-gray-500">
+                        <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left tabular-nums text-gray-600`}>
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
@@ -377,7 +411,7 @@ export default function UsersPage() {
 
               {/* Pagination */}
               {meta && meta.totalPages > 1 && (
-                <div className="mt-6 flex items-center justify-between">
+                <div className={`${ADMIN_TABLE_FOOTER_ROUNDED_B} flex items-center justify-between`}>
                   <div className="text-sm text-gray-700">
                     {t('admin.users.showingPage').replace('{page}', meta.page.toString()).replace('{totalPages}', meta.totalPages.toString()).replace('{total}', meta.total.toString())}
                   </div>
@@ -399,16 +433,6 @@ export default function UsersPage() {
                   </div>
                 </div>
               )}
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-sm text-gray-700">{t('admin.users.selectedUsers').replace('{count}', selectedIds.size.toString())}</div>
-                <Button
-                  variant="outline"
-                  onClick={handleBulkDelete}
-                  disabled={selectedIds.size === 0 || bulkDeleting}
-                >
-                  {bulkDeleting ? t('admin.users.deleting') : t('admin.users.deleteSelected')}
-                </Button>
-              </div>
             </>
           )}
         </Card>
