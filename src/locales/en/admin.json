@@ -16,7 +16,8 @@
   },
   "sidebar": {
     "expand": "Expand sidebar",
-    "collapse": "Collapse sidebar"
+    "collapse": "Collapse sidebar",
+    "toggleProductsNested": "Show or hide Categories, Brands, and Attributes under Products"
   },
   "dashboard": {
     "title": "Admin Page",

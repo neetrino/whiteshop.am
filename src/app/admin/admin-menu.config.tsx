@@ -63,6 +63,7 @@ export function getAdminMenuTABS(t: (path: string) => string): AdminMenuItem[] {
     label: t('admin.menu.categories'),
     path: '/admin/categories',
     isSubCategory: true,
+    parentGroupId: 'products',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -79,6 +80,7 @@ export function getAdminMenuTABS(t: (path: string) => string): AdminMenuItem[] {
     label: t('admin.menu.brands'),
     path: '/admin/brands',
     isSubCategory: true,
+    parentGroupId: 'products',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -95,6 +97,7 @@ export function getAdminMenuTABS(t: (path: string) => string): AdminMenuItem[] {
     label: t('admin.menu.attributes'),
     path: '/admin/attributes',
     isSubCategory: true,
+    parentGroupId: 'products',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path

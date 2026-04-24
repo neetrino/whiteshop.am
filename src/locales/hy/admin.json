@@ -16,7 +16,8 @@
   },
   "sidebar": {
     "expand": "Բացել sidebar-ը",
-    "collapse": "Փակել sidebar-ը"
+    "collapse": "Փակել sidebar-ը",
+    "toggleProductsNested": "Բացել կամ պակել Ապրանքների ներքևի բաժինները՝ Կատեգորիաներ, Բրենդներ, Ատրիբուտներ"
   },
   "dashboard": {
     "title": "Ադմին էջ",
