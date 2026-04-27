@@ -73,8 +73,11 @@ export function useAdminProductsSubnavExpanded(pathname: string): readonly [bool
   const toggle = useCallback(() => {
     setExpanded((prev) => {
       const next = !prev;
-      persistExpanded(next);
-      dispatchSubnavChange();
+      // Avoid sync dispatch inside updater (cross-component setState during reconcile).
+      queueMicrotask(() => {
+        persistExpanded(next);
+        dispatchSubnavChange();
+      });
       return next;
     });
   }, []);
