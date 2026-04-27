@@ -75,12 +75,19 @@ export function ProductAttributesSelector({
   console.log('🎨 [PRODUCT ATTRIBUTES SELECTOR] attributeGroups entries:', attributeGroupsEntries.length);
   console.log('🎨 [PRODUCT ATTRIBUTES SELECTOR] attributeGroups keys:', Array.from(attributeGroups.keys()));
   console.log('🎨 [PRODUCT ATTRIBUTES SELECTOR] product.productAttributes:', product?.productAttributes);
-  
+
+  const useNewFormat = attributeGroupsEntries.some(([, arr]) => arr.length > 0);
+  const hasLegacyColor = colorGroups.length > 0;
+  const hasLegacySize = !product?.productAttributes && sizeGroups.length > 0;
+  if (!useNewFormat && !hasLegacyColor && !hasLegacySize) {
+    return null;
+  }
+
   return (
     <div className="mt-8 p-4 bg-white border border-gray-200 rounded-2xl space-y-4">
       {/* Attribute Selectors - Support both new (productAttributes) and old (colorGroups) format */}
       {/* Display all attributes from attributeGroups, not just from productAttributes */}
-      {attributeGroupsEntries.length > 0 ? (
+      {useNewFormat ? (
         // Use attributeGroups which contains all attributes (from productAttributes and variants)
         Array.from(attributeGroups.entries()).map(([attrKey, attrGroups]) => {
           // Try to get attribute name from productAttributes if available
