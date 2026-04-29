@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '../../lib/i18n-client';
+import { resolveLoginApiError } from '../../lib/auth/client-api-error-messages';
 import { Eye, EyeOff } from 'lucide-react';
 
 function LoginPageContent() {
@@ -51,7 +52,7 @@ function LoginPageContent() {
       router.push(redirectTo);
     } catch (err: any) {
       console.error('❌ [LOGIN PAGE] Login error:', err);
-      setError(err.message || t('login.errors.loginFailed'));
+      setError(resolveLoginApiError(err instanceof Error ? err.message : String(err), t));
     } finally {
       setIsSubmitting(false);
     }

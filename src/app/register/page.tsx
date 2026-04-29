@@ -5,6 +5,7 @@ import { Button, Input, Card } from '@shop/ui';
 import Link from 'next/link';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useTranslation } from '../../lib/i18n-client';
+import { resolveRegisterApiError } from '../../lib/auth/client-api-error-messages';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -112,7 +113,7 @@ export default function RegisterPage() {
         stack: err.stack,
         name: err.name,
       });
-      setError(err.message || t('register.errors.registrationFailed'));
+      setError(resolveRegisterApiError(err instanceof Error ? err.message : String(err), t));
     } finally {
       setIsSubmitting(false);
     }

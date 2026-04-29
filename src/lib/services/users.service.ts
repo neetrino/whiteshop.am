@@ -176,8 +176,23 @@ class UsersService {
   }
 
   /**
-   * Soft-delete the authenticated user's own account.
-   * Requires current password when a password is set; otherwise confirmation must match email or phone.
+   * Remove user row and unlink orders (same as self-service delete).
+   */
+  async permanentlyDeleteUserById(userId: string): Promise<void> {
+    await db.$transaction(async (tx) => {
+      await tx.order.updateMany({
+        where: { userId },
+        data: { userId: null },
+      });
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+  }
+
+  /**
+   * Permanently remove the authenticated user's row so email/phone can be registered again.
+   * Orders stay with userId cleared. Requires password or email/phone confirmation.
    */
   async deleteMyAccount(
     userId: string,
@@ -258,14 +273,7 @@ class UsersService {
       }
     }
 
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        deletedAt: new Date(),
-        blocked: true,
-      },
-      select: { id: true },
-    });
+    await this.permanentlyDeleteUserById(userId);
 
     return { success: true };
   }

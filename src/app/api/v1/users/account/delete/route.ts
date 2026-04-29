@@ -5,7 +5,7 @@ import { toApiError } from "@/lib/types/errors";
 import { logger } from "@/lib/utils/logger";
 
 /**
- * Self-service account deletion (soft delete).
+ * Self-service account deletion (hard delete user row; orders unlinked).
  * Body: { password?: string, confirmation?: string } — password when account has a password set; otherwise confirmation must match email or phone.
  */
 export async function POST(req: NextRequest) {
