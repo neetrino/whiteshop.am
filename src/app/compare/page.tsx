@@ -1,32 +1,51 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { MouseEvent } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@shop/ui';
 import { apiClient } from '../../lib/api-client';
-import { formatPrice, getStoredCurrency } from '../../lib/currency';
+import { getStoredCurrency } from '../../lib/currency';
 import { getStoredLanguage } from '../../lib/language';
 import { useTranslation } from '../../lib/i18n-client';
 import { useAuth } from '../../lib/auth/AuthContext';
+import { CompareProductsTable, type CompareProduct } from './CompareProductsTable';
 
-interface Product {
-  id: string;
-  slug: string;
-  title: string;
-  price: number;
-  originalPrice: number | null;
-  compareAtPrice: number | null;
-  discountPercent: number | null;
-  image: string | null;
-  inStock: boolean;
-  brand: {
-    id: string;
-    name: string;
-  } | null;
-  description?: string;
+interface CompareSection {
+  sectionKey: string;
+  sectionTitle: string;
+  products: CompareProduct[];
+}
+
+function buildCompareSections(
+  compareIds: string[],
+  productList: CompareProduct[],
+  uncategorizedLabel: string
+): CompareSection[] {
+  const byId = new Map(productList.map((p) => [p.id, p]));
+  const ordered = compareIds
+    .map((id) => byId.get(id))
+    .filter((p): p is CompareProduct => p !== undefined);
+
+  const sections: CompareSection[] = [];
+  const keyToIndex = new Map<string, number>();
+
+  for (const product of ordered) {
+    const first = product.categories?.[0];
+    const sectionKey = first?.id ?? '__uncategorized__';
+    const sectionTitle = first?.title || uncategorizedLabel;
+
+    let idx = keyToIndex.get(sectionKey);
+    if (idx === undefined) {
+      idx = sections.length;
+      keyToIndex.set(sectionKey, idx);
+      sections.push({ sectionKey, sectionTitle, products: [] });
+    }
+    sections[idx].products.push(product);
+  }
+
+  return sections;
 }
 
 const COMPARE_KEY = 'shop_compare';
@@ -49,7 +68,7 @@ export default function ComparePage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const { t } = useTranslation();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<CompareProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [currency, setCurrency] = useState(getStoredCurrency());
@@ -73,7 +92,7 @@ export default function ComparePage() {
       console.info(`[Compare] Fetching ${idsToLoad.length} products for render`);
       const languagePreference = getStoredLanguage();
       const response = await apiClient.get<{
-        data: Product[];
+        data: CompareProduct[];
         meta: {
           total: number;
           page: number;
@@ -171,7 +190,7 @@ export default function ComparePage() {
     window.dispatchEvent(new Event('compare-updated'));
   };
 
-  const handleAddToCart = async (e: MouseEvent, product: Product) => {
+  const handleAddToCart = async (e: MouseEvent, product: CompareProduct) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -233,6 +252,11 @@ export default function ComparePage() {
     }
   };
 
+  const compareSections = useMemo(
+    () => buildCompareSections(compareIds, products, t('common.compare.uncategorized')),
+    [compareIds, products, t]
+  );
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -258,182 +282,22 @@ export default function ComparePage() {
       </div>
 
       {products.length > 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 min-w-[150px] sticky left-0 bg-gray-50 z-10">
-                    {t('common.compare.characteristic')}
-                  </th>
-                  {products.map((product) => (
-                    <th
-                      key={product.id}
-                      className="px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[220px] relative"
-                    >
-                      <button
-                        onClick={(e) => handleRemove(e, product.id)}
-                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
-                        title={t('common.buttons.remove')}
-                        aria-label={t('common.buttons.remove')}
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {/* Изображение */}
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-700 bg-gray-50 sticky left-0 z-10">
-                    {t('common.compare.image')}
-                  </td>
-                  {products.map((product) => (
-                    <td key={product.id} className="px-4 py-4 text-center">
-                      <Link href={`/products/${product.slug}`} className="inline-block">
-                        <div className="w-32 h-32 mx-auto bg-gray-100 rounded-lg overflow-hidden relative">
-                          {product.image ? (
-                            <Image
-                              src={product.image}
-                              alt={product.title}
-                              fill
-                              className="object-cover"
-                              sizes="128px"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-gray-400 text-xs">{t('common.messages.noImage')}</span>
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Название */}
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-700 bg-gray-50 sticky left-0 z-10">
-                    {t('common.compare.name')}
-                  </td>
-                  {products.map((product) => (
-                    <td key={product.id} className="px-4 py-4">
-                      <Link
-                        href={`/products/${product.slug}`}
-                        className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors block text-center"
-                      >
-                        {product.title}
-                      </Link>
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Бренд */}
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-700 bg-gray-50 sticky left-0 z-10">
-                    {t('common.compare.brand')}
-                  </td>
-                  {products.map((product) => (
-                    <td key={product.id} className="px-4 py-4 text-center text-sm text-gray-600">
-                      {product.brand ? product.brand.name : '-'}
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Цена */}
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-700 bg-gray-50 sticky left-0 z-10">
-                    {t('common.compare.price')}
-                  </td>
-                  {products.map((product) => (
-                    <td key={product.id} className="px-4 py-4 text-center">
-                      <div className="flex items-center justify-center gap-3">
-                        <p className="text-lg font-bold text-gray-900 select-none">
-                          {formatPrice(product.price, currency)}
-                        </p>
-                        {(product.originalPrice && product.originalPrice > product.price) && (
-                          <p className="text-sm text-gray-500 line-through select-none">
-                            {formatPrice(product.originalPrice, currency)}
-                          </p>
-                        )}
-                        {!product.originalPrice && product.compareAtPrice && product.compareAtPrice > product.price && (
-                          <p className="text-sm text-gray-500 line-through select-none">
-                            {formatPrice(product.compareAtPrice, currency)}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Наличие */}
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-700 bg-gray-50 sticky left-0 z-10">
-                    {t('common.compare.availability')}
-                  </td>
-                  {products.map((product) => (
-                    <td key={product.id} className="px-4 py-4 text-center">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          product.inStock
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {product.inStock
-                          ? t('common.stock.inStock')
-                          : t('common.stock.outOfStock')}
-                      </span>
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Действия */}
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-4 text-sm font-medium text-gray-700 bg-gray-50 sticky left-0 z-10">
-                    {t('common.compare.actions')}
-                  </td>
-                  {products.map((product) => (
-                    <td key={product.id} className="px-4 py-4 text-center">
-                      <div className="flex flex-col gap-2 items-center">
-                        <Link
-                          href={`/products/${product.slug}`}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          {t('common.compare.viewDetails')}
-                        </Link>
-                        {product.inStock && (
-                          <button
-                            onClick={(e) => handleAddToCart(e, product)}
-                            disabled={addingToCart.has(product.id)}
-                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {addingToCart.has(product.id)
-                              ? t('common.messages.adding')
-                              : t('common.buttons.addToCart')}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-8">
+          {compareSections.map((section) => (
+            <div key={section.sectionKey}>
+              {compareSections.length > 1 && (
+                <h2 className="text-lg font-semibold text-gray-800 mb-3">{section.sectionTitle}</h2>
+              )}
+              <CompareProductsTable
+                products={section.products}
+                currency={currency}
+                addingToCart={addingToCart}
+                t={t}
+                onRemove={handleRemove}
+                onAddToCart={handleAddToCart}
+              />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="text-center py-8">

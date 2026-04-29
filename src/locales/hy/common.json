@@ -86,7 +86,9 @@
     "availability": "Պահեստ",
     "actions": "Գործողություններ",
     "viewDetails": "Դիտել մանրամասները",
-    "browseProducts": "Դիտել ապրանքները"
+    "browseProducts": "Դիտել ապրանքները",
+    "category": "Կատեգորիա",
+    "uncategorized": "Առանց կատեգորիայի"
   },
   "reviews": {
     "title": "Կարծիքներ",
