@@ -1,3 +1,4 @@
+import { logger } from "@/lib/utils/logger";
 /**
  * Hook for product form callbacks and event handlers
  */
@@ -86,7 +87,7 @@ export function useProductFormCallbacks({
     };
     setGeneratedVariants((prev) => {
       const updated = [...prev, newVariant];
-      console.log('✅ [VARIANT BUILDER] New manual variant added:', {
+      logger.debug('✅ [VARIANT BUILDER] New manual variant added:', {
         newVariantId: newVariant.id,
         totalVariants: updated.length,
         manualVariants: updated.filter((v) => v.id !== 'variant-all').length,

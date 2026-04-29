@@ -4,6 +4,7 @@ import { processImageUrl } from '../../../lib/utils/image-utils';
 import { t, getAttributeLabel } from '../../../lib/i18n';
 import type { LanguageCode } from '../../../lib/language';
 import type { Product, ProductVariant } from './types';
+import { logger } from "@/lib/utils/logger";
 
 interface AttributeGroupValue {
   valueId?: string;
@@ -72,9 +73,9 @@ export function ProductAttributesSelector({
   getOptionValue,
 }: ProductAttributesSelectorProps) {
   const attributeGroupsEntries = Array.from(attributeGroups.entries());
-  console.log('🎨 [PRODUCT ATTRIBUTES SELECTOR] attributeGroups entries:', attributeGroupsEntries.length);
-  console.log('🎨 [PRODUCT ATTRIBUTES SELECTOR] attributeGroups keys:', Array.from(attributeGroups.keys()));
-  console.log('🎨 [PRODUCT ATTRIBUTES SELECTOR] product.productAttributes:', product?.productAttributes);
+  logger.debug('🎨 [PRODUCT ATTRIBUTES SELECTOR] attributeGroups entries:', attributeGroupsEntries.length);
+  logger.debug('🎨 [PRODUCT ATTRIBUTES SELECTOR] attributeGroups keys:', Array.from(attributeGroups.keys()));
+  logger.debug('🎨 [PRODUCT ATTRIBUTES SELECTOR] product.productAttributes:', product?.productAttributes);
 
   const useNewFormat = attributeGroupsEntries.some(([, arr]) => arr.length > 0);
   const hasLegacyColor = colorGroups.length > 0;
@@ -155,7 +156,7 @@ export function ProductAttributesSelector({
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                               onLoad={() => {
-                                console.log(`✅ [COLOR IMAGE] Successfully loaded image for color "${g.value}":`, processedImageUrl);
+                                logger.debug(`✅ [COLOR IMAGE] Successfully loaded image for color "${g.value}":`, processedImageUrl);
                               }}
                             />
                           ) : null}
@@ -224,7 +225,7 @@ export function ProductAttributesSelector({
                               (e.target as HTMLImageElement).style.display = 'none';
                             }}
                             onLoad={() => {
-                              console.log(`✅ [SIZE IMAGE] Successfully loaded image for size "${g.value}":`, processedImageUrl);
+                              logger.debug(`✅ [SIZE IMAGE] Successfully loaded image for size "${g.value}":`, processedImageUrl);
                             }}
                           />
                         )}
@@ -306,7 +307,7 @@ export function ProductAttributesSelector({
                               (e.target as HTMLImageElement).style.display = 'none';
                             }}
                             onLoad={() => {
-                              console.log(`✅ [ATTRIBUTE IMAGE] Successfully loaded image for attribute "${attrKey}" value "${g.value}":`, processedImageUrl);
+                              logger.debug(`✅ [ATTRIBUTE IMAGE] Successfully loaded image for attribute "${attrKey}" value "${g.value}":`, processedImageUrl);
                             }}
                           />
                         ) : hasColors && colorHex ? (

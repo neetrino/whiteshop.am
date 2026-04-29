@@ -4,6 +4,7 @@ import type { ChangeEvent } from 'react';
 import { processImageFile } from '../../../../../lib/utils/image-utils';
 import type { Variant, ColorData } from '../types';
 import type { GeneratedVariant } from '../types';
+import { logger } from "@/lib/utils/logger";
 
 interface UseImageHandlingProps {
   imageUrls: string[];
@@ -88,7 +89,7 @@ export function useImageHandling({
   };
 
   const addColorImages = (variantId: string, colorValue: string, images: string[]) => {
-    console.log('🖼️ [ADMIN] Adding images to color:', {
+    logger.debug('🖼️ [ADMIN] Adding images to color:', {
       variantId,
       colorValue,
       imagesCount: images.length,
@@ -118,7 +119,7 @@ export function useImageHandling({
       return;
     }
 
-    console.log('📸 [UPLOAD] Starting upload of', files.length, 'image(s)');
+    logger.debug('📸 [UPLOAD] Starting upload of', files.length, 'image(s)');
     setImageUploadLoading(true);
     setImageUploadError(null);
     try {
@@ -133,7 +134,7 @@ export function useImageHandling({
             return { success: false, error: errorMsg, index };
           }
 
-          console.log(`📸 [UPLOAD] Processing file ${index + 1}/${files.length}:`, file.name, `(${Math.round(file.size / 1024)}KB)`);
+          logger.debug(`📸 [UPLOAD] Processing file ${index + 1}/${files.length}:`, file.name, `(${Math.round(file.size / 1024)}KB)`);
 
           const base64 = await processImageFile(file, {
             maxSizeMB: 2,
@@ -144,7 +145,7 @@ export function useImageHandling({
           });
 
           if (base64 && base64.trim()) {
-            console.log(`✅ [UPLOAD] Successfully processed file ${index + 1}/${files.length}:`, file.name);
+            logger.debug(`✅ [UPLOAD] Successfully processed file ${index + 1}/${files.length}:`, file.name);
             return { success: true, base64, index };
           } else {
             const errorMsg = `Failed to convert "${file.name}" to base64`;
@@ -175,7 +176,7 @@ export function useImageHandling({
         }
       });
 
-      console.log('📸 [UPLOAD] Upload complete. Processed:', uploadedImages.length, 'of', files.length, 'files');
+      logger.debug('📸 [UPLOAD] Upload complete. Processed:', uploadedImages.length, 'of', files.length, 'files');
       if (errors.length > 0) {
         console.warn('⚠️ [UPLOAD] Errors during upload:', errors);
         setImageUploadError(errors.join('; '));
@@ -224,7 +225,7 @@ export function useImageHandling({
     setImageUploadLoading(true);
     setImageUploadError(null);
     try {
-      console.log('🖼️ [VARIANT IMAGE] Processing variant image:', {
+      logger.debug('🖼️ [VARIANT IMAGE] Processing variant image:', {
         variantId,
         fileName: file.name,
         originalSize: `${Math.round(file.size / 1024)}KB`,
@@ -239,7 +240,7 @@ export function useImageHandling({
       });
 
       setGeneratedVariants((prev) => prev.map((v) => (v.id === variantId ? { ...v, image: base64 } : v)));
-      console.log('✅ [VARIANT BUILDER] Variant image uploaded and processed for variant:', variantId);
+      logger.debug('✅ [VARIANT BUILDER] Variant image uploaded and processed for variant:', variantId);
     } catch (error: any) {
       console.error('❌ [VARIANT IMAGE] Error processing variant image:', error);
       setImageUploadError(error?.message || t('admin.products.add.failedToProcessImage'));
@@ -254,7 +255,7 @@ export function useImageHandling({
   const handleUploadColorImages = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (!files.length || !colorImageTarget) {
-      console.log('⚠️ [ADMIN] No files or no color target:', { filesLength: files.length, colorImageTarget });
+      logger.debug('⚠️ [ADMIN] No files or no color target:', { filesLength: files.length, colorImageTarget });
       if (event.target) {
         event.target.value = '';
       }
@@ -271,11 +272,11 @@ export function useImageHandling({
 
     try {
       setImageUploadLoading(true);
-      console.log('📤 [ADMIN] Starting upload for color:', colorImageTarget.colorValue, 'Files:', imageFiles.length);
+      logger.debug('📤 [ADMIN] Starting upload for color:', colorImageTarget.colorValue, 'Files:', imageFiles.length);
 
       const uploadedImages = await Promise.all(
         imageFiles.map(async (file, index) => {
-          console.log(`🖼️ [COLOR IMAGE] Processing image ${index + 1}/${imageFiles.length}:`, {
+          logger.debug(`🖼️ [COLOR IMAGE] Processing image ${index + 1}/${imageFiles.length}:`, {
             fileName: file.name,
             originalSize: `${Math.round(file.size / 1024)}KB`,
           });
@@ -288,19 +289,19 @@ export function useImageHandling({
             initialQuality: 0.8,
           });
 
-          console.log(`✅ [COLOR IMAGE] Image ${index + 1}/${imageFiles.length} processed, base64 length:`, base64.length);
+          logger.debug(`✅ [COLOR IMAGE] Image ${index + 1}/${imageFiles.length} processed, base64 length:`, base64.length);
           return base64;
         })
       );
 
-      console.log('📥 [ADMIN] All images processed, adding to variant:', {
+      logger.debug('📥 [ADMIN] All images processed, adding to variant:', {
         variantId: colorImageTarget.variantId,
         colorValue: colorImageTarget.colorValue,
         imagesCount: uploadedImages.length,
       });
 
       addColorImages(colorImageTarget.variantId, colorImageTarget.colorValue, uploadedImages);
-      console.log('✅ [ADMIN] Color images added to state:', uploadedImages.length);
+      logger.debug('✅ [ADMIN] Color images added to state:', uploadedImages.length);
     } catch (error: any) {
       console.error('❌ [ADMIN] Error uploading color images:', error);
       setImageUploadError(error?.message || t('admin.products.add.failedToProcessImages'));

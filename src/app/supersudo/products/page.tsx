@@ -11,6 +11,7 @@ import { ProductFilters } from './components/ProductFilters';
 import { ProductsTable } from './components/ProductsTable';
 import { useProductHandlers } from './hooks/useProductHandlers';
 import type { Product, ProductsResponse, Category } from './types';
+import { logger } from "@/lib/utils/logger";
 
 export default function ProductsPage() {
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const updateCurrency = () => {
       const newCurrency = getStoredCurrency();
-      console.log('💱 [ADMIN PRODUCTS] Currency updated to:', newCurrency);
+      logger.debug('💱 [ADMIN PRODUCTS] Currency updated to:', newCurrency);
       setCurrency(newCurrency);
     };
     
@@ -62,7 +63,7 @@ export default function ProductsPage() {
     if (typeof window !== 'undefined') {
       window.addEventListener('currency-updated', updateCurrency);
       const handleCurrencyRatesUpdate = () => {
-        console.log('💱 [ADMIN PRODUCTS] Currency rates updated, refreshing currency...');
+        logger.debug('💱 [ADMIN PRODUCTS] Currency rates updated, refreshing currency...');
         updateCurrency();
       };
       window.addEventListener('currency-rates-updated', handleCurrencyRatesUpdate);
@@ -101,10 +102,10 @@ export default function ProductsPage() {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
-      console.log('📂 [ADMIN] Fetching categories...');
+      logger.debug('📂 [ADMIN] Fetching categories...');
       const response = await apiClient.get<{ data: Category[] }>('/api/v1/admin/categories');
       setCategories(response.data || []);
-      console.log('✅ [ADMIN] Categories loaded:', response.data?.length || 0);
+      logger.debug('✅ [ADMIN] Categories loaded:', response.data?.length || 0);
     } catch (err: any) {
       console.error('❌ [ADMIN] Error fetching categories:', err);
       setCategories([]);
@@ -117,7 +118,7 @@ export default function ProductsPage() {
     if (isLoggedIn && isAdmin) {
       fetchProducts();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isLoggedIn, isAdmin, page, search, selectedCategories, skuSearch, stockFilter, sortBy, minPrice, maxPrice]);
 
   const fetchProducts = async () => {
@@ -198,7 +199,7 @@ export default function ProductsPage() {
     const [field, directionRaw] = sortBy.split('-');
     const direction = directionRaw === 'asc' ? 1 : -1;
 
-    console.log('📊 [ADMIN] Applying client-side sort:', { field, direction: directionRaw });
+    logger.debug('📊 [ADMIN] Applying client-side sort:', { field, direction: directionRaw });
 
     const cloned = [...products];
 
@@ -272,7 +273,7 @@ export default function ProductsPage() {
         }
       }
 
-      console.log('📊 [ADMIN] Sort changed from', current, 'to', next, 'by header click');
+      logger.debug('📊 [ADMIN] Sort changed from', current, 'to', next, 'by header click');
       return next;
     });
   };

@@ -12,6 +12,7 @@ import {
   createColorData,
   updateColorData,
 } from '../utils/colorDataBuilder';
+import { logger } from "@/lib/utils/logger";
 import {
   collectVariantImagesFromColors,
   collectVariantImagesFromProductVariants,
@@ -60,7 +61,7 @@ export function useProductEditMode({
       const loadProduct = async () => {
         try {
           setLoadingProduct(true);
-          console.log('📥 [ADMIN] Loading product for edit:', productId);
+          logger.debug('📥 [ADMIN] Loading product for edit:', productId);
           const product = await apiClient.get<ProductData>(`/api/v1/admin/products/${productId}`);
 
           const colorDataMap = new Map<string, ColorData>();
@@ -69,7 +70,7 @@ export function useProductEditMode({
           let firstSku = '';
 
           (product.variants || []).forEach((variant: any, index: number) => {
-            console.log(`🔍 [ADMIN] Processing variant ${index}:`, {
+            logger.debug(`🔍 [ADMIN] Processing variant ${index}:`, {
               id: variant.id,
               sku: variant.sku,
               price: variant.price,
@@ -83,7 +84,7 @@ export function useProductEditMode({
             const color = extractColor(variant);
             const size = extractSize(variant);
 
-            console.log(`📊 [ADMIN] Extracted from variant ${index}:`, { color, size });
+            logger.debug(`📊 [ADMIN] Extracted from variant ${index}:`, { color, size });
 
             const stockValue =
               variant.stock !== undefined && variant.stock !== null ? String(variant.stock) : '';
@@ -145,10 +146,10 @@ export function useProductEditMode({
           );
           const variantImages = new Set([...variantImagesFromColors, ...variantImagesFromProduct]);
 
-          console.log(`🖼️ [ADMIN] Total variant images collected: ${variantImages.size}`);
+          logger.debug(`🖼️ [ADMIN] Total variant images collected: ${variantImages.size}`);
 
           const mediaList = product.media || [];
-          console.log('🖼️ [ADMIN] Loading main media images. Total media:', mediaList.length);
+          logger.debug('🖼️ [ADMIN] Loading main media images. Total media:', mediaList.length);
 
           const { main } = separateMainAndVariantImages(
             Array.isArray(mediaList) ? mediaList : [],
@@ -156,7 +157,7 @@ export function useProductEditMode({
           );
 
           const normalizedMedia = cleanImageUrls(main);
-          console.log(
+          logger.debug(
             `🖼️ [ADMIN] Main media loaded: ${normalizedMedia.length} images (after separation from ${variantImages.size} variant images)`
           );
 
@@ -196,14 +197,14 @@ export function useProductEditMode({
 
           if (product.attributeIds && product.attributeIds.length > 0) {
             (window as any).__productAttributeIds = product.attributeIds;
-            console.log('📋 [ADMIN] Product attributeIds loaded:', product.attributeIds);
+            logger.debug('📋 [ADMIN] Product attributeIds loaded:', product.attributeIds);
           }
 
           const variants = product.variants || [];
           const hasVariants = variants.length > 0;
           const hasVariantsWithAttrs = hasVariantsWithAttributes(variants);
 
-          console.log('📦 [ADMIN] Product type check:', {
+          logger.debug('📦 [ADMIN] Product type check:', {
             hasVariants,
             variantsCount: variants.length,
             hasVariantsWithAttributes: hasVariantsWithAttrs,
@@ -228,7 +229,7 @@ export function useProductEditMode({
           });
 
           if (!hasVariantsWithAttrs) {
-            console.log('📦 [ADMIN] Product variants have no attributes, setting productType to "simple"');
+            logger.debug('📦 [ADMIN] Product variants have no attributes, setting productType to "simple"');
             setProductType('simple');
 
             if (hasVariants && variants.length > 0) {
@@ -268,11 +269,11 @@ export function useProductEditMode({
               });
             }
           } else {
-            console.log('📦 [ADMIN] Product variants have attributes, keeping productType as "variable"');
+            logger.debug('📦 [ADMIN] Product variants have attributes, keeping productType as "variable"');
             setProductType('variable');
           }
 
-          console.log('✅ [ADMIN] Product loaded for edit');
+          logger.debug('✅ [ADMIN] Product loaded for edit');
         } catch (err: unknown) {
           console.error('❌ [ADMIN] Error loading product:', err);
           router.push('/supersudo/products');

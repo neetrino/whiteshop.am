@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '../../../../lib/api-client';
 import { useTranslation } from '../../../../lib/i18n-client';
 import type { Product, ProductsResponse } from '../types';
+import { logger } from "@/lib/utils/logger";
 
 interface UseProductHandlersProps {
   products: Product[];
@@ -80,7 +81,7 @@ export function useProductHandlers({
 
     try {
       await apiClient.delete(`/api/v1/admin/products/${productId}`);
-      console.log('✅ [ADMIN] Product deleted successfully');
+      logger.debug('✅ [ADMIN] Product deleted successfully');
       
       // Refresh products list
       fetchProducts();
@@ -103,11 +104,11 @@ export function useProductHandlers({
         published: newStatus,
       };
       
-      console.log(`🔄 [ADMIN] Updating product status to ${newStatus ? 'published' : 'draft'}`);
+      logger.debug(`🔄 [ADMIN] Updating product status to ${newStatus ? 'published' : 'draft'}`);
       
       await apiClient.put(`/api/v1/admin/products/${productId}`, updateData);
       
-      console.log(`✅ [ADMIN] Product ${newStatus ? 'published' : 'unpublished'} successfully`);
+      logger.debug(`✅ [ADMIN] Product ${newStatus ? 'published' : 'unpublished'} successfully`);
       
       // Refresh products list
       fetchProducts();
@@ -131,11 +132,11 @@ export function useProductHandlers({
         featured: newStatus,
       };
       
-      console.log(`⭐ [ADMIN] Updating product featured status to ${newStatus ? 'featured' : 'not featured'}`);
+      logger.debug(`⭐ [ADMIN] Updating product featured status to ${newStatus ? 'featured' : 'not featured'}`);
       
       await apiClient.put(`/api/v1/admin/products/${productId}`, updateData);
       
-      console.log(`✅ [ADMIN] Product ${newStatus ? 'marked as featured' : 'removed from featured'} successfully`);
+      logger.debug(`✅ [ADMIN] Product ${newStatus ? 'marked as featured' : 'removed from featured'} successfully`);
       
       // Refresh products list
       fetchProducts();
@@ -163,7 +164,7 @@ export function useProductHandlers({
       const failed = results.filter(r => r.status === 'rejected');
       const successCount = products.length - failed.length;
       
-      console.log(`✅ [ADMIN] Toggle all featured completed: ${successCount}/${products.length} successful`);
+      logger.debug(`✅ [ADMIN] Toggle all featured completed: ${successCount}/${products.length} successful`);
       
       // Refresh products list
       await fetchProducts();

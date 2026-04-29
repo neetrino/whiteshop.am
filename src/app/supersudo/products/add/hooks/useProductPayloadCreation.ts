@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api-client';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { Attribute } from '../types';
+import { logger } from "@/lib/utils/logger";
 
 interface CreateAndSubmitPayloadProps {
   formData: {
@@ -73,18 +74,18 @@ export async function createAndSubmitPayload({
         color: label.color || null,
       }));
 
-    console.log('📤 [ADMIN] Sending payload:', JSON.stringify(payload, null, 2));
+    logger.debug('📤 [ADMIN] Sending payload:', JSON.stringify(payload, null, 2));
     
     try {
       if (isEditMode && productId) {
         const product = await apiClient.put(`/api/v1/admin/products/${productId}`, payload);
-        console.log('✅ [ADMIN] Product updated:', product);
+        logger.debug('✅ [ADMIN] Product updated:', product);
         const baseMessage = 'Ապրանքը հաջողությամբ թարմացվեց!';
         const extra = creationMessages.length ? `\n\n${creationMessages.join('\n')}` : '';
         alert(`${baseMessage}${extra}`);
       } else {
         const product = await apiClient.post('/api/v1/admin/products', payload);
-        console.log('✅ [ADMIN] Product created:', product);
+        logger.debug('✅ [ADMIN] Product created:', product);
         const baseMessage = 'Ապրանքը հաջողությամբ ստեղծվեց!';
         const extra = creationMessages.length ? `\n\n${creationMessages.join('\n')}` : '';
         alert(`${baseMessage}${extra}`);

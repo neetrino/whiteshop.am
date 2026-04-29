@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from '../../lib/i18n-client';
 import { resolveLoginApiError } from '../../lib/auth/client-api-error-messages';
 import { Eye, EyeOff } from 'lucide-react';
+import { logger } from "@/lib/utils/logger";
 
 function LoginPageContent() {
   const { t } = useTranslation();
@@ -29,7 +30,7 @@ function LoginPageContent() {
     setError(null);
     setIsSubmitting(true);
 
-    console.log('🔐 [LOGIN PAGE] Form submitted');
+    logger.debug('🔐 [LOGIN PAGE] Form submitted');
 
     // Validation
     if (!emailOrPhone.trim()) {
@@ -45,12 +46,12 @@ function LoginPageContent() {
     }
 
     try {
-      console.log('📤 [LOGIN PAGE] Calling login function...');
+      logger.debug('📤 [LOGIN PAGE] Calling login function...');
       const loggedInUser = await login(emailOrPhone.trim(), password);
       const isUserAdmin =
         Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('admin');
       const destination = isUserAdmin ? '/supersudo' : redirectTo;
-      console.log('✅ [LOGIN PAGE] Login successful, redirecting to:', destination);
+      logger.debug('✅ [LOGIN PAGE] Login successful, redirecting to:', destination);
       router.push(destination);
     } catch (err: any) {
       console.error('❌ [LOGIN PAGE] Login error:', err);
