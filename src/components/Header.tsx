@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, Suspense } from 'react';
 import type { FormEvent, ReactNode, CSSProperties } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
 import { getStoredLanguage } from '../lib/language';
 import { useInstantSearch } from './hooks/useInstantSearch';
+import { useHeaderScrollVisibility } from './hooks/useHeaderScrollVisibility';
 import { SearchDropdown } from './SearchDropdown';
 import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
@@ -367,6 +368,33 @@ export function Header() {
   const productsMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchModalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const mainNavRef = useRef<HTMLElement>(null);
+  const [topBarHeight, setTopBarHeight] = useState(0);
+  const [mainNavHeight, setMainNavHeight] = useState(0);
+
+  const suppressScrollHide =
+    showSearchModal ||
+    mobileMenuOpen ||
+    showUserMenu ||
+    showMobileCurrency ||
+    showProductsMenu;
+
+  const headerScrollVisible = useHeaderScrollVisibility(suppressScrollHide);
+
+  useLayoutEffect(() => {
+    const top = topBarRef.current;
+    const nav = mainNavRef.current;
+    const measure = () => {
+      if (top) setTopBarHeight(top.getBoundingClientRect().height);
+      if (nav) setMainNavHeight(nav.getBoundingClientRect().height);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (top) ro.observe(top);
+    if (nav) ro.observe(nav);
+    return () => ro.disconnect();
+  }, []);
 
   const {
     query: searchQuery,
@@ -690,8 +718,10 @@ export function Header() {
     window.dispatchEvent(new Event('currency-updated'));
   };
 
+  const spacerHeight = topBarHeight + (headerScrollVisible ? mainNavHeight : 0);
+
   return (
-    <header className="bg-gradient-to-b from-gray-50 to-white sticky top-0 z-50 border-b border-gray-200/80 shadow-sm backdrop-blur-sm bg-white/95">
+    <>
       <Suspense fallback={null}>
         <HeaderSearchSync
           setSearchQuery={setSearchQuery}
@@ -699,8 +729,16 @@ export function Header() {
           categories={categories}
         />
       </Suspense>
-      {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 hidden md:block">
+      <div
+        aria-hidden
+        className="shrink-0 overflow-hidden transition-[height] duration-300 ease-out"
+        style={{ height: spacerHeight }}
+      />
+      {/* Desktop top bar — fixed, does not hide on scroll */}
+      <div
+        ref={topBarRef}
+        className="fixed top-0 inset-x-0 z-[60] hidden md:block bg-white border-b border-gray-200"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
             {/* Phone + Social */}
@@ -784,7 +822,14 @@ export function Header() {
         </div>
       </div>
 
-      {/* Main Header */}
+      {/* Main nav row — logo, links, icons; hides on scroll down */}
+      <header
+        ref={mainNavRef}
+        style={{ top: topBarHeight }}
+        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-out will-change-transform ${
+          headerScrollVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        }`}
+      >
       <div className="max-w-7xl mx-auto pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">
         <div className="flex flex-wrap items-center gap-2 sm:gap-4 py-4 md:py-3">
           {/* Logo + Mobile Menu */}
@@ -1221,6 +1266,7 @@ export function Header() {
         </div>
       )}
     </header>
+    </>
   );
 }
 
