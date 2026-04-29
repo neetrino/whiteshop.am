@@ -29,7 +29,7 @@ export function ProfileDeleteAccount({
 }: ProfileDeleteAccountProps) {
   if (!profile) {
     return (
-      <Card className="p-6">
+      <Card className="rounded-2xl border border-gray-200/80 p-6 sm:p-8">
         <p className="text-sm text-gray-600">{t('profile.common.loadingProfile')}</p>
       </Card>
     );
@@ -38,17 +38,19 @@ export function ProfileDeleteAccount({
   const hasPassword = profile.hasPassword ?? true;
 
   return (
-    <Card className="p-6 border border-red-200 bg-red-50/30">
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('profile.deleteAccount.title')}</h2>
-      <p className="text-sm text-gray-700 mb-6">{t('profile.deleteAccount.description')}</p>
+    <Card className="rounded-2xl border border-red-200 bg-red-50/30 p-5 shadow-none sm:p-7 lg:p-8">
+      <div className="mb-6 space-y-2 sm:mb-8">
+        <h2 className="text-lg font-bold tracking-tight text-gray-900 sm:text-xl">{t('profile.deleteAccount.title')}</h2>
+        <p className="max-w-2xl text-sm leading-relaxed text-gray-700">{t('profile.deleteAccount.description')}</p>
+      </div>
 
-      <ul className="text-sm text-gray-600 list-disc pl-5 mb-6 space-y-1">
+      <ul className="mb-8 max-w-2xl list-disc space-y-2 pl-5 text-sm text-gray-600 sm:mb-10">
         <li>{t('profile.deleteAccount.pointOrders')}</li>
         <li>{t('profile.deleteAccount.pointLogin')}</li>
         <li>{t('profile.deleteAccount.pointData')}</li>
       </ul>
 
-      <form onSubmit={onSubmit} className="space-y-4 max-w-2xl">
+      <form onSubmit={onSubmit} className="mx-auto max-w-xl space-y-6 lg:mx-0 lg:max-w-2xl">
         {hasPassword ? (
           <Input
             label={t('profile.deleteAccount.currentPassword')}
@@ -71,21 +73,21 @@ export function ProfileDeleteAccount({
           />
         )}
 
-        <label className="flex items-start gap-3 cursor-pointer">
+        <label className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
             className="mt-1 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
             checked={acknowledged}
             onChange={(e) => setAcknowledged(e.target.checked)}
           />
-          <span className="text-sm text-gray-800">{t('profile.deleteAccount.acknowledge')}</span>
+          <span className="text-sm leading-snug text-gray-800">{t('profile.deleteAccount.acknowledge')}</span>
         </label>
 
-        <div className="pt-2">
+        <div className="pt-1 sm:pt-2">
           <Button
             type="submit"
             variant="primary"
-            className="!bg-red-700 hover:!bg-red-800 focus:!ring-red-600 text-white"
+            className="h-11 w-full rounded-xl !bg-red-700 hover:!bg-red-800 focus:!ring-red-600 sm:w-auto"
             disabled={deleting || !acknowledged}
           >
             {deleting ? t('profile.deleteAccount.deleting') : t('profile.deleteAccount.submit')}

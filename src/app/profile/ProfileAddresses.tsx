@@ -34,12 +34,13 @@ export function ProfileAddresses({
   t,
 }: ProfileAddressesProps) {
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">{t('profile.addresses.title')}</h2>
+    <div className="space-y-6 sm:space-y-8">
+      <Card className="rounded-2xl border border-gray-200/80 p-5 shadow-none sm:p-7 lg:p-8">
+        <div className="mb-6 flex flex-col gap-4 border-b border-gray-100 pb-5 sm:mb-8 sm:flex-row sm:items-center sm:justify-between sm:pb-6">
+          <h2 className="text-lg font-bold tracking-tight text-gray-900 sm:text-xl">{t('profile.addresses.title')}</h2>
           <Button
             variant="primary"
+            className="h-11 w-full shrink-0 rounded-xl sm:w-auto"
             onClick={() => {
               onResetForm();
               setShowAddressForm(!showAddressForm);
@@ -49,13 +50,12 @@ export function ProfileAddresses({
           </Button>
         </div>
 
-        {/* Address Form */}
         {showAddressForm && (
-          <form onSubmit={onSave} className="mb-6 p-4 bg-gray-50 rounded-lg space-y-4">
-            <h3 className="font-semibold text-gray-900">
+          <form onSubmit={onSave} className="mb-8 space-y-5 rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 p-4 sm:mb-10 sm:p-6">
+            <h3 className="text-base font-semibold text-gray-900">
               {editingAddress ? t('profile.addresses.form.editTitle') : t('profile.addresses.form.addTitle')}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
               <Input
                 label={t('profile.addresses.form.addressLine1')}
                 value={addressForm.addressLine1}
@@ -69,22 +69,20 @@ export function ProfileAddresses({
                 required
               />
             </div>
-            <label className="flex items-center">
+            <label className="flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={addressForm.isDefault || false}
                 onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
-                className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
               />
-              <span className="ml-2 text-sm text-gray-700">{t('profile.addresses.form.isDefault')}</span>
+              <span className="text-sm text-gray-700">{t('profile.addresses.form.isDefault')}</span>
             </label>
-            <div className="flex gap-2">
-              <Button type="submit" variant="primary" disabled={savingAddress}>
-                {savingAddress ? t('profile.addresses.form.saving') : editingAddress ? t('profile.addresses.form.update') : t('profile.addresses.form.add')}
-              </Button>
+            <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:gap-3">
               <Button
                 type="button"
                 variant="outline"
+                className="h-11 w-full rounded-xl sm:w-auto"
                 onClick={() => {
                   setShowAddressForm(false);
                   onResetForm();
@@ -92,56 +90,46 @@ export function ProfileAddresses({
               >
                 {t('profile.addresses.form.cancel')}
               </Button>
+              <Button type="submit" variant="primary" className="h-11 w-full rounded-xl sm:w-auto" disabled={savingAddress}>
+                {savingAddress ? t('profile.addresses.form.saving') : editingAddress ? t('profile.addresses.form.update') : t('profile.addresses.form.add')}
+              </Button>
             </div>
           </form>
         )}
 
-        {/* Addresses List */}
-        <div className="space-y-4">
+        <div className="space-y-4 sm:space-y-5">
           {profile?.addresses && profile.addresses.length > 0 ? (
             profile.addresses.map((address, index) => (
               <div
                 key={address.id || address._id || index}
-                className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 lg:p-6"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {address.isDefault && (
-                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                        <span className="rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                           {t('profile.addresses.default')}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-700">
-                      {address.addressLine1}
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      {address.city}
-                    </p>
+                    <p className="text-sm text-gray-800 sm:text-base">{address.addressLine1}</p>
+                    <p className="text-sm text-gray-800 sm:text-base">{address.city}</p>
                   </div>
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-4 lg:border-0 lg:pt-0">
                     {!address.isDefault && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onSetDefault((address.id || address._id)!)}
-                      >
+                      <Button variant="outline" size="sm" className="min-h-9 flex-1 rounded-xl sm:flex-initial" onClick={() => onSetDefault((address.id || address._id)!)}>
                         {t('profile.addresses.setDefault')}
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(address)}
-                    >
+                    <Button variant="outline" size="sm" className="min-h-9 flex-1 rounded-xl sm:flex-initial" onClick={() => onEdit(address)}>
                       {t('profile.addresses.edit')}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-9 flex-1 rounded-xl text-red-600 hover:border-red-300 hover:text-red-700 sm:flex-initial"
                       onClick={() => onDelete((address.id || address._id)!)}
-                      className="text-red-600 hover:text-red-700 hover:border-red-300"
                     >
                       {t('profile.addresses.delete')}
                     </Button>
@@ -150,13 +138,10 @@ export function ProfileAddresses({
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-center py-8">{t('profile.addresses.noAddresses')}</p>
+            <p className="py-12 text-center text-sm text-gray-500 sm:py-16">{t('profile.addresses.noAddresses')}</p>
           )}
         </div>
       </Card>
     </div>
   );
 }
-
-
-

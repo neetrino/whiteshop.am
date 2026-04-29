@@ -25,10 +25,12 @@ export function ProfilePersonalInfo({
   t,
 }: ProfilePersonalInfoProps) {
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('profile.personal.title')}</h2>
-      <form onSubmit={onSave} className="space-y-4 max-w-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Card className="rounded-2xl border border-gray-200/80 p-5 shadow-none sm:p-7 lg:p-8">
+      <div className="mb-8 border-b border-gray-100 pb-5 sm:mb-10 sm:pb-6">
+        <h2 className="text-lg font-bold tracking-tight text-gray-900 sm:text-xl">{t('profile.personal.title')}</h2>
+      </div>
+      <form onSubmit={onSave} className="mx-auto max-w-xl space-y-6 lg:mx-0 lg:max-w-2xl">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
           <Input
             label={t('profile.personal.firstName')}
             value={personalInfo.firstName}
@@ -56,13 +58,11 @@ export function ProfilePersonalInfo({
           onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
           placeholder={t('profile.personal.phonePlaceholder')}
         />
-        <div className="flex items-center gap-2 pt-4">
-          <Button type="submit" variant="primary" disabled={savingPersonal}>
-            {savingPersonal ? t('profile.personal.saving') : t('profile.personal.save')}
-          </Button>
+        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:gap-4 sm:pt-4">
           <Button
             type="button"
             variant="outline"
+            className="h-11 w-full rounded-xl sm:w-auto"
             onClick={() => {
               setPersonalInfo({
                 firstName: profile?.firstName || '',
@@ -74,11 +74,11 @@ export function ProfilePersonalInfo({
           >
             {t('profile.personal.cancel')}
           </Button>
+          <Button type="submit" variant="primary" className="h-11 w-full rounded-xl sm:w-auto" disabled={savingPersonal}>
+            {savingPersonal ? t('profile.personal.saving') : t('profile.personal.save')}
+          </Button>
         </div>
       </form>
     </Card>
   );
 }
-
-
-

@@ -150,26 +150,27 @@ function ProfilePageContent() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <ProfileHeader
-          profile={profile}
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          t={t}
-        />
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-10 lg:gap-12">
+        <aside className="w-full shrink-0 sm:sticky sm:top-24 sm:w-56 sm:self-start sm:border-r sm:border-gray-200/90 sm:pr-8 lg:w-64">
+          <ProfileHeader
+            profile={profile}
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            t={t}
+          />
+        </aside>
 
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          {/* Alert messages */}
+        <main className="min-w-0 flex-1">
+          <div className="space-y-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200/80 sm:space-y-8 sm:p-6 lg:rounded-3xl lg:p-8">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
           {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <p className="text-sm text-green-600">{success}</p>
             </div>
           )}
@@ -270,7 +271,8 @@ function ProfilePageContent() {
               t={t}
             />
           )}
-        </div>
+          </div>
+        </main>
       </div>
     </div>
   );
