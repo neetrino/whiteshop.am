@@ -1213,11 +1213,20 @@ export function Header() {
           </div>
         </div>
       )}
+    </header>
 
-      {/* Search Modal */}
+      {/* Search overlay lives outside <header> so fixed positioning is viewport-relative (header uses transform for scroll-hide). */}
       {showSearchModal && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-start justify-center pt-20 px-4">
-          <div 
+        <div
+          className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 backdrop-blur-sm pt-20 px-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowSearchModal(false);
+            }
+          }}
+        >
+          <div
             ref={searchModalRef}
             className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200/80 p-4 animate-in fade-in slide-in-from-top-2 duration-200 relative"
           >
@@ -1231,7 +1240,9 @@ export function Header() {
                   setSearchQuery(e.target.value);
                   if (e.target.value.trim().length >= 1) setSearchDropdownOpen(true);
                 }}
-                onFocus={() => { if (searchQuery.trim().length >= 1) setSearchDropdownOpen(true); }}
+                onFocus={() => {
+                  if (searchQuery.trim().length >= 1) setSearchDropdownOpen(true);
+                }}
                 onKeyDown={searchHandleKeyDown}
                 placeholder={t('common.placeholders.search')}
                 className="flex-1 h-11 px-4 border-2 border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm placeholder:text-gray-400"
@@ -1239,7 +1250,7 @@ export function Header() {
                 aria-expanded={searchDropdownOpen && searchResults.length > 0}
                 aria-autocomplete="list"
               />
-              
+
               {/* Search Button */}
               <button
                 type="submit"
@@ -1267,7 +1278,6 @@ export function Header() {
           </div>
         </div>
       )}
-    </header>
     </>
   );
 }
