@@ -718,7 +718,9 @@ export function Header() {
     window.dispatchEvent(new Event('currency-updated'));
   };
 
-  const spacerHeight = topBarHeight + (headerScrollVisible ? mainNavHeight : 0);
+  // Always reserve main-nav height so toggling visibility does not change document
+  // length (which would shift scrollY and retrigger show/hide — flicker loop).
+  const spacerHeight = topBarHeight + mainNavHeight;
 
   return (
     <>
