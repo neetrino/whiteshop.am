@@ -1,4 +1,5 @@
 import { db } from "@white-shop/db";
+import { logger } from "@/lib/utils/logger";
 
 class AdminAttributesReadService {
   /**
@@ -37,14 +38,14 @@ class AdminAttributesReadService {
         return; // Columns already exist
       }
 
-      console.log('📝 [ADMIN ATTRIBUTES READ SERVICE] Adding missing colors/imageUrl columns...');
+      logger.debug('📝 [ADMIN ATTRIBUTES READ SERVICE] Adding missing colors/imageUrl columns...');
 
       // Add colors column if it doesn't exist
       if (!colorsExists) {
         await db.$executeRawUnsafe(`
           ALTER TABLE "attribute_values" ADD COLUMN IF NOT EXISTS "colors" JSONB DEFAULT '[]'::jsonb;
         `);
-        console.log('✅ [ADMIN ATTRIBUTES READ SERVICE] Added "colors" column');
+        logger.debug('✅ [ADMIN ATTRIBUTES READ SERVICE] Added "colors" column');
       }
 
       // Add imageUrl column if it doesn't exist
@@ -52,7 +53,7 @@ class AdminAttributesReadService {
         await db.$executeRawUnsafe(`
           ALTER TABLE "attribute_values" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
         `);
-        console.log('✅ [ADMIN ATTRIBUTES READ SERVICE] Added "imageUrl" column');
+        logger.debug('✅ [ADMIN ATTRIBUTES READ SERVICE] Added "imageUrl" column');
       }
 
       // Create index if it doesn't exist
@@ -61,7 +62,7 @@ class AdminAttributesReadService {
         ON "attribute_values" USING GIN ("colors");
       `);
 
-      console.log('✅ [ADMIN ATTRIBUTES READ SERVICE] Migration completed successfully!');
+      logger.debug('✅ [ADMIN ATTRIBUTES READ SERVICE] Migration completed successfully!');
     } catch (error: any) {
       console.error('❌ [ADMIN ATTRIBUTES READ SERVICE] Migration error:', error.message);
       throw error; // Re-throw to handle in calling code
@@ -250,7 +251,7 @@ class AdminAttributesReadService {
               colorsArray = [];
             }
             
-            console.log('🎨 [ADMIN ATTRIBUTES READ SERVICE] Parsed colors for value:', {
+            logger.debug('🎨 [ADMIN ATTRIBUTES READ SERVICE] Parsed colors for value:', {
               valueId: value.id,
               valueLabel: valueTranslation?.label || value.value,
               colorsData,

@@ -23,6 +23,8 @@ export interface UserProfile {
   locale?: string;
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  /** Present on API profile response; used for account deletion flow */
+  hasPassword?: boolean;
   addresses?: Address[];
   createdAt?: string;
   updatedAt?: string;
@@ -119,7 +121,13 @@ export interface OrderListItem {
   createdAt: string;
 }
 
-export type ProfileTab = 'dashboard' | 'personal' | 'addresses' | 'password' | 'orders';
+export type ProfileTab =
+  | 'dashboard'
+  | 'personal'
+  | 'addresses'
+  | 'password'
+  | 'orders'
+  | 'deleteAccount';
 
 export interface ProfileTabConfig {
   id: ProfileTab;

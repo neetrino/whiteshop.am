@@ -1,3 +1,41 @@
+function categoryTitleFromTranslations(
+  translations: Array<{ title: string }> | undefined
+): string {
+  return Array.isArray(translations) && translations.length > 0 ? translations[0].title : "";
+}
+
+/**
+ * Comma-separated category titles; primary category first when set.
+ */
+function formatCategorySummary(product: {
+  primaryCategoryId: string | null;
+  categories?: Array<{
+    id: string;
+    translations?: Array<{ title: string }>;
+  }>;
+}): string {
+  const cats = product.categories ?? [];
+  if (cats.length === 0) {
+    return "";
+  }
+  const primaryId = product.primaryCategoryId;
+  const ordered = [...cats].sort((a, b) => {
+    if (primaryId) {
+      if (a.id === primaryId && b.id !== primaryId) return -1;
+      if (b.id === primaryId && a.id !== primaryId) return 1;
+    }
+    return categoryTitleFromTranslations(a.translations).localeCompare(
+      categoryTitleFromTranslations(b.translations),
+      undefined,
+      { sensitivity: "base" }
+    );
+  });
+  return ordered
+    .map((c) => categoryTitleFromTranslations(c.translations))
+    .filter(Boolean)
+    .join(", ");
+}
+
 /**
  * Format product for list response
  */
@@ -7,6 +45,7 @@ export function formatProductForList(product: {
   featured: boolean | null;
   discountPercent: number | null;
   createdAt: Date;
+  primaryCategoryId: string | null;
   translations?: Array<{
     slug: string;
     title: string;
@@ -17,6 +56,10 @@ export function formatProductForList(product: {
     compareAtPrice: number | null;
   }>;
   media?: unknown[];
+  categories?: Array<{
+    id: string;
+    translations?: Array<{ title: string }>;
+  }>;
 }) {
   // Безопасное получение translation с проверкой на существование массива
   const translation = Array.isArray(product.translations) && product.translations.length > 0
@@ -43,6 +86,7 @@ export function formatProductForList(product: {
     colorStocks: [], // Can be enhanced later
     image,
     createdAt: product.createdAt.toISOString(),
+    categorySummary: formatCategorySummary(product),
   };
 }
 

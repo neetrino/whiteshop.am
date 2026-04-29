@@ -14,6 +14,11 @@
     "delivery": "Доставка",
     "settings": "Настройки"
   },
+  "sidebar": {
+    "expand": "Развернуть боковую панель",
+    "collapse": "Свернуть боковую панель",
+    "toggleProductsNested": "Показать или скрыть подразделы товаров: категории, бренды, атрибуты"
+  },
   "dashboard": {
     "title": "Админ страница",
     "welcome": "Добро пожаловать, {name}!",
@@ -277,6 +282,7 @@
     "product": "ТОВАР",
     "stock": "НАЛИЧИЕ",
     "price": "ЦЕНА",
+    "category": "КАТЕГОРИЯ",
     "status": "СТАТУС",
     "featured": "РЕКОМЕНДУЕМЫЕ",
     "created": "СОЗДАН",
@@ -577,9 +583,11 @@
     "payment": "Оплата",
     "total": "Итого",
     "items": "Товары",
+    "itemsQtyHeader": "Кол.",
     "date": "Дата",
     "unknownCustomer": "Неизвестный клиент",
     "viewOrderDetails": "Просмотр деталей заказа",
+    "viewOrderDetailsShort": "Подробнее",
     "selectAllOrders": "Выбрать все заказы",
     "selectOrder": "Выбрать заказ {number}",
     "orderDetails": {

@@ -32,6 +32,7 @@
     "passwordRequired": "Please enter a password",
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordsDoNotMatch": "Passwords do not match",
+    "userExists": "An account with this email or phone already exists.",
     "registrationFailed": "Registration failed. Please try again."
   },
   "passwordHint": "Must be at least 6 characters"

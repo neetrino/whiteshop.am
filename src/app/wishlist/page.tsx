@@ -240,36 +240,17 @@ export default function WishlistPage() {
             </div>
           </div>
 
-          {/* Products Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          {/* Table Header */}
-          <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <div className="md:col-span-5">
-              <span className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{t('common.wishlist.tableHeaders.productName')}</span>
-            </div>
-            <div className="md:col-span-2 text-center">
-              <span className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{t('common.wishlist.tableHeaders.unitPrice')}</span>
-            </div>
-            <div className="md:col-span-2 text-center">
-              <span className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{t('common.wishlist.tableHeaders.stockStatus')}</span>
-            </div>
-            <div className="md:col-span-3 text-center">
-              <span className="text-sm font-semibold text-gray-900 uppercase tracking-wide">{t('common.wishlist.tableHeaders.action')}</span>
-            </div>
-          </div>
-
-          {/* Table Body */}
-          <div className="divide-y divide-gray-200">
+          {/* Products grid (cards side by side) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
-              <div
+              <article
                 key={product.id}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-6 hover:bg-gray-50 transition-colors"
+                className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow"
               >
-                {/* Product Name */}
-                <div className="md:col-span-5 flex items-center gap-4">
+                <div className="relative aspect-square bg-gray-100 shrink-0">
                   <Link
                     href={`/products/${product.slug}`}
-                    className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 relative overflow-hidden"
+                    className="absolute inset-0 block"
                   >
                     {product.image ? (
                       <Image
@@ -277,86 +258,82 @@ export default function WishlistPage() {
                         alt={product.title}
                         fill
                         className="object-cover"
-                        sizes="80px"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                         unoptimized
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
                     )}
                   </Link>
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/products/${product.slug}`}
-                      className="text-base font-medium text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
-                    >
-                      {product.title}
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Unit Price */}
-                <div className="md:col-span-2 flex items-center justify-center md:justify-start">
-                  <div className="flex items-center gap-3">
-                    <span className="text-base font-semibold text-blue-600">
-                      {formatPrice(product.price, currency)}
-                    </span>
-                    {(product.originalPrice && product.originalPrice > product.price) && (
-                      <span className="text-sm text-gray-500 line-through">
-                        {formatPrice(product.originalPrice, currency)}
-                      </span>
-                    )}
-                    {!product.originalPrice && product.compareAtPrice && product.compareAtPrice > product.price && (
-                      <span className="text-sm text-gray-500 line-through">
-                        {formatPrice(product.compareAtPrice, currency)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Stock Status */}
-                <div className="md:col-span-2 flex items-center justify-center">
-                  {product.inStock ? (
-                    <span className="text-sm font-medium text-green-600 flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {t('common.stock.inStock')}
-                    </span>
-                  ) : (
-                    <span className="text-sm font-medium text-red-600">
-                      {t('common.stock.outOfStock')}
-                    </span>
-                  )}
-                </div>
-
-                {/* Action */}
-                <div className="md:col-span-3 flex items-center justify-center gap-3">
-                  <Button
-                    variant="primary"
-                    onClick={() => handleAddToCart(product)}
-                    disabled={!product.inStock || addingToCart.has(product.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white rounded-md px-4 py-2 font-semibold uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {addingToCart.has(product.id) ? t('common.messages.adding') : t('common.buttons.addToCart')}
-                  </Button>
                   <button
-                    onClick={() => handleRemove(product.id)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRemove(product.id);
+                    }}
+                    className="absolute right-2 top-2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-white/95 shadow-md border border-gray-200/80 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
                     aria-label={t('common.ariaLabels.removeFromWishlist')}
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-              </div>
+                <div className="p-4 flex flex-col flex-1 gap-3 min-w-0">
+                  <Link
+                    href={`/products/${product.slug}`}
+                    className="text-base font-medium text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
+                  >
+                    {product.title}
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-lg font-semibold text-blue-600">
+                      {formatPrice(product.price, currency)}
+                    </span>
+                    {product.originalPrice != null && product.originalPrice > product.price && (
+                      <span className="text-sm text-gray-500 line-through">
+                        {formatPrice(product.originalPrice, currency)}
+                      </span>
+                    )}
+                    {product.originalPrice == null &&
+                      product.compareAtPrice != null &&
+                      product.compareAtPrice > product.price && (
+                        <span className="text-sm text-gray-500 line-through">
+                          {formatPrice(product.compareAtPrice, currency)}
+                        </span>
+                      )}
+                  </div>
+                  <div>
+                    {product.inStock ? (
+                      <span className="text-sm font-medium text-green-600 inline-flex items-center gap-1">
+                        <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        {t('common.stock.inStock')}
+                      </span>
+                    ) : (
+                      <span className="text-sm font-medium text-red-600">{t('common.stock.outOfStock')}</span>
+                    )}
+                  </div>
+                  <div className="mt-auto pt-2">
+                    <Button
+                      variant="primary"
+                      onClick={() => handleAddToCart(product)}
+                      disabled={!product.inStock || addingToCart.has(product.id)}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white rounded-md px-4 py-2 font-semibold uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {addingToCart.has(product.id) ? t('common.messages.adding') : t('common.buttons.addToCart')}
+                    </Button>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
-        </div>
         </>
       ) : (
         <div className="text-center py-16">

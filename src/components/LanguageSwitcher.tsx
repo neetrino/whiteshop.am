@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { getStoredLanguage, setStoredLanguage, LANGUAGES, type LanguageCode } from '../lib/language';
-import { useTranslation } from '../lib/i18n-client';
 
 /**
  * Language Switcher Component
@@ -14,7 +13,6 @@ import { useTranslation } from '../lib/i18n-client';
 export function LanguageSwitcher() {
   const [currentLang, setCurrentLang] = useState<LanguageCode>(getStoredLanguage());
   const [showMenu, setShowMenu] = useState(false);
-  const { t } = useTranslation();
 
   useEffect(() => {
     const handleLanguageUpdate = () => {
@@ -44,9 +42,6 @@ export function LanguageSwitcher() {
         className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
         aria-label="Change language"
       >
-        <span className="text-lg" role="img" aria-label={currentLanguage.nativeName}>
-          {currentLang === 'en' ? '🇬🇧' : currentLang === 'hy' ? '🇦🇲' : currentLang === 'ru' ? '🇷🇺' : '🇬🇪'}
-        </span>
         <span className="hidden sm:inline">{currentLanguage.nativeName}</span>
         <span className="sm:hidden">{currentLanguage.code.toUpperCase()}</span>
         <svg
@@ -71,8 +66,7 @@ export function LanguageSwitcher() {
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
             {Object.entries(LANGUAGES).map(([code, lang]) => {
               const isActive = code === currentLang;
-              const flag = code === 'en' ? '🇬🇧' : code === 'hy' ? '🇦🇲' : code === 'ru' ? '🇷🇺' : '🇬🇪';
-              
+
               return (
                 <button
                   key={code}
@@ -83,7 +77,6 @@ export function LanguageSwitcher() {
                       : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  <span className="text-xl">{flag}</span>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">{lang.nativeName}</span>
                     <span className="text-xs text-gray-500">{lang.name}</span>
@@ -112,8 +105,7 @@ export function LanguageSwitcher() {
 }
 
 /**
- * Simple Language Switcher - Minimal version
- * Just shows flags/icons without dropdown
+ * Simple Language Switcher - Minimal version (language codes, no dropdown)
  */
 export function SimpleLanguageSwitcher() {
   const [currentLang, setCurrentLang] = useState<LanguageCode>(getStoredLanguage());
@@ -139,13 +131,12 @@ export function SimpleLanguageSwitcher() {
     <div className="flex items-center gap-2">
       {Object.entries(LANGUAGES).map(([code, lang]) => {
         const isActive = code === currentLang;
-        const flag = code === 'en' ? '🇬🇧' : code === 'hy' ? '🇦🇲' : code === 'ru' ? '🇷🇺' : '🇬🇪';
-        
+
         return (
           <button
             key={code}
             onClick={() => handleLanguageChange(code as LanguageCode)}
-            className={`px-2 py-1 rounded transition-all ${
+            className={`px-2 py-1 rounded text-xs font-semibold transition-all ${
               isActive
                 ? 'bg-blue-100 text-blue-700 scale-110'
                 : 'hover:bg-gray-100 text-gray-600'
@@ -153,7 +144,7 @@ export function SimpleLanguageSwitcher() {
             title={lang.nativeName}
             aria-label={`Switch to ${lang.name}`}
           >
-            <span className="text-lg">{flag}</span>
+            {code.toUpperCase()}
           </button>
         );
       })}

@@ -5,48 +5,39 @@
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-interface LogContext {
-  [key: string]: unknown;
-}
-
 class Logger {
   private isDevelopment(): boolean {
     return process.env.NODE_ENV === 'development';
   }
 
-  private formatMessage(level: LogLevel, message: string, context?: LogContext): string {
+  private formatMessage(level: LogLevel, message: string): string {
     const timestamp = new Date().toISOString();
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-    return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`;
+    return `[${timestamp}] [${level.toUpperCase()}] ${message}`;
   }
 
-  debug(message: string, context?: LogContext): void {
+  debug(message: string, ...args: unknown[]): void {
     if (this.isDevelopment()) {
-      console.debug(this.formatMessage('debug', message, context));
+      console.debug(this.formatMessage('debug', message), ...args);
     }
   }
 
-  info(message: string, context?: LogContext): void {
+  info(message: string, ...args: unknown[]): void {
     if (this.isDevelopment()) {
-      console.info(this.formatMessage('info', message, context));
+      console.info(this.formatMessage('info', message), ...args);
     }
   }
 
-  warn(message: string, context?: LogContext): void {
-    console.warn(this.formatMessage('warn', message, context));
+  warn(message: string, ...args: unknown[]): void {
+    console.warn(this.formatMessage('warn', message), ...args);
   }
 
-  error(message: string, context?: LogContext): void {
-    console.error(this.formatMessage('error', message, context));
+  error(message: string, ...args: unknown[]): void {
+    console.error(this.formatMessage('error', message), ...args);
   }
 
-  log(message: string, context?: LogContext): void {
-    // Alias for info in development
-    this.info(message, context);
+  log(message: string, ...args: unknown[]): void {
+    this.info(message, ...args);
   }
 }
 
 export const logger = new Logger();
-
-
-

@@ -16,6 +16,8 @@
   "errors": {
     "emailOrPhoneRequired": "Пожалуйста, введите ваш email или номер телефона",
     "passwordRequired": "Пожалуйста, введите ваш пароль",
+    "invalidCredentials": "Неверный email или телефон, или неверный пароль.",
+    "accountBlocked": "Ваш аккаунт заблокирован.",
     "loginFailed": "Ошибка входа. Пожалуйста, попробуйте снова."
   }
 }

@@ -14,6 +14,11 @@
     "delivery": "Առաքում",
     "settings": "Կարգավորումներ"
   },
+  "sidebar": {
+    "expand": "Բացել sidebar-ը",
+    "collapse": "Փակել sidebar-ը",
+    "toggleProductsNested": "Բացել կամ պակել Ապրանքների ներքևի բաժինները՝ Կատեգորիաներ, Բրենդներ, Ատրիբուտներ"
+  },
   "dashboard": {
     "title": "Ադմին էջ",
     "welcome": "Բարի վերադարձ, {name}!",
@@ -277,6 +282,7 @@
     "product": "ԱՊՐԱՆՔ",
     "stock": "ՊԱՇԱՐ",
     "price": "ԳԻՆ",
+    "category": "ԿԱՏԵԳՈՐԻԱ",
     "status": "ԿԱՐԳԱՎԻՃԱԿ",
     "featured": "ԱՌԱՋԱՐԿՎԱԾ",
     "created": "ՍՏԵՂծՎԱԾ",
@@ -574,9 +580,11 @@
     "payment": "Վճարում",
     "total": "Ընդամենը",
     "items": "Ապրանքներ",
+    "itemsQtyHeader": "Քան.",
     "date": "Ամսաթիվ",
     "unknownCustomer": "Անհայտ հաճախորդ",
     "viewOrderDetails": "Դիտել պատվերի մանրամասները",
+    "viewOrderDetailsShort": "Մանրամասներ",
     "showingPage": "Ցուցադրվում է {page} էջը {totalPages}-ից ({total} ընդամենը)",
     "previous": "Նախորդ",
     "next": "Հաջորդ",

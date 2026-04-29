@@ -52,7 +52,7 @@ export function UserAvatar({
   const initials = getInitials();
 
   return (
-    <div className={`relative flex-shrink-0 ${sizeClasses[size]} ${className}`}>
+    <div className={`relative shrink-0 rounded-full ${sizeClasses[size]} ${className}`}>
       {avatarUrl ? (
         <img
           src={avatarUrl}

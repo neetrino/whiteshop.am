@@ -7,7 +7,9 @@ import Link from 'next/link';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '../../lib/i18n-client';
+import { resolveLoginApiError } from '../../lib/auth/client-api-error-messages';
 import { Eye, EyeOff } from 'lucide-react';
+import { logger } from "@/lib/utils/logger";
 
 function LoginPageContent() {
   const { t } = useTranslation();
@@ -18,7 +20,7 @@ function LoginPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { login, isLoading, isLoggedIn } = useAuth();
+  const { login, isLoading, isLoggedIn, isAdmin } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams?.get('redirect') || '/';
@@ -28,7 +30,7 @@ function LoginPageContent() {
     setError(null);
     setIsSubmitting(true);
 
-    console.log('🔐 [LOGIN PAGE] Form submitted');
+    logger.debug('🔐 [LOGIN PAGE] Form submitted');
 
     // Validation
     if (!emailOrPhone.trim()) {
@@ -44,25 +46,27 @@ function LoginPageContent() {
     }
 
     try {
-      console.log('📤 [LOGIN PAGE] Calling login function...');
-      await login(emailOrPhone.trim(), password);
-      console.log('✅ [LOGIN PAGE] Login successful, redirecting to:', redirectTo);
-      // Redirect to the specified page or home
-      router.push(redirectTo);
+      logger.debug('📤 [LOGIN PAGE] Calling login function...');
+      const loggedInUser = await login(emailOrPhone.trim(), password);
+      const isUserAdmin =
+        Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('admin');
+      const destination = isUserAdmin ? '/supersudo' : redirectTo;
+      logger.debug('✅ [LOGIN PAGE] Login successful, redirecting to:', destination);
+      router.push(destination);
     } catch (err: any) {
       console.error('❌ [LOGIN PAGE] Login error:', err);
-      setError(err.message || t('login.errors.loginFailed'));
+      setError(resolveLoginApiError(err instanceof Error ? err.message : String(err), t));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Redirect if already logged in
+  // Redirect if already logged in (admins go to admin panel)
   useEffect(() => {
     if (isLoggedIn && !isLoading) {
-      router.push(redirectTo);
+      router.push(isAdmin ? '/supersudo' : redirectTo);
     }
-  }, [isLoggedIn, isLoading, redirectTo, router]);
+  }, [isLoggedIn, isLoading, isAdmin, redirectTo, router]);
 
   return (
     <div className="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-12">

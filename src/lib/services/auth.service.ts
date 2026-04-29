@@ -2,6 +2,7 @@ import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { db } from "@white-shop/db";
 import { logger } from "../utils/logger";
+import { usersService } from "./users.service";
 
 export interface RegisterData {
   email?: string;
@@ -59,26 +60,34 @@ class AuthService {
       };
     }
 
-    // Check if user already exists
-    const existingUser = await db.user.findFirst({
+    const emailNorm = data.email?.trim().toLowerCase() || undefined;
+    const phoneNorm = data.phone?.trim() || undefined;
+
+    const candidates = await db.user.findMany({
       where: {
         OR: [
-          ...(data.email ? [{ email: data.email }] : []),
-          ...(data.phone ? [{ phone: data.phone }] : []),
+          ...(emailNorm ? [{ email: emailNorm }] : []),
+          ...(phoneNorm ? [{ phone: phoneNorm }] : []),
         ],
-        deletedAt: null,
       },
-      select: { id: true },
+      select: { id: true, deletedAt: true },
     });
 
-    if (existingUser) {
-      logger.info("Auth registration rejected: user already exists");
-      throw {
-        status: 409,
-        type: "https://api.shop.am/problems/conflict",
-        title: "User already exists",
-        detail: "User with this email or phone already exists",
-      };
+    for (const row of candidates) {
+      if (!row.deletedAt) {
+        logger.info("Auth registration rejected: user already exists");
+        throw {
+          status: 409,
+          type: "https://api.shop.am/problems/conflict",
+          title: "User already exists",
+          detail: "User with this email or phone already exists",
+        };
+      }
+    }
+
+    const reclaimIds = [...new Set(candidates.map((c) => c.id))];
+    for (const id of reclaimIds) {
+      await usersService.permanentlyDeleteUserById(id);
     }
 
     // Hash password
@@ -89,8 +98,8 @@ class AuthService {
     try {
       user = await db.user.create({
         data: {
-          email: data.email || null,
-          phone: data.phone || null,
+          email: emailNorm || null,
+          phone: phoneNorm || null,
           passwordHash,
           firstName: data.firstName || null,
           lastName: data.lastName || null,
@@ -177,12 +186,15 @@ class AuthService {
       };
     }
 
+    const loginEmail = data.email?.trim().toLowerCase() || undefined;
+    const loginPhone = data.phone?.trim() || undefined;
+
     // Find user
     const user = await db.user.findFirst({
       where: {
         OR: [
-          ...(data.email ? [{ email: data.email }] : []),
-          ...(data.phone ? [{ phone: data.phone }] : []),
+          ...(loginEmail ? [{ email: loginEmail }] : []),
+          ...(loginPhone ? [{ phone: loginPhone }] : []),
         ],
         deletedAt: null,
       },

@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, Suspense } from 'react';
 import type { FormEvent, ReactNode, CSSProperties } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
 import { getStoredLanguage } from '../lib/language';
 import { useInstantSearch } from './hooks/useInstantSearch';
+import { useHeaderScrollVisibility } from './hooks/useHeaderScrollVisibility';
 import { SearchDropdown } from './SearchDropdown';
 import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
@@ -15,6 +16,7 @@ import { CART_KEY, getCompareCount, getWishlistCount } from '../lib/storageCount
 import { LanguageSwitcherHeader } from './LanguageSwitcherHeader';
 import { Instagram, Facebook, Linkedin } from 'lucide-react';
 import { CompareIcon } from './icons/CompareIcon';
+import { BrandLogoLink } from './BrandLogoLink';
 import { CartIcon } from './icons/CartIcon';
 
 // Navigation links will be translated dynamically using useTranslation hook
@@ -366,6 +368,33 @@ export function Header() {
   const productsMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchModalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const mainNavRef = useRef<HTMLElement>(null);
+  const [topBarHeight, setTopBarHeight] = useState(0);
+  const [mainNavHeight, setMainNavHeight] = useState(0);
+
+  const suppressScrollHide =
+    showSearchModal ||
+    mobileMenuOpen ||
+    showUserMenu ||
+    showMobileCurrency ||
+    showProductsMenu;
+
+  const headerScrollVisible = useHeaderScrollVisibility(suppressScrollHide);
+
+  useLayoutEffect(() => {
+    const top = topBarRef.current;
+    const nav = mainNavRef.current;
+    const measure = () => {
+      if (top) setTopBarHeight(top.getBoundingClientRect().height);
+      if (nav) setMainNavHeight(nav.getBoundingClientRect().height);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (top) ro.observe(top);
+    if (nav) ro.observe(nav);
+    return () => ro.disconnect();
+  }, []);
 
   const {
     query: searchQuery,
@@ -689,8 +718,12 @@ export function Header() {
     window.dispatchEvent(new Event('currency-updated'));
   };
 
+  // Always reserve main-nav height so toggling visibility does not change document
+  // length (which would shift scrollY and retrigger show/hide — flicker loop).
+  const spacerHeight = topBarHeight + mainNavHeight;
+
   return (
-    <header className="bg-gradient-to-b from-gray-50 to-white sticky top-0 z-50 border-b border-gray-200/80 shadow-sm backdrop-blur-sm bg-white/95">
+    <>
       <Suspense fallback={null}>
         <HeaderSearchSync
           setSearchQuery={setSearchQuery}
@@ -698,8 +731,16 @@ export function Header() {
           categories={categories}
         />
       </Suspense>
-      {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 hidden md:block">
+      <div
+        aria-hidden
+        className="shrink-0 overflow-hidden transition-[height] duration-300 ease-out"
+        style={{ height: spacerHeight }}
+      />
+      {/* Desktop top bar — fixed, does not hide on scroll */}
+      <div
+        ref={topBarRef}
+        className="fixed top-0 inset-x-0 z-[60] hidden md:block bg-white border-b border-gray-200"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
             {/* Phone + Social */}
@@ -750,10 +791,12 @@ export function Header() {
                   onClick={() => {
                     setShowCurrency(!showCurrency);
                   }}
-                  className="flex items-center gap-2 bg-white px-3 py-2 text-gray-800 transition-colors"
+                  className={`inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200/90 px-3 text-gray-800 shadow-sm transition-colors ${
+                    showCurrency ? 'bg-gray-200' : 'bg-gray-100 hover:bg-gray-200/90'
+                  }`}
                 >
-                  <span className="text-base font-semibold leading-none">{selectedCurrencyInfo.symbol}</span>
-                  <span className="text-sm font-medium leading-none">{selectedCurrency}</span>
+                  <span className="text-sm font-semibold leading-none tabular-nums">{selectedCurrencyInfo.symbol}</span>
+                  <span className="text-sm font-medium leading-none tabular-nums">{selectedCurrency}</span>
                   <ChevronDownIcon />
                 </button>
                 {showCurrency && (
@@ -781,7 +824,14 @@ export function Header() {
         </div>
       </div>
 
-      {/* Main Header */}
+      {/* Main nav row — logo, links, icons; hides on scroll down */}
+      <header
+        ref={mainNavRef}
+        style={{ top: topBarHeight }}
+        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-out will-change-transform ${
+          headerScrollVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        }`}
+      >
       <div className="max-w-7xl mx-auto pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">
         <div className="flex flex-wrap items-center gap-2 sm:gap-4 py-4 md:py-3">
           {/* Logo + Mobile Menu */}
@@ -798,11 +848,7 @@ export function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
                 </svg>
               </button>
-              <Link href="/" className="flex items-center flex-shrink-0 group">
-                <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent group-hover:from-gray-800 group-hover:to-gray-600 transition-all duration-300">
-                  White-Shop
-                </span>
-              </Link>
+              <BrandLogoLink />
             </div>
             {/* Mobile Currency and Language - on same line as logo */}
             <div className="flex items-center gap-1 sm:gap-2 md:hidden">
@@ -813,10 +859,12 @@ export function Header() {
                   onClick={() => {
                     setShowMobileCurrency(!showMobileCurrency);
                   }}
-                  className="flex h-9 sm:h-10 items-center justify-center gap-1 sm:gap-2 bg-transparent md:bg-white px-2 sm:px-3 text-xs sm:text-sm font-medium text-gray-800 shadow-none md:shadow-sm transition-colors cursor-pointer"
+                  className={`inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200/90 px-3 text-sm font-medium text-gray-800 shadow-sm transition-colors cursor-pointer ${
+                    showMobileCurrency ? 'bg-gray-200' : 'bg-gray-100 hover:bg-gray-200/90'
+                  }`}
                 >
-                  <span className="text-sm sm:text-base font-semibold leading-none">{selectedCurrencyInfo.symbol}</span>
-                  <span className="text-xs sm:text-sm font-medium leading-none">{selectedCurrency}</span>
+                  <span className="font-semibold leading-none tabular-nums">{selectedCurrencyInfo.symbol}</span>
+                  <span className="font-medium leading-none tabular-nums">{selectedCurrency}</span>
                   <ChevronDownIcon />
                 </button>
                 {showMobileCurrency && (
@@ -844,7 +892,7 @@ export function Header() {
                 )}
               </div>
               {/* Language Switcher */}
-              <div className="flex h-9 sm:h-10 items-center justify-center">
+              <div className="flex h-10 items-center">
                 <LanguageSwitcherHeader />
               </div>
             </div>
@@ -944,7 +992,7 @@ export function Header() {
                         </Link>
                         {isAdmin && (
                           <Link
-                            href="/admin"
+                            href="/supersudo"
                             className="block px-5 py-3 text-sm text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white transition-all duration-150 font-medium border-b border-gray-100"
                             onClick={() => setShowUserMenu(false)}
                           >
@@ -1108,7 +1156,7 @@ export function Header() {
                       </Link>
                       {isAdmin && (
                         <Link
-                          href="/admin"
+                          href="/supersudo"
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center justify-between px-4 py-3 hover:bg-blue-50 normal-case text-blue-700"
                         >
@@ -1165,11 +1213,20 @@ export function Header() {
           </div>
         </div>
       )}
+    </header>
 
-      {/* Search Modal */}
+      {/* Search overlay lives outside <header> so fixed positioning is viewport-relative (header uses transform for scroll-hide). */}
       {showSearchModal && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-start justify-center pt-20 px-4">
-          <div 
+        <div
+          className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 backdrop-blur-sm pt-20 px-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowSearchModal(false);
+            }
+          }}
+        >
+          <div
             ref={searchModalRef}
             className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200/80 p-4 animate-in fade-in slide-in-from-top-2 duration-200 relative"
           >
@@ -1183,7 +1240,9 @@ export function Header() {
                   setSearchQuery(e.target.value);
                   if (e.target.value.trim().length >= 1) setSearchDropdownOpen(true);
                 }}
-                onFocus={() => { if (searchQuery.trim().length >= 1) setSearchDropdownOpen(true); }}
+                onFocus={() => {
+                  if (searchQuery.trim().length >= 1) setSearchDropdownOpen(true);
+                }}
                 onKeyDown={searchHandleKeyDown}
                 placeholder={t('common.placeholders.search')}
                 className="flex-1 h-11 px-4 border-2 border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm placeholder:text-gray-400"
@@ -1191,7 +1250,7 @@ export function Header() {
                 aria-expanded={searchDropdownOpen && searchResults.length > 0}
                 aria-autocomplete="list"
               />
-              
+
               {/* Search Button */}
               <button
                 type="submit"
@@ -1219,7 +1278,7 @@ export function Header() {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }
 

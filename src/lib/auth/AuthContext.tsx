@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, ApiError } from '../api-client';
+import { logger } from "@/lib/utils/logger";
 
 /**
  * User interface
@@ -26,7 +27,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   roles: string[];
-  login: (_emailOrPhone: string, _password: string) => Promise<void>;
+  login: (_emailOrPhone: string, _password: string) => Promise<User>;
   register: (_data: RegisterData) => Promise<void>;
   logout: () => void;
 }
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load auth state from localStorage on mount
   useEffect(() => {
-    console.log('🔐 [AUTH] Loading auth state from localStorage...');
+    logger.debug('🔐 [AUTH] Loading auth state from localStorage...');
     
     const loadAuthState = async () => {
       try {
@@ -74,18 +75,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedUser = localStorage.getItem(AUTH_USER_KEY);
 
         if (storedToken && storedUser) {
-          console.log('✅ [AUTH] Found stored auth data');
+          logger.debug('✅ [AUTH] Found stored auth data');
           const parsedUser = JSON.parse(storedUser);
           
           // If user doesn't have roles, fetch from API
           if (!parsedUser.roles || !Array.isArray(parsedUser.roles)) {
-            console.log('⚠️ [AUTH] User data missing roles, fetching from API...');
+            logger.debug('⚠️ [AUTH] User data missing roles, fetching from API...');
             try {
               const profileData = await apiClient.get<{ roles: string[] }>('/api/v1/users/profile');
               if (profileData.roles) {
                 parsedUser.roles = profileData.roles;
                 localStorage.setItem(AUTH_USER_KEY, JSON.stringify(parsedUser));
-                console.log('✅ [AUTH] Roles updated from API:', profileData.roles);
+                logger.debug('✅ [AUTH] Roles updated from API:', profileData.roles);
               }
             } catch (fetchError) {
               console.error('❌ [AUTH] Failed to fetch user roles:', fetchError);
@@ -95,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(storedToken);
           setUser(parsedUser);
         } else {
-          console.log('ℹ️ [AUTH] No stored auth data found');
+          logger.debug('ℹ️ [AUTH] No stored auth data found');
         }
       } catch (error) {
         console.error('❌ [AUTH] Error loading auth state:', error);
@@ -113,8 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Login user
    */
-  const login = async (emailOrPhone: string, password: string) => {
-    console.log('🔐 [AUTH] Login attempt:', { emailOrPhone: emailOrPhone ? 'provided' : 'not provided', password: password ? 'provided' : 'not provided' });
+  const login = async (emailOrPhone: string, password: string): Promise<User> => {
+    logger.debug('🔐 [AUTH] Login attempt:', { emailOrPhone: emailOrPhone ? 'provided' : 'not provided', password: password ? 'provided' : 'not provided' });
     
     try {
       setIsLoading(true);
@@ -125,12 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? { email: emailOrPhone, password }
         : { phone: emailOrPhone, password };
 
-      console.log('📤 [AUTH] Sending login request to API...');
+      logger.debug('📤 [AUTH] Sending login request to API...');
       const response = await apiClient.post<AuthResponse>('/api/v1/auth/login', requestData, {
         skipAuth: true, // Don't send token for login
       });
 
-      console.log('✅ [AUTH] Login successful:', { 
+      logger.debug('✅ [AUTH] Login successful:', { 
         userId: response.user.id,
         roles: response.user.roles,
         isAdmin: response.user.roles?.includes('admin')
@@ -146,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Trigger auth update event
       window.dispatchEvent(new Event('auth-updated'));
 
-      // Don't redirect here - let the login page handle redirect based on query params
+      return response.user;
     } catch (error: any) {
       console.error('❌ [AUTH] Login error:', error);
       
@@ -185,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Register new user
    */
   const register = async (data: RegisterData) => {
-    console.log('🔐 [AUTH] Registration attempt:', { 
+    logger.debug('🔐 [AUTH] Registration attempt:', { 
       email: data.email || 'not provided',
       phone: data.phone || 'not provided',
       hasFirstName: !!data.firstName,
@@ -195,25 +196,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
 
-      console.log('📤 [AUTH] Sending registration request to API...', { data });
+      logger.debug('📤 [AUTH] Sending registration request to API...', { data });
       const response = await apiClient.post<AuthResponse>('/api/v1/auth/register', data, {
         skipAuth: true, // Don't send token for registration
       });
 
-      console.log('✅ [AUTH] Registration response received:', response);
+      logger.debug('✅ [AUTH] Registration response received:', response);
 
       if (!response || !response.user || !response.token) {
         console.error('❌ [AUTH] Invalid response structure:', response);
         throw new Error('Invalid response from server');
       }
 
-      console.log('✅ [AUTH] Registration successful:', { userId: response.user.id });
+      logger.debug('✅ [AUTH] Registration successful:', { userId: response.user.id });
 
       // Store auth data
       try {
         localStorage.setItem(AUTH_TOKEN_KEY, response.token);
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user));
-        console.log('💾 [AUTH] Auth data stored in localStorage');
+        logger.debug('💾 [AUTH] Auth data stored in localStorage');
       } catch (storageError) {
         console.error('❌ [AUTH] Failed to store auth data:', storageError);
         throw new Error('Failed to save authentication data');
@@ -225,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Trigger auth update event
       window.dispatchEvent(new Event('auth-updated'));
 
-      console.log('🔄 [AUTH] Redirecting to home page...');
+      logger.debug('🔄 [AUTH] Redirecting to home page...');
       // Redirect to home page
       router.push('/');
     } catch (error: any) {
@@ -283,7 +284,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * Logout user
    */
   const logout = () => {
-    console.log('🔐 [AUTH] Logging out...');
+    logger.debug('🔐 [AUTH] Logging out...');
     
     // Clear auth data
     localStorage.removeItem(AUTH_TOKEN_KEY);
@@ -309,7 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userRoles = Array.isArray(user.roles) ? user.roles : [];
       const userIsAdmin = userRoles.includes('admin');
       
-      console.log('🔍 [AUTH] User state updated:', {
+      logger.debug('🔍 [AUTH] User state updated:', {
         userId: user.id,
         roles: user.roles,
         rolesArray: userRoles,
@@ -320,14 +321,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // If user doesn't have roles, fetch from API
       if (!user.roles || !Array.isArray(user.roles) || user.roles.length === 0) {
-        console.log('⚠️ [AUTH] User missing roles, fetching from API...');
+        logger.debug('⚠️ [AUTH] User missing roles, fetching from API...');
         apiClient.get<{ roles: string[] }>('/api/v1/users/profile')
           .then(profileData => {
             if (profileData.roles && Array.isArray(profileData.roles)) {
               const updatedUser = { ...user, roles: profileData.roles };
               setUser(updatedUser);
               localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
-              console.log('✅ [AUTH] Roles updated from API:', profileData.roles);
+              logger.debug('✅ [AUTH] Roles updated from API:', profileData.roles);
             }
           })
           .catch(error => {

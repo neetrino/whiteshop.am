@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * GET /api/v1/admin/activity
@@ -8,11 +9,11 @@ import { adminService } from "@/lib/services/admin.service";
  */
 export async function GET(req: NextRequest) {
   try {
-    console.log("📋 [ACTIVITY] Request received");
+    logger.debug("📋 [ACTIVITY] Request received");
     const user = await authenticateToken(req);
     
     if (!user || !requireAdmin(user)) {
-      console.log("❌ [ACTIVITY] Unauthorized or not admin");
+      logger.debug("❌ [ACTIVITY] Unauthorized or not admin");
       return NextResponse.json(
         {
           type: "https://api.shop.am/problems/forbidden",
@@ -29,9 +30,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
 
-    console.log(`✅ [ACTIVITY] User authenticated: ${user.id}, limit: ${limit}`);
+    logger.debug(`✅ [ACTIVITY] User authenticated: ${user.id}, limit: ${limit}`);
     const result = await adminService.getActivity(limit);
-    console.log("✅ [ACTIVITY] Activity data retrieved successfully");
+    logger.debug("✅ [ACTIVITY] Activity data retrieved successfully");
     
     return NextResponse.json({ data: result });
   } catch (error: any) {

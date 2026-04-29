@@ -86,7 +86,9 @@
     "availability": "Availability",
     "actions": "Actions",
     "viewDetails": "View Details",
-    "browseProducts": "Browse Products"
+    "browseProducts": "Browse Products",
+    "category": "Category",
+    "uncategorized": "Uncategorized"
   },
   "reviews": {
     "title": "Reviews",

@@ -16,6 +16,8 @@
   "errors": {
     "emailOrPhoneRequired": "Please enter your email or phone number",
     "passwordRequired": "Please enter your password",
+    "invalidCredentials": "Invalid email or phone, or wrong password.",
+    "accountBlocked": "Your account has been blocked.",
     "loginFailed": "Login failed. Please try again."
   }
 }

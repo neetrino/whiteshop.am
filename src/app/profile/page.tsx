@@ -10,6 +10,7 @@ import { ProfilePersonalInfo } from './ProfilePersonalInfo';
 import { ProfileAddresses } from './ProfileAddresses';
 import { ProfileOrders } from './ProfileOrders';
 import { ProfilePassword } from './ProfilePassword';
+import { ProfileDeleteAccount } from './ProfileDeleteAccount';
 import { OrderDetailsModal } from './OrderDetailsModal';
 import type { ProfileTab, ProfileTabConfig } from './types';
 
@@ -60,6 +61,14 @@ function ProfilePageContent() {
     handleOrderClick,
     handleReOrder,
     currency,
+    deleteAccountPassword,
+    setDeleteAccountPassword,
+    deleteAccountConfirmation,
+    setDeleteAccountConfirmation,
+    deleteAccountAcknowledged,
+    setDeleteAccountAcknowledged,
+    deletingAccount,
+    handleDeleteAccount,
   } = useProfilePage();
 
   if (authLoading || loading) {
@@ -124,29 +133,44 @@ function ProfilePageContent() {
         </svg>
       ),
     },
+    {
+      id: 'deleteAccount',
+      label: t('profile.tabs.deleteAccount'),
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
+        </svg>
+      ),
+    },
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <ProfileHeader
-          profile={profile}
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          t={t}
-        />
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-10 lg:gap-12">
+        <aside className="w-full shrink-0 sm:sticky sm:top-24 sm:w-56 sm:self-start sm:border-r sm:border-gray-200/90 sm:pr-8 lg:w-64">
+          <ProfileHeader
+            profile={profile}
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            t={t}
+          />
+        </aside>
 
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          {/* Alert messages */}
+        <main className="min-w-0 flex-1">
+          <div className="space-y-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200/80 sm:space-y-8 sm:p-6 lg:rounded-3xl lg:p-8">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
           {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <p className="text-sm text-green-600">{success}</p>
             </div>
           )}
@@ -219,6 +243,21 @@ function ProfilePageContent() {
             />
           )}
 
+          {activeTab === 'deleteAccount' && (
+            <ProfileDeleteAccount
+              profile={profile}
+              password={deleteAccountPassword}
+              setPassword={setDeleteAccountPassword}
+              confirmation={deleteAccountConfirmation}
+              setConfirmation={setDeleteAccountConfirmation}
+              acknowledged={deleteAccountAcknowledged}
+              setAcknowledged={setDeleteAccountAcknowledged}
+              deleting={deletingAccount}
+              onSubmit={handleDeleteAccount}
+              t={t}
+            />
+          )}
+
           {/* Order Details Modal */}
           {selectedOrder && (
             <OrderDetailsModal
@@ -232,7 +271,8 @@ function ProfilePageContent() {
               t={t}
             />
           )}
-        </div>
+          </div>
+        </main>
       </div>
     </div>
   );

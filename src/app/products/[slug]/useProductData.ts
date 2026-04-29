@@ -14,6 +14,7 @@ import {
   normalizeUrlForComparison,
   cleanImageUrls,
 } from '../../../lib/utils/image-utils';
+import { logger } from "@/lib/utils/logger";
 
 interface UseProductDataProps {
   params: Promise<{ slug?: string }>;
@@ -63,12 +64,12 @@ export function useProductData({
   const images = useMemo(() => {
     if (!product) return [];
 
-    console.log('🖼️ [PRODUCT IMAGES] Building images array for product:', product.id);
+    logger.debug('🖼️ [PRODUCT IMAGES] Building images array for product:', product.id);
 
     // Collect all main images (product.media is already cleaned in findBySlug)
     const mainImages = Array.isArray(product.media) ? product.media : [];
     const cleanedMain = cleanImageUrls(mainImages);
-    console.log('🖼️ [PRODUCT IMAGES] Main images from product.media:', cleanedMain.length);
+    logger.debug('🖼️ [PRODUCT IMAGES] Main images from product.media:', cleanedMain.length);
 
     // Collect all variant images
     const variantImages: any[] = [];
@@ -89,7 +90,7 @@ export function useProductData({
     }
 
     const cleanedVariantImages = cleanImageUrls(variantImages);
-    console.log('🖼️ [PRODUCT IMAGES] Variant images:', cleanedVariantImages.length);
+    logger.debug('🖼️ [PRODUCT IMAGES] Variant images:', cleanedVariantImages.length);
 
     // Combine all images: main first, then variant images
     // Use array to preserve order, Set to track duplicates
@@ -116,10 +117,10 @@ export function useProductData({
       }
     });
 
-    console.log('🖼️ [PRODUCT IMAGES] Final images count:', allImages.length);
-    console.log('🖼️ [PRODUCT IMAGES] Main images:', cleanedMain.length);
-    console.log('🖼️ [PRODUCT IMAGES] Variant images:', cleanedVariantImages.length);
-    console.log(
+    logger.debug('🖼️ [PRODUCT IMAGES] Final images count:', allImages.length);
+    logger.debug('🖼️ [PRODUCT IMAGES] Main images:', cleanedMain.length);
+    logger.debug('🖼️ [PRODUCT IMAGES] Variant images:', cleanedVariantImages.length);
+    logger.debug(
       '🖼️ [PRODUCT IMAGES] Unique images after deduplication:',
       allImages.length
     );

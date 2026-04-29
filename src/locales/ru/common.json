@@ -86,7 +86,9 @@
     "availability": "Наличие",
     "actions": "Действия",
     "viewDetails": "Посмотреть детали",
-    "browseProducts": "Просмотреть товары"
+    "browseProducts": "Просмотреть товары",
+    "category": "Категория",
+    "uncategorized": "Без категории"
   },
   "reviews": {
     "title": "Отзывы",

@@ -17,10 +17,12 @@ class UsersService {
         locale: true,
         roles: true,
         addresses: true,
+        passwordHash: true,
+        deletedAt: true,
       },
     });
 
-    if (!user) {
+    if (!user || user.deletedAt) {
       throw {
         status: 404,
         type: "https://api.shop.am/problems/not-found",
@@ -37,6 +39,7 @@ class UsersService {
       locale: user.locale,
       roles: user.roles,
       addresses: user.addresses,
+      hasPassword: Boolean(user.passwordHash),
     };
   }
 
@@ -170,6 +173,109 @@ class UsersService {
         detail: "Failed to hash new password",
       };
     }
+  }
+
+  /**
+   * Remove user row and unlink orders (same as self-service delete).
+   */
+  async permanentlyDeleteUserById(userId: string): Promise<void> {
+    await db.$transaction(async (tx) => {
+      await tx.order.updateMany({
+        where: { userId },
+        data: { userId: null },
+      });
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+  }
+
+  /**
+   * Permanently remove the authenticated user's row so email/phone can be registered again.
+   * Orders stay with userId cleared. Requires password or email/phone confirmation.
+   */
+  async deleteMyAccount(
+    userId: string,
+    credentials: { password?: string; confirmation?: string }
+  ) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        passwordHash: true,
+        deletedAt: true,
+      },
+    });
+
+    if (!user || user.deletedAt) {
+      throw {
+        status: 404,
+        type: "https://api.shop.am/problems/not-found",
+        title: "User not found",
+      };
+    }
+
+    const digitsOnly = (value: string) => value.replace(/\D/g, "");
+
+    if (user.passwordHash) {
+      const password = credentials.password?.trim() ?? "";
+      if (!password) {
+        throw {
+          status: 400,
+          type: "https://api.shop.am/problems/validation-error",
+          title: "Validation Error",
+          detail: "Current password is required to delete your account",
+        };
+      }
+      const isValid = await bcrypt.compare(password, user.passwordHash);
+      if (!isValid) {
+        throw {
+          status: 401,
+          type: "https://api.shop.am/problems/unauthorized",
+          title: "Invalid password",
+          detail: "The password you entered is incorrect",
+        };
+      }
+    } else {
+      const email = user.email?.trim().toLowerCase() ?? "";
+      const phone = user.phone?.trim() ?? "";
+      if (!email && !phone) {
+        throw {
+          status: 400,
+          type: "https://api.shop.am/problems/validation-error",
+          title: "Validation Error",
+          detail: "This account cannot be deleted automatically. Please contact support.",
+        };
+      }
+      const confirmation = credentials.confirmation?.trim() ?? "";
+      if (!confirmation) {
+        throw {
+          status: 400,
+          type: "https://api.shop.am/problems/validation-error",
+          title: "Validation Error",
+          detail: "Confirmation is required: enter the email or phone on this account",
+        };
+      }
+      const confLower = confirmation.toLowerCase();
+      const emailMatch = email.length > 0 && confLower === email;
+      const phoneMatch =
+        phone.length > 0 &&
+        (confirmation === phone || digitsOnly(confirmation) === digitsOnly(phone));
+      if (!emailMatch && !phoneMatch) {
+        throw {
+          status: 401,
+          type: "https://api.shop.am/problems/unauthorized",
+          title: "Confirmation does not match",
+          detail: "The value you entered does not match your email or phone",
+        };
+      }
+    }
+
+    await this.permanentlyDeleteUserById(userId);
+
+    return { success: true };
   }
 
   /**
