@@ -751,10 +751,12 @@ export function Header() {
                   onClick={() => {
                     setShowCurrency(!showCurrency);
                   }}
-                  className="flex items-center gap-2 bg-white px-3 py-2 text-gray-800 transition-colors"
+                  className={`inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200/90 px-3 text-gray-800 shadow-sm transition-colors ${
+                    showCurrency ? 'bg-gray-200' : 'bg-gray-100 hover:bg-gray-200/90'
+                  }`}
                 >
-                  <span className="text-base font-semibold leading-none">{selectedCurrencyInfo.symbol}</span>
-                  <span className="text-sm font-medium leading-none">{selectedCurrency}</span>
+                  <span className="text-sm font-semibold leading-none tabular-nums">{selectedCurrencyInfo.symbol}</span>
+                  <span className="text-sm font-medium leading-none tabular-nums">{selectedCurrency}</span>
                   <ChevronDownIcon />
                 </button>
                 {showCurrency && (
@@ -810,10 +812,12 @@ export function Header() {
                   onClick={() => {
                     setShowMobileCurrency(!showMobileCurrency);
                   }}
-                  className="flex h-9 sm:h-10 items-center justify-center gap-1 sm:gap-2 bg-transparent md:bg-white px-2 sm:px-3 text-xs sm:text-sm font-medium text-gray-800 shadow-none md:shadow-sm transition-colors cursor-pointer"
+                  className={`inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200/90 px-3 text-sm font-medium text-gray-800 shadow-sm transition-colors cursor-pointer ${
+                    showMobileCurrency ? 'bg-gray-200' : 'bg-gray-100 hover:bg-gray-200/90'
+                  }`}
                 >
-                  <span className="text-sm sm:text-base font-semibold leading-none">{selectedCurrencyInfo.symbol}</span>
-                  <span className="text-xs sm:text-sm font-medium leading-none">{selectedCurrency}</span>
+                  <span className="font-semibold leading-none tabular-nums">{selectedCurrencyInfo.symbol}</span>
+                  <span className="font-medium leading-none tabular-nums">{selectedCurrency}</span>
                   <ChevronDownIcon />
                 </button>
                 {showMobileCurrency && (
@@ -841,7 +845,7 @@ export function Header() {
                 )}
               </div>
               {/* Language Switcher */}
-              <div className="flex h-9 sm:h-10 items-center justify-center">
+              <div className="flex h-10 items-center">
                 <LanguageSwitcherHeader />
               </div>
             </div>
