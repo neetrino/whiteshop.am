@@ -26,7 +26,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   roles: string[];
-  login: (_emailOrPhone: string, _password: string) => Promise<void>;
+  login: (_emailOrPhone: string, _password: string) => Promise<User>;
   register: (_data: RegisterData) => Promise<void>;
   logout: () => void;
 }
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * Login user
    */
-  const login = async (emailOrPhone: string, password: string) => {
+  const login = async (emailOrPhone: string, password: string): Promise<User> => {
     console.log('🔐 [AUTH] Login attempt:', { emailOrPhone: emailOrPhone ? 'provided' : 'not provided', password: password ? 'provided' : 'not provided' });
     
     try {
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Trigger auth update event
       window.dispatchEvent(new Event('auth-updated'));
 
-      // Don't redirect here - let the login page handle redirect based on query params
+      return response.user;
     } catch (error: any) {
       console.error('❌ [AUTH] Login error:', error);
       

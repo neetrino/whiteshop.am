@@ -5,7 +5,7 @@ import { Header } from './Header';
 
 export function ConditionalHeader() {
   const pathname = usePathname();
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/supersudo')) {
     return null;
   }
   return <Header />;

@@ -5,7 +5,7 @@ import { Breadcrumb } from './Breadcrumb';
 
 export function ConditionalBreadcrumb() {
   const pathname = usePathname();
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/supersudo')) {
     return null;
   }
   return <Breadcrumb />;

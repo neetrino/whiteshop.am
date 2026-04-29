@@ -992,7 +992,7 @@ export function Header() {
                         </Link>
                         {isAdmin && (
                           <Link
-                            href="/admin"
+                            href="/supersudo"
                             className="block px-5 py-3 text-sm text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white transition-all duration-150 font-medium border-b border-gray-100"
                             onClick={() => setShowUserMenu(false)}
                           >
@@ -1156,7 +1156,7 @@ export function Header() {
                       </Link>
                       {isAdmin && (
                         <Link
-                          href="/admin"
+                          href="/supersudo"
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center justify-between px-4 py-3 hover:bg-blue-50 normal-case text-blue-700"
                         >

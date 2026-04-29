@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdminProductsSubnavExpanded } from '../app/admin/hooks/useAdminProductsSubnavExpanded';
+import { useAdminProductsSubnavExpanded } from '../app/supersudo/hooks/useAdminProductsSubnavExpanded';
 import { useTranslation } from '../lib/i18n-client';
 import { BrandLogoLink } from './BrandLogoLink';
 
@@ -25,8 +25,8 @@ interface AdminMenuDrawerProps {
 function isDrawerTabPathActive(tabPath: string, pathname: string): boolean {
   return (
     pathname === tabPath ||
-    (tabPath === '/admin' && pathname === '/admin') ||
-    (tabPath !== '/admin' && pathname.startsWith(tabPath))
+    (tabPath === '/supersudo' && pathname === '/supersudo') ||
+    (tabPath !== '/supersudo' && pathname.startsWith(tabPath))
   );
 }
 
@@ -51,7 +51,7 @@ export function AdminMenuDrawer({ tabs, currentPath }: AdminMenuDrawerProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const pathname = currentPath || '/admin';
+  const pathname = currentPath || '/supersudo';
   const [productsNestedExpanded, toggleProductsNested] = useAdminProductsSubnavExpanded(pathname);
 
   useEffect(() => {
