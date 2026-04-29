@@ -7,7 +7,8 @@
     "personal": "Personal Information",
     "addresses": "Addresses",
     "password": "Change Password",
-    "orders": "Orders"
+    "orders": "Orders",
+    "deleteAccount": "Delete account"
   },
   "dashboard": {
     "loading": "Loading dashboard...",
@@ -105,6 +106,22 @@
     "currentPasswordPlaceholder": "Enter your current password",
     "newPasswordPlaceholder": "Enter new password (min. 6 characters)",
     "confirmPasswordPlaceholder": "Confirm new password"
+  },
+  "deleteAccount": {
+    "title": "Delete account",
+    "description": "If you continue, your account will be closed. You will not be able to log in again with this account.",
+    "pointOrders": "Order history may be retained for legal and accounting reasons.",
+    "pointLogin": "You will be signed out immediately after deletion.",
+    "pointData": "Your profile and saved addresses will no longer be available to you.",
+    "currentPassword": "Current password",
+    "currentPasswordPlaceholder": "Enter your password to confirm",
+    "confirmationLabel": "Confirm your email or phone",
+    "confirmationPlaceholder": "Type the email or phone number on this account",
+    "acknowledge": "I understand that this action is permanent for my access to this account.",
+    "mustAcknowledge": "Please confirm that you understand the consequences.",
+    "submit": "Delete my account",
+    "deleting": "Deleting…",
+    "failed": "Could not delete account. Please try again."
   },
   "orders": {
     "title": "My Orders",

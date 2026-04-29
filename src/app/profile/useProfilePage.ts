@@ -2,6 +2,7 @@ import { useProfile } from './hooks/useProfile';
 import { usePersonalInfo } from './hooks/usePersonalInfo';
 import { useAddresses } from './hooks/useAddresses';
 import { usePassword } from './hooks/usePassword';
+import { useDeleteAccount } from './hooks/useDeleteAccount';
 import { useDashboard } from './hooks/useDashboard';
 import { useOrders } from './hooks/useOrders';
 import { useProfileTabs } from './hooks/useProfileTabs';
@@ -46,6 +47,17 @@ export function useProfilePage() {
   // Tabs management
   const { activeTab, handleTabChange: baseHandleTabChange } = useProfileTabs();
 
+  // Password hook
+  const password = usePassword({
+    onError: setError,
+    onSuccess: setSuccess,
+  });
+
+  const deleteAccount = useDeleteAccount({
+    hasPassword: profile?.hasPassword ?? true,
+    onError: setError,
+  });
+
   // Enhanced tab change with address form cleanup
   const handleTabChange = (tab: typeof activeTab) => {
     baseHandleTabChange(tab);
@@ -55,13 +67,10 @@ export function useProfilePage() {
       addresses.setShowAddressForm(false);
       addresses.setEditingAddress(null);
     }
+    if (tab !== 'deleteAccount') {
+      deleteAccount.resetForm();
+    }
   };
-
-  // Password hook
-  const password = usePassword({
-    onError: setError,
-    onSuccess: setSuccess,
-  });
 
   // Dashboard hook
   const dashboard = useDashboard({
@@ -124,6 +133,16 @@ export function useProfilePage() {
     setPasswordForm: password.setPasswordForm,
     savingPassword: password.savingPassword,
     handleChangePassword: password.handleChangePassword,
+
+    // Delete account
+    deleteAccountPassword: deleteAccount.password,
+    setDeleteAccountPassword: deleteAccount.setPassword,
+    deleteAccountConfirmation: deleteAccount.confirmation,
+    setDeleteAccountConfirmation: deleteAccount.setConfirmation,
+    deleteAccountAcknowledged: deleteAccount.acknowledged,
+    setDeleteAccountAcknowledged: deleteAccount.setAcknowledged,
+    deletingAccount: deleteAccount.deleting,
+    handleDeleteAccount: deleteAccount.handleDeleteAccount,
     
     // Dashboard
     dashboardData: dashboard.dashboardData,
