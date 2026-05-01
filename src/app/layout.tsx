@@ -5,7 +5,6 @@ import './globals.css';
 import { ClientProviders } from '../components/ClientProviders';
 import { ConditionalHeader } from '../components/ConditionalHeader';
 import { Footer } from '../components/Footer';
-import { ConditionalBreadcrumb } from '../components/ConditionalBreadcrumb';
 import { MobileBottomNav } from '../components/MobileBottomNav';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -27,7 +26,6 @@ export default function RootLayout({
           <ClientProviders>
             <div className="flex min-h-screen flex-col pb-16 lg:pb-0">
               <ConditionalHeader />
-              <ConditionalBreadcrumb />
               <main className="flex-1 w-full">
                 {children}
               </main>
