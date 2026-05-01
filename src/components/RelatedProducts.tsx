@@ -6,6 +6,7 @@ import { apiClient } from '../lib/api-client';
 import { getStoredCurrency } from '../lib/currency';
 import { getStoredLanguage, type LanguageCode } from '../lib/language';
 import { t } from '../lib/i18n';
+import { logger } from '@/lib/utils/logger';
 import { useAuth } from '../lib/auth/AuthContext';
 import { useRelatedProducts } from './hooks/useRelatedProducts';
 import { useCarousel } from './hooks/useCarousel';
@@ -17,13 +18,15 @@ import { CarouselDots } from './RelatedProducts/CarouselDots';
 interface RelatedProductsProps {
   categorySlug?: string;
   currentProductId: string;
+  /** PDP: use dedicated related endpoint + cache (server resolves category). */
+  productSlug?: string;
 }
 
 /**
  * RelatedProducts component - displays products from the same category in a carousel
  * Shown at the bottom of the single product page
  */
-export function RelatedProducts({ categorySlug, currentProductId }: RelatedProductsProps) {
+export function RelatedProducts({ categorySlug, currentProductId, productSlug }: RelatedProductsProps) {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const [language, setLanguage] = useState<LanguageCode>('en');
@@ -31,7 +34,12 @@ export function RelatedProducts({ categorySlug, currentProductId }: RelatedProdu
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   
   const visibleCards = useVisibleCards();
-  const { products, loading } = useRelatedProducts({ categorySlug, currentProductId, language });
+  const { products, loading } = useRelatedProducts({
+    categorySlug,
+    currentProductId,
+    language,
+    productSlug,
+  });
   
   const {
     currentIndex,
@@ -118,7 +126,9 @@ export function RelatedProducts({ categorySlug, currentProductId }: RelatedProdu
       // Trigger cart update event
       window.dispatchEvent(new Event('cart-updated'));
     } catch (error: unknown) {
-      console.error('[RelatedProducts] Error adding to cart:', error);
+      logger.warn('[RelatedProducts] Error adding to cart', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       const err = error as { message?: string };
       if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
         router.push(`/login?redirect=/products/${product.slug}`);

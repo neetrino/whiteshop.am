@@ -8,7 +8,11 @@ import { logger } from './logger';
 /**
  * Type for image URL input - can be string or object with url/src/value properties
  */
-type ImageUrlInput = string | null | undefined | { url?: string; src?: string; value?: string };
+export type ImageUrlInput =
+  | string
+  | null
+  | undefined
+  | { url?: string; src?: string; value?: string };
 
 /**
  * Validates if a URL is a valid image URL

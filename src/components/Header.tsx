@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useEffect, useLayoutEffect, useRef, Suspense } from 'react';
 import type { FormEvent, ReactNode, CSSProperties } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
@@ -26,6 +26,38 @@ const primaryNavLinks = [
   { href: '/about', translationKey: 'common.navigation.about' },
   { href: '/contact', translationKey: 'common.navigation.contact' },
 ];
+
+function isHeaderNavActive(pathname: string | null, href: string): boolean {
+  if (!pathname) {
+    return false;
+  }
+  if (href === '/') {
+    return pathname === '/';
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+const HEADER_NAV_LINK_BASE =
+  'px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap';
+
+function headerTextNavClassName(active: boolean): string {
+  return active
+    ? `${HEADER_NAV_LINK_BASE} bg-gray-100 text-gray-900 font-semibold ring-1 ring-gray-200/90`
+    : `${HEADER_NAV_LINK_BASE} text-gray-700 hover:text-gray-900 hover:bg-gray-50`;
+}
+
+function headerIconNavClassName(active: boolean): string {
+  const base =
+    'w-11 h-11 flex items-center justify-center transition-colors duration-150 rounded-lg';
+  return active
+    ? `${base} text-gray-900 bg-gray-100 ring-1 ring-gray-200/90`
+    : `${base} text-gray-700 hover:text-gray-900`;
+}
+
+function headerMobileRowClassName(active: boolean): string {
+  const base = 'flex items-center justify-between px-4 py-3 hover:bg-gray-50';
+  return active ? `${base} bg-gray-100 text-gray-900` : base;
+}
 
 interface Category {
   id: string;
@@ -343,6 +375,7 @@ function CategoryMenuItem({
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { isLoggedIn, logout, isAdmin } = useAuth();
   const { t } = useTranslation();
   const [compareCount, setCompareCount] = useState(0);
@@ -900,7 +933,11 @@ export function Header() {
 
           {/* Navigation Links - Centered */}
           <nav className="order-3 hidden w-full items-center justify-center gap-1 md:order-none md:flex md:flex-1">
-            <Link href="/" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap">
+            <Link
+              href="/"
+              className={headerTextNavClassName(isHeaderNavActive(pathname, '/'))}
+              aria-current={isHeaderNavActive(pathname, '/') ? 'page' : undefined}
+            >
               {t('common.navigation.home')}
             </Link>
             <div 
@@ -921,7 +958,8 @@ export function Header() {
             >
               <Link
                 href="/products"
-                className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap flex items-center gap-1"
+                className={`${headerTextNavClassName(isHeaderNavActive(pathname, '/products'))} flex items-center gap-1`}
+                aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
               >
                 {t('common.navigation.products')}
                 <ChevronDownIcon />
@@ -947,10 +985,18 @@ export function Header() {
                 </>
               )}
             </div>
-            <Link href="/about" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap">
+            <Link
+              href="/about"
+              className={headerTextNavClassName(isHeaderNavActive(pathname, '/about'))}
+              aria-current={isHeaderNavActive(pathname, '/about') ? 'page' : undefined}
+            >
               {t('common.navigation.about')}
             </Link>
-            <Link href="/contact" className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap">
+            <Link
+              href="/contact"
+              className={headerTextNavClassName(isHeaderNavActive(pathname, '/contact'))}
+              aria-current={isHeaderNavActive(pathname, '/contact') ? 'page' : undefined}
+            >
               {t('common.navigation.contact')}
             </Link>
           </nav>
@@ -976,8 +1022,15 @@ export function Header() {
                 {isLoggedIn ? (
                   <>
                     <button
+                      type="button"
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="w-11 h-11 flex items-center justify-center transition-all duration-200 group"
+                      className={`w-11 h-11 flex items-center justify-center transition-all duration-200 group rounded-lg ${
+                        isHeaderNavActive(pathname, '/profile')
+                          ? 'bg-gray-100 ring-1 ring-gray-200/90'
+                          : ''
+                      }`}
+                      aria-expanded={showUserMenu}
+                      aria-haspopup="true"
                     >
                       <ProfileIconFilled />
                     </button>
@@ -985,7 +1038,12 @@ export function Header() {
                       <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-200/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                         <Link
                           href="/profile"
-                          className="block px-5 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-150 font-medium border-b border-gray-100"
+                          className={`block px-5 py-3 text-sm transition-all duration-150 font-medium border-b border-gray-100 ${
+                            isHeaderNavActive(pathname, '/profile')
+                              ? 'bg-gray-100 text-gray-900'
+                              : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white'
+                          }`}
+                          aria-current={isHeaderNavActive(pathname, '/profile') ? 'page' : undefined}
                           onClick={() => setShowUserMenu(false)}
                         >
                           {t('common.navigation.profile')}
@@ -993,7 +1051,12 @@ export function Header() {
                         {isAdmin && (
                           <Link
                             href="/supersudo"
-                            className="block px-5 py-3 text-sm text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-white transition-all duration-150 font-medium border-b border-gray-100"
+                            className={`block px-5 py-3 text-sm transition-all duration-150 font-medium border-b border-gray-100 ${
+                              isHeaderNavActive(pathname, '/supersudo')
+                                ? 'bg-gray-100 text-gray-900'
+                                : 'text-gray-800 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white'
+                            }`}
+                            aria-current={isHeaderNavActive(pathname, '/supersudo') ? 'page' : undefined}
                             onClick={() => setShowUserMenu(false)}
                           >
                             <div className="flex items-center">
@@ -1018,28 +1081,60 @@ export function Header() {
                     )}
                   </>
                 ) : (
-                  <Link href="/login" className="w-11 h-11 flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors duration-150 group">
+                  <Link
+                    href="/login"
+                    className={headerIconNavClassName(isHeaderNavActive(pathname, '/login'))}
+                    aria-current={isHeaderNavActive(pathname, '/login') ? 'page' : undefined}
+                  >
                     <ProfileIconOutline />
                   </Link>
                 )}
               </div>
 
               {/* Compare */}
-              <Link href="/compare" className="w-11 h-11 flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors duration-150 relative group">
+              <Link
+                href="/compare"
+                className={`${headerIconNavClassName(isHeaderNavActive(pathname, '/compare'))} relative group`}
+                aria-current={isHeaderNavActive(pathname, '/compare') ? 'page' : undefined}
+              >
                 <BadgeIcon icon={<CompareIcon size={18} />} badge={compareCount} />
               </Link>
 
               {/* Wishlist */}
-              <Link href="/wishlist" className="w-11 h-11 flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors duration-150 relative group">
+              <Link
+                href="/wishlist"
+                className={`${headerIconNavClassName(isHeaderNavActive(pathname, '/wishlist'))} relative group`}
+                aria-current={isHeaderNavActive(pathname, '/wishlist') ? 'page' : undefined}
+              >
                 <BadgeIcon icon={<WishlistIcon />} badge={wishlistCount} />
               </Link>
 
               {/* Shopping Cart */}
-              <Link href="/cart" className="flex items-center gap-[0.hpx] group">
-                <div className="w-11 h-11 flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors duration-150 relative">
+              <Link
+                href="/cart"
+                className={`flex items-center gap-[0.hpx] group rounded-lg transition-colors ${
+                  isHeaderNavActive(pathname, '/cart')
+                    ? 'bg-gray-100 ring-1 ring-gray-200/90 p-0.5'
+                    : ''
+                }`}
+                aria-current={isHeaderNavActive(pathname, '/cart') ? 'page' : undefined}
+              >
+                <div
+                  className={`w-11 h-11 flex items-center justify-center transition-colors duration-150 relative ${
+                    isHeaderNavActive(pathname, '/cart')
+                      ? 'text-gray-900'
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
                   <BadgeIcon icon={<CartIcon size={19} />} badge={cartCount} />
                 </div>
-                <span className="text-gray-800 font-bold text-sm hidden sm:block min-w-[3.25rem] group-hover:text-gray-900 transition-colors">
+                <span
+                  className={`font-bold text-sm hidden sm:block min-w-[3.25rem] transition-colors ${
+                    isHeaderNavActive(pathname, '/cart')
+                      ? 'text-gray-900'
+                      : 'text-gray-800 group-hover:text-gray-900'
+                  }`}
+                >
                   {formatPrice(cartTotal, selectedCurrency)}
                 </span>
               </Link>
@@ -1082,7 +1177,8 @@ export function Header() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                      className={headerMobileRowClassName(isHeaderNavActive(pathname, link.href))}
+                      aria-current={isHeaderNavActive(pathname, link.href) ? 'page' : undefined}
                     >
                       {t(link.translationKey)}
                       <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1094,9 +1190,14 @@ export function Header() {
                   <Link
                     href="/wishlist"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                    className={headerMobileRowClassName(isHeaderNavActive(pathname, '/wishlist'))}
+                    aria-current={isHeaderNavActive(pathname, '/wishlist') ? 'page' : undefined}
                   >
-                    <span className="flex items-center gap-2 normal-case font-medium text-gray-700">
+                    <span
+                      className={`flex items-center gap-2 normal-case font-medium ${
+                        isHeaderNavActive(pathname, '/wishlist') ? 'text-gray-900' : 'text-gray-700'
+                      }`}
+                    >
                       <WishlistIcon />
                       {t('common.navigation.wishlist')}
                     </span>
@@ -1110,9 +1211,14 @@ export function Header() {
                   <Link
                     href="/compare"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                    className={headerMobileRowClassName(isHeaderNavActive(pathname, '/compare'))}
+                    aria-current={isHeaderNavActive(pathname, '/compare') ? 'page' : undefined}
                   >
-                    <span className="flex items-center gap-2 normal-case font-medium text-gray-700">
+                    <span
+                      className={`flex items-center gap-2 normal-case font-medium ${
+                        isHeaderNavActive(pathname, '/compare') ? 'text-gray-900' : 'text-gray-700'
+                      }`}
+                    >
                       <CompareIcon size={18} />
                       Compare
                     </span>
@@ -1126,9 +1232,14 @@ export function Header() {
                   <Link
                     href="/cart"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                    className={headerMobileRowClassName(isHeaderNavActive(pathname, '/cart'))}
+                    aria-current={isHeaderNavActive(pathname, '/cart') ? 'page' : undefined}
                   >
-                    <span className="flex items-center gap-2 normal-case font-medium text-gray-700">
+                    <span
+                      className={`flex items-center gap-2 normal-case font-medium ${
+                        isHeaderNavActive(pathname, '/cart') ? 'text-gray-900' : 'text-gray-700'
+                      }`}
+                    >
                       <CartIcon size={19} />
                       Cart
                     </span>
@@ -1144,7 +1255,8 @@ export function Header() {
                       <Link
                         href="/profile"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 normal-case text-gray-800"
+                        className={`${headerMobileRowClassName(isHeaderNavActive(pathname, '/profile'))} normal-case`}
+                        aria-current={isHeaderNavActive(pathname, '/profile') ? 'page' : undefined}
                       >
                         <span className="flex items-center gap-2">
                           <ProfileIconFilled />
@@ -1158,7 +1270,12 @@ export function Header() {
                         <Link
                           href="/supersudo"
                           onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center justify-between px-4 py-3 hover:bg-blue-50 normal-case text-blue-700"
+                          className={`flex items-center justify-between px-4 py-3 normal-case ${
+                            isHeaderNavActive(pathname, '/supersudo')
+                              ? 'bg-gray-200/90 text-gray-900 font-semibold'
+                              : 'text-gray-800 hover:bg-gray-50'
+                          }`}
+                          aria-current={isHeaderNavActive(pathname, '/supersudo') ? 'page' : undefined}
                         >
                           <span>Admin Panel</span>
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1184,7 +1301,8 @@ export function Header() {
                       <Link
                         href="/login"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 normal-case text-gray-800"
+                        className={`${headerMobileRowClassName(isHeaderNavActive(pathname, '/login'))} normal-case`}
+                        aria-current={isHeaderNavActive(pathname, '/login') ? 'page' : undefined}
                       >
                         <span>Login</span>
                         <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1194,7 +1312,12 @@ export function Header() {
                       <Link
                         href="/register"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-900 hover:text-white normal-case text-gray-900 font-semibold"
+                        className={`flex items-center justify-between px-4 py-3 normal-case font-semibold ${
+                          isHeaderNavActive(pathname, '/register')
+                            ? 'bg-gray-100 text-gray-900 ring-1 ring-inset ring-gray-200/90'
+                            : 'text-gray-900 hover:bg-gray-900 hover:text-white'
+                        }`}
+                        aria-current={isHeaderNavActive(pathname, '/register') ? 'page' : undefined}
                       >
                         <span>Create account</span>
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

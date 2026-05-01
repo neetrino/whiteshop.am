@@ -18,7 +18,7 @@ function CategoryNavigationContent() {
   const currentCategory = searchParams?.get('category');
   
   const { categories, loading: categoriesLoading } = useCategories();
-  const { categoryProducts, loading: productsLoading } = useCategoryProducts(categories, t);
+  const { categoryProducts, loading: previewsLoading } = useCategoryProducts();
   const {
     scrollContainerRef,
     canScrollLeft,
@@ -26,8 +26,6 @@ function CategoryNavigationContent() {
     scrollByAmount,
     updateScrollButtons,
   } = useCategoryScroll();
-
-  const loading = categoriesLoading || productsLoading;
 
   const handleCategoryClick = (categorySlug: string | null) => {
     const params = new URLSearchParams(searchParams?.toString() || '');
@@ -45,15 +43,16 @@ function CategoryNavigationContent() {
   };
 
   useEffect(() => {
-    // Обновляем состояние кнопок после загрузки категорий и продуктов
-    if (!loading && categories.length > 0) {
-      setTimeout(() => {
+    if (!categoriesLoading && categories.length > 0 && !previewsLoading) {
+      const timer = window.setTimeout(() => {
         updateScrollButtons();
       }, 200);
+      return () => window.clearTimeout(timer);
     }
-  }, [categories.length, Object.keys(categoryProducts).length, loading, updateScrollButtons]);
+    return undefined;
+  }, [categories.length, categoriesLoading, previewsLoading, updateScrollButtons]);
 
-  if (loading) {
+  if (categoriesLoading && categories.length === 0) {
     return <CategoryNavigationLoading />;
   }
 

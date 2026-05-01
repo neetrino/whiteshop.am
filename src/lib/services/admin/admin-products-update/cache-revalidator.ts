@@ -1,4 +1,8 @@
 import { revalidatePath, revalidateTag } from "next/cache";
+import {
+  invalidateProductPageCaches,
+  invalidateStorefrontProductRelatedCaches,
+} from "@/lib/cache/storefront-cache";
 import { logger } from "../../../utils/logger";
 import { cacheService } from "../../cache.service";
 
@@ -21,7 +25,9 @@ export async function revalidateProductCache(
     // @ts-expect-error - revalidateTag type issue in Next.js
     revalidateTag(`product-${productId}`);
 
-    await cacheService.deletePattern('products:*');
+    await cacheService.deletePattern("products:*");
+    await invalidateProductPageCaches();
+    await invalidateStorefrontProductRelatedCaches();
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.warn('Revalidation failed (expected in some environments)', { error: errorMessage });

@@ -6,24 +6,33 @@ declare global {
 
 const globalForPrisma = globalThis as typeof globalThis & { prisma?: PrismaClient };
 
-// Ensure UTF-8 encoding for PostgreSQL connection
-// This fixes encoding issues with Armenian and other UTF-8 characters
-const databaseUrl = process.env.DATABASE_URL || '';
-let urlWithEncoding = databaseUrl;
-
-if (!databaseUrl.includes('client_encoding')) {
-  urlWithEncoding = databaseUrl.includes('?') 
-    ? `${databaseUrl}&client_encoding=UTF8`
-    : `${databaseUrl}?client_encoding=UTF8`;
-  
-  // Temporarily override DATABASE_URL for Prisma Client
-  process.env.DATABASE_URL = urlWithEncoding;
+/**
+ * Append libpq params if missing: UTF-8 + bounded connect wait (faster fail than default).
+ */
+function augmentDatabaseUrl(raw: string): string {
+  if (!raw) return raw;
+  let u = raw;
+  if (!u.includes("client_encoding=")) {
+    u += u.includes("?") ? "&client_encoding=UTF8" : "?client_encoding=UTF8";
+  }
+  if (!u.includes("connect_timeout=")) {
+    u += u.includes("?") ? "&connect_timeout=12" : "?connect_timeout=12";
+  }
+  return u;
 }
+
+const databaseUrl = process.env.DATABASE_URL || "";
+process.env.DATABASE_URL = augmentDatabaseUrl(databaseUrl);
+
+const devPrismaLogs =
+  process.env.NODE_ENV === "development" && process.env.PRISMA_LOG_QUERIES === "1"
+    ? (["query", "error", "warn"] as const)
+    : (["error", "warn"] as const);
 
 export const db =
   globalForPrisma.prisma ??
-  new PrismaClient({ 
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? [...devPrismaLogs] : ["error"],
     errorFormat: "pretty",
   });
 

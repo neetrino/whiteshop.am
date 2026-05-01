@@ -125,7 +125,7 @@ export async function executeProductQuery(
       skip,
       take: limit,
     });
-    logger.info(`Found ${products.length} products from database (with productAttributes)`);
+    logger.debug(`Found ${products.length} products from database (with productAttributes)`);
     return products as unknown as ProductWithRelations[];
   } catch (error: unknown) {
     // If productAttributes table doesn't exist, retry without it
@@ -146,7 +146,7 @@ export async function executeProductQuery(
           skip,
           take: limit,
         });
-        logger.info(`Found ${products.length} products from database (after creating attributes column)`);
+        logger.debug(`Found ${products.length} products from database (after creating attributes column)`);
         return products as unknown as ProductWithRelations[];
       } catch (attributesError: unknown) {
         return handleAttributesError(attributesError, where, limit, skip);
@@ -181,7 +181,7 @@ async function executeWithoutProductAttributes(
       skip,
       take: limit,
     });
-    logger.info(`Found ${products.length} products from database (without productAttributes)`);
+    logger.debug(`Found ${products.length} products from database (without productAttributes)`);
     return products as unknown as ProductWithRelations[];
   } catch (retryError: unknown) {
     if (isVariantAttributesError(retryError)) {
@@ -194,7 +194,7 @@ async function executeWithoutProductAttributes(
           skip,
           take: limit,
         });
-        logger.info(`Found ${products.length} products from database (after creating attributes column)`);
+        logger.debug(`Found ${products.length} products from database (after creating attributes column)`);
         return products as unknown as ProductWithRelations[];
       } catch (attributesError: unknown) {
         return handleAttributesError(attributesError, where, limit, skip);
@@ -251,7 +251,7 @@ async function executeWithoutAttributeValue(
       skip,
       take: limit,
     });
-    logger.info(`Found ${products.length} products from database (without attributeValue, with productAttributes)`);
+    logger.debug(`Found ${products.length} products from database (without attributeValue, with productAttributes)`);
     return products as unknown as ProductWithRelations[];
   } catch (productAttrError: unknown) {
     // If productAttributes also fails, try without it
@@ -262,7 +262,7 @@ async function executeWithoutAttributeValue(
         skip,
         take: limit,
       });
-      logger.info(`Found ${products.length} products from database (without attributeValue and productAttributes)`);
+      logger.debug(`Found ${products.length} products from database (without attributeValue and productAttributes)`);
       return products as unknown as ProductWithRelations[];
     }
     throw productAttrError;

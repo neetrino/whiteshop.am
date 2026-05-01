@@ -3,125 +3,47 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../../../lib/api-client';
 import { getStoredLanguage } from '../../../lib/language';
-import type { Category } from '../utils';
-import { logger } from "@/lib/utils/logger";
+import type { CategoryNavPreviewProduct } from '@/lib/services/categories-navigation-previews.service';
+import { logger } from '@/lib/utils/logger';
 
-interface Product {
-  id: string;
-  slug: string;
-  title: string;
-  image: string | null;
-}
-
-interface ProductsResponse {
-  data: Product[];
-  meta: {
-    total: number;
-  };
+interface PreviewsResponse {
+  data: Record<string, CategoryNavPreviewProduct | null>;
 }
 
 /**
- * Hook for fetching first product with image for each category
+ * Loads one preview product per category nav slot via a single API call
+ * (replaces N parallel /products requests).
  */
-export function useCategoryProducts(categories: Category[], t: (path: string) => string) {
-  const [categoryProducts, setCategoryProducts] = useState<Record<string, Product | null>>({});
+export function useCategoryProducts() {
+  const [categoryProducts, setCategoryProducts] = useState<
+    Record<string, CategoryNavPreviewProduct | null>
+  >({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (categories.length === 0) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchCategoryProducts = async () => {
+    const fetchPreviews = async () => {
       try {
         setLoading(true);
         const language = getStoredLanguage();
-        const products: Record<string, Product | null> = {};
-        
-        // Add "All" category
-        const allCategoriesWithAll = [
-          { id: 'all', slug: 'all', title: t('products.categoryNavigation.all'), fullPath: 'all', children: [] } as Category,
-          ...categories
-        ];
-
-        // Fetch products for each category
-        const categoryPromises = allCategoriesWithAll.map(async (category) => {
-          try {
-            const params: Record<string, string> = {
-              limit: '5',
-              lang: language,
-            };
-            if (category.slug !== 'all') {
-              params.category = category.slug;
-            }
-
-            logger.debug(`🔍 [CategoryNavigation] Fetching products for category: "${category.title}" (slug: "${category.slug}")`, params);
-            const productsResponse = await apiClient.get<ProductsResponse>('/api/v1/products', {
-              params,
-            });
-            
-            logger.debug(`📦 [CategoryNavigation] Response for "${category.title}":`, {
-              total: productsResponse.meta?.total || 0,
-              productsCount: productsResponse.data?.length || 0,
-              firstProductId: productsResponse.data?.[0]?.id,
-              firstProductImage: productsResponse.data?.[0]?.image,
-            });
-            
-            // If category has 0 products, it might mean category was not found
-            if (productsResponse.meta?.total === 0 && category.slug !== 'all') {
-              console.warn(`⚠️ [CategoryNavigation] Category "${category.title}" (${category.slug}) has 0 products - category might not exist in database`);
-            }
-            
-            // Get first product with image
-            const productWithImage = productsResponse.data && productsResponse.data.length > 0
-              ? (productsResponse.data.find(p => p.image) || productsResponse.data[0] || null)
-              : null;
-            products[category.slug] = productWithImage;
-            
-            logger.debug(`✅ [CategoryNavigation] Category "${category.title}" (${category.slug}): selected product: ${productWithImage?.id} (image: ${productWithImage?.image ? 'yes' : 'no'})`);
-          } catch (err) {
-            console.error(`❌ [CategoryNavigation] Error fetching product for category ${category.slug}:`, err);
-            products[category.slug] = null;
-          }
-        });
-
-        await Promise.all(categoryPromises);
-        setCategoryProducts(products);
-        
-        // Log final state to verify each category has unique product
-        logger.debug('✅ [CategoryNavigation] All categories processed');
-        logger.debug('📊 [CategoryNavigation] Final category products mapping:', 
-          Object.entries(products).map(([slug, product]) => ({
-            slug,
-            productId: product?.id || 'null',
-            productImage: product?.image || 'null',
-          }))
+        const response = await apiClient.get<PreviewsResponse>(
+          '/api/v1/categories/navigation-previews',
+          { params: { lang: language } }
         );
-        
-        // Check for duplicate products
-        const productIds = Object.values(products).map(p => p?.id).filter(Boolean);
-        const uniqueProductIds = new Set(productIds);
-        if (productIds.length !== uniqueProductIds.size) {
-          console.warn('⚠️ [CategoryNavigation] WARNING: Some categories have the same product!', {
-            totalProducts: productIds.length,
-            uniqueProducts: uniqueProductIds.size,
-            duplicates: productIds.filter((id, index) => productIds.indexOf(id) !== index)
-          });
-        }
+        setCategoryProducts(response.data ?? {});
       } catch (err) {
-        console.error('Error fetching category products:', err);
+        logger.error('[CategoryNavigation] Failed to load navigation previews', err);
+        setCategoryProducts({});
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategoryProducts();
-  }, [categories, t]);
+    void fetchPreviews();
+
+    const onLang = () => void fetchPreviews();
+    window.addEventListener('language-updated', onLang);
+    return () => window.removeEventListener('language-updated', onLang);
+  }, []);
 
   return { categoryProducts, loading };
 }
-
-
-
-

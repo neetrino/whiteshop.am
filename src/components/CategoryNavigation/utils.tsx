@@ -1,26 +1,11 @@
 import type { ReactNode } from 'react';
+import type { CategoryTreeNode } from '../../lib/categories/category-tree';
+import { flattenCategoryTree } from '../../lib/categories/category-tree';
 
-export interface Category {
-  id: string;
-  slug: string;
-  title: string;
-  fullPath: string;
-  children: Category[];
-}
+export type Category = CategoryTreeNode;
 
-/**
- * Flatten categories tree to get all categories
- */
-export function flattenCategories(cats: Category[]): Category[] {
-  const result: Category[] = [];
-  cats.forEach((cat) => {
-    result.push(cat);
-    if (cat.children && cat.children.length > 0) {
-      result.push(...flattenCategories(cat.children));
-    }
-  });
-  return result;
-}
+/** Depth-first flatten (shared with server preview builder). */
+export const flattenCategories = flattenCategoryTree;
 
 /**
  * Get category icon based on title/slug

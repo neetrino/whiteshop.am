@@ -36,12 +36,19 @@ interface UseRelatedProductsProps {
   categorySlug?: string;
   currentProductId: string;
   language: LanguageCode;
+  /** When set (PDP), uses cached `/api/v1/products/[slug]/related` instead of list API. */
+  productSlug?: string;
 }
 
 /**
  * Hook for fetching related products
  */
-export function useRelatedProducts({ categorySlug, currentProductId, language }: UseRelatedProductsProps) {
+export function useRelatedProducts({
+  categorySlug,
+  currentProductId,
+  language,
+  productSlug,
+}: UseRelatedProductsProps) {
   const [products, setProducts] = useState<RelatedProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,20 +56,32 @@ export function useRelatedProducts({ categorySlug, currentProductId, language }:
     const fetchRelatedProducts = async () => {
       try {
         setLoading(true);
-        
-        // Build params - if no categorySlug, fetch all products
+
+        if (productSlug) {
+          const encoded = encodeURIComponent(productSlug.trim());
+          const response = await apiClient.get<{
+            data: RelatedProduct[];
+            meta: { total: number };
+          }>(`/api/v1/products/${encoded}/related`, {
+            params: { lang: language },
+          });
+          const filtered = response.data.filter((p) => p.id !== currentProductId);
+          setProducts(filtered.slice(0, 10));
+          return;
+        }
+
         const params: Record<string, string> = {
-          limit: '30', // Fetch more to ensure we have 10 after filtering
+          limit: '30',
           lang: language,
         };
-        
+
         if (categorySlug) {
           params.category = categorySlug;
           logger.debug('[RelatedProducts] Fetching related products for category:', categorySlug);
         } else {
           logger.debug('[RelatedProducts] No categorySlug, fetching all products');
         }
-        
+
         const response = await apiClient.get<{
           data: RelatedProduct[];
           meta: {
@@ -73,22 +92,23 @@ export function useRelatedProducts({ categorySlug, currentProductId, language }:
         });
 
         logger.debug('[RelatedProducts] Received products:', response.data.length);
-        // Filter out current product and take exactly 10
-        const filtered = response.data.filter(p => p.id !== currentProductId);
+        const filtered = response.data.filter((p) => p.id !== currentProductId);
         logger.debug('[RelatedProducts] After filtering current product:', filtered.length);
         const finalProducts = filtered.slice(0, 10);
         logger.debug('[RelatedProducts] Final products to display:', finalProducts.length);
         setProducts(finalProducts);
-      } catch (error) {
-        console.error('[RelatedProducts] Error fetching related products:', error);
+      } catch (error: unknown) {
+        logger.warn('[RelatedProducts] Error fetching related products', {
+          error: error instanceof Error ? error.message : String(error),
+        });
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRelatedProducts();
-  }, [categorySlug, currentProductId, language]);
+    void fetchRelatedProducts();
+  }, [categorySlug, currentProductId, language, productSlug]);
 
   return { products, loading };
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { invalidateStorefrontAfterAdminSettingsUpdate } from "@/lib/cache/storefront-cache";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
 
@@ -53,6 +54,7 @@ export async function PUT(req: NextRequest) {
 
     const data = await req.json();
     const result = await adminService.updateSettings(data);
+    await invalidateStorefrontAfterAdminSettingsUpdate();
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("❌ [ADMIN] Error:", error);

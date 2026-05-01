@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiRouteErrorResponse } from "@/lib/http/api-route-errors";
 import { productsService } from "@/lib/services/products.service";
 import { cacheService } from "@/lib/services/cache.service";
 
@@ -56,18 +57,7 @@ export async function GET(req: NextRequest) {
       headers: { "X-Cache": "MISS" },
     });
   } catch (error: unknown) {
-    const err = error as { type?: string; title?: string; status?: number; detail?: string; message?: string };
-    console.error("❌ [PRODUCTS] Error:", error);
-    return NextResponse.json(
-      {
-        type: err.type || "https://api.shop.am/problems/internal-error",
-        title: err.title || "Internal Server Error",
-        status: err.status || 500,
-        detail: err.detail || err.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: err.status || 500 }
-    );
+    return apiRouteErrorResponse(req, error, "[PRODUCTS]");
   }
 }
 
