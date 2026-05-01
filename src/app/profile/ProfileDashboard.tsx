@@ -186,16 +186,24 @@ export function ProfileDashboard({
       <Card className="rounded-2xl border border-gray-200/80 p-5 shadow-none sm:p-7 lg:p-8">
         <h2 className="mb-5 text-lg font-bold tracking-tight text-gray-900 sm:mb-6 sm:text-xl">{t('profile.dashboard.quickActions')}</h2>
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:flex-wrap">
-          <Button variant="outline" onClick={() => onTabChange('orders')} className="h-12 w-full justify-between rounded-xl px-4 sm:justify-start lg:min-w-[200px] lg:flex-1">
-            <span className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => onTabChange('orders')}
+            className="flex min-h-12 w-full items-center justify-between rounded-xl px-4 sm:justify-start lg:min-w-[200px] lg:flex-1"
+          >
+            <span className="flex min-w-0 items-center gap-3 text-left leading-snug">
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               {t('profile.dashboard.viewAllOrders')}
             </span>
           </Button>
-          <Button variant="outline" onClick={() => onTabChange('addresses')} className="h-12 w-full justify-between rounded-xl px-4 sm:justify-start lg:min-w-[200px] lg:flex-1">
-            <span className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => onTabChange('addresses')}
+            className="flex min-h-12 w-full items-center justify-between rounded-xl px-4 sm:justify-start lg:min-w-[200px] lg:flex-1"
+          >
+            <span className="flex min-w-0 items-center gap-3 text-left leading-snug">
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -204,8 +212,8 @@ export function ProfileDashboard({
             </span>
           </Button>
           <Link href="/products" className="block w-full lg:min-w-[200px] lg:flex-1">
-            <Button variant="outline" className="h-12 w-full justify-between rounded-xl px-4 sm:justify-start">
-              <span className="flex items-center gap-3">
+            <Button variant="outline" className="flex min-h-12 w-full items-center justify-between rounded-xl px-4 sm:justify-start">
+              <span className="flex min-w-0 items-center gap-3 text-left leading-snug">
                 <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
