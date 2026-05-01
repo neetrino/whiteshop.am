@@ -3,6 +3,7 @@ import {
   normalizeUrlForComparison,
   processImageUrl,
   smartSplitUrls,
+  type ImageUrlInput,
 } from "../../utils/image-utils";
 
 /** Minimal variant shape for gallery URL merge (matches client useProductImages). */
@@ -19,7 +20,9 @@ export function computeProductGalleryUrls(
   media: unknown[] | null | undefined,
   variants: GalleryVariantInput[] | null | undefined
 ): string[] {
-  const mainImages = Array.isArray(media) ? media : [];
+  const mainImages: ImageUrlInput[] = Array.isArray(media)
+    ? (media as ImageUrlInput[])
+    : [];
   const cleanedMain = cleanImageUrls(mainImages);
   const variantImages: string[] = [];
 
