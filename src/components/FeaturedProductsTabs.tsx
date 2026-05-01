@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { apiClient } from '../lib/api-client';
 import { getStoredLanguage, type LanguageCode } from '../lib/language';
 import { ProductCard } from './ProductCard';
 import { t } from '../lib/i18n';
 import type { ProductLabel } from './ProductLabels';
+import { logger } from '../lib/utils/logger';
 
 interface Product {
   id: string;
@@ -51,35 +52,41 @@ const PRODUCTS_PER_PAGE = 10;
 const MOBILE_GRID_LAYOUT =
   'grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
 
+function filterParamForTab(tabId: FilterType): string | null {
+  switch (tabId) {
+    case 'new':
+      return 'new';
+    case 'bestseller':
+      return 'bestseller';
+    case 'featured':
+      return 'featured';
+    default:
+      return null;
+  }
+}
+
 /**
  * FeaturedProductsTabs Component
  * Displays products with tabs for filtering (NEW OFFERS, NEW, FEATURED, TOP SELLERS)
  * Similar to the reference design with underlined active tab
  */
 export function FeaturedProductsTabs() {
-  // Use state for language to prevent hydration mismatch
-  // Start with 'en' on server, update on client mount
   const [language, setLanguage] = useState<LanguageCode>('en');
+  const [languageHydrated, setLanguageHydrated] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterType>('new');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Update language on mount and when language changes
+  useLayoutEffect(() => {
+    setLanguage(getStoredLanguage());
+    setLanguageHydrated(true);
+  }, []);
+
   useEffect(() => {
-    const updateLanguage = () => {
-      const storedLang = getStoredLanguage();
-      setLanguage(storedLang);
-    };
-
-    // Update immediately on mount
-    updateLanguage();
-
-    // Listen to language-updated events
     const handleLanguageUpdate = () => {
-      updateLanguage();
+      setLanguage(getStoredLanguage());
     };
-
     window.addEventListener('language-updated', handleLanguageUpdate);
     return () => {
       window.removeEventListener('language-updated', handleLanguageUpdate);
@@ -119,7 +126,7 @@ export function FeaturedProductsTabs() {
 
       setProducts((response.data || []).slice(0, PRODUCTS_PER_PAGE));
     } catch (err) {
-      console.error('[FeaturedProductsTabs] Error:', err);
+      logger.error('[FeaturedProductsTabs] Error loading featured products', err);
       setError(t(language, 'home.featured_products.errorLoading'));
       setProducts([]);
     } finally {
@@ -127,19 +134,14 @@ export function FeaturedProductsTabs() {
     }
   }, [language]);
 
-  /**
-   * Handle tab change
-   */
   const handleTabChange = (tabId: FilterType) => {
     setActiveTab(tabId);
-    const tab = tabs.find((t) => t.id === tabId);
-    fetchProducts(tab?.filter || null);
   };
 
-  // Load products on mount (default "NEW")
   useEffect(() => {
-    fetchProducts('new');
-  }, [fetchProducts]);
+    if (!languageHydrated) return;
+    void fetchProducts(filterParamForTab(activeTab));
+  }, [languageHydrated, language, activeTab, fetchProducts]);
 
   return (
     <section className="py-16 bg-gray-50">
@@ -184,15 +186,15 @@ export function FeaturedProductsTabs() {
         </div>
 
         {/* Products Grid */}
-        {loading ? (
+        {loading && products.length === 0 ? (
           <div className={MOBILE_GRID_LAYOUT}>
             {[...Array(PRODUCTS_PER_PAGE)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg overflow-hidden animate-pulse">
-                <div className="aspect-square bg-gray-200"></div>
+              <div key={i} className="bg-white rounded-lg overflow-hidden">
+                <div className="aspect-square bg-neutral-100" />
                 <div className="p-4 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-4 bg-neutral-100 rounded w-3/4" />
+                  <div className="h-3 bg-neutral-100 rounded w-1/2" />
+                  <div className="h-5 bg-neutral-100 rounded w-1/3" />
                 </div>
               </div>
             ))}
@@ -201,9 +203,9 @@ export function FeaturedProductsTabs() {
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{error}</p>
             <button
+              type="button"
               onClick={() => {
-                const tab = tabs.find((t) => t.id === activeTab);
-                fetchProducts(tab?.filter || null);
+                void fetchProducts(filterParamForTab(activeTab));
               }}
               className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors"
             >
@@ -211,7 +213,7 @@ export function FeaturedProductsTabs() {
             </button>
           </div>
         ) : products.length > 0 ? (
-          <div className={MOBILE_GRID_LAYOUT}>
+          <div className={`${MOBILE_GRID_LAYOUT} ${loading ? 'opacity-80' : ''}`}>
             {products.slice(0, PRODUCTS_PER_PAGE).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

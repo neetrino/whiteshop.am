@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { invalidateStorefrontCategoryCaches } from "@/lib/cache/storefront-cache";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
 import { logger } from "@/lib/utils/logger";
@@ -65,6 +66,8 @@ export async function POST(req: NextRequest) {
 
     const result = await adminService.createCategory(body);
     logger.debug("✅ [ADMIN CATEGORIES] Category created:", result.data.id);
+
+    await invalidateStorefrontCategoryCaches();
 
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {

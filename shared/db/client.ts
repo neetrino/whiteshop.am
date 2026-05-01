@@ -20,10 +20,15 @@ if (!databaseUrl.includes('client_encoding')) {
   process.env.DATABASE_URL = urlWithEncoding;
 }
 
+const devPrismaLogs =
+  process.env.NODE_ENV === "development" && process.env.PRISMA_LOG_QUERIES === "1"
+    ? (["query", "error", "warn"] as const)
+    : (["error", "warn"] as const);
+
 export const db =
   globalForPrisma.prisma ??
-  new PrismaClient({ 
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? [...devPrismaLogs] : ["error"],
     errorFormat: "pretty",
   });
 

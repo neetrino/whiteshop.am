@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { invalidateStorefrontCategoryCaches } from "@/lib/cache/storefront-cache";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
 import { logger } from "@/lib/utils/logger";
@@ -88,6 +89,8 @@ export async function PUT(
     const result = await adminService.updateCategory(id, body);
     logger.debug("✅ [ADMIN CATEGORIES] Category updated:", id);
 
+    await invalidateStorefrontCategoryCaches();
+
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("❌ [ADMIN CATEGORIES] PUT Error:", error);
@@ -132,6 +135,8 @@ export async function DELETE(
 
     await adminService.deleteCategory(id);
     logger.debug("✅ [ADMIN CATEGORIES] Category deleted:", id);
+
+    await invalidateStorefrontCategoryCaches();
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

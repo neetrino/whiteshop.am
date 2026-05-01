@@ -1,21 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  STOREFRONT_CACHE_KEYS,
+  STOREFRONT_CACHE_TTL,
+  readJsonCache,
+  stableSearchParamsKey,
+  writeJsonCache,
+} from "@/lib/cache/storefront-cache";
 import { productsService } from "@/lib/services/products.service";
+import { logger } from "@/lib/utils/logger";
 
 export async function GET(req: NextRequest) {
   try {
-    let searchParams;
+    let searchParams: URLSearchParams;
     try {
-      const url = req.url || '';
+      const url = req.url || "";
       searchParams = new URL(url).searchParams;
     } catch (urlError) {
-      console.error("❌ [PRODUCTS FILTERS] Error parsing URL:", urlError);
+      logger.error("[PRODUCTS FILTERS] Invalid request URL", urlError);
       return NextResponse.json(
         {
           type: "https://api.shop.am/problems/internal-error",
           title: "Internal Server Error",
           status: 500,
           detail: "Invalid request URL",
-          instance: req.url || '',
+          instance: req.url || "",
         },
         { status: 500 }
       );
@@ -33,21 +41,28 @@ export async function GET(req: NextRequest) {
       lang: searchParams.get("lang") || "en",
     };
 
+    const cacheKey = STOREFRONT_CACHE_KEYS.productsFilters(stableSearchParamsKey(searchParams));
+    const cached = await readJsonCache<unknown>(cacheKey);
+    if (cached !== null) {
+      return NextResponse.json(cached, { headers: { "X-Cache": "HIT" } });
+    }
+
     const result = await productsService.getFilters(filters);
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("❌ [PRODUCTS FILTERS] Error:", error);
-    console.error("❌ [PRODUCTS FILTERS] Error stack:", error.stack);
+    await writeJsonCache(cacheKey, STOREFRONT_CACHE_TTL.productsFilters, result);
+
+    return NextResponse.json(result, { headers: { "X-Cache": "MISS" } });
+  } catch (error: unknown) {
+    const err = error as { type?: string; title?: string; status?: number; message?: string };
+    logger.error("[PRODUCTS FILTERS] Error", error);
     return NextResponse.json(
       {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url || '',
+        type: err.type || "https://api.shop.am/problems/internal-error",
+        title: err.title || "Internal Server Error",
+        status: err.status || 500,
+        detail: err.message || "An error occurred",
+        instance: req.url || "",
       },
-      { status: error.status || 500 }
+      { status: err.status || 500 }
     );
   }
 }
-

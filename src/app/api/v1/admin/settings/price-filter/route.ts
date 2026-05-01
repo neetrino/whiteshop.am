@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { invalidateStorefrontProductFilterCaches } from "@/lib/cache/storefront-cache";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
 import { logger } from "@/lib/utils/logger";
@@ -171,6 +172,7 @@ export async function PUT(req: NextRequest) {
 
     const result = await adminService.updatePriceFilterSettings(data);
     logger.debug('✅ [PRICE FILTER API] Settings updated:', result);
+    await invalidateStorefrontProductFilterCaches();
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("❌ [PRICE FILTER API] PUT Error:", error);

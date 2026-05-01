@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  STOREFRONT_CACHE_KEYS,
+  STOREFRONT_CACHE_TTL,
+  readJsonCache,
+  stableSearchParamsKey,
+  writeJsonCache,
+} from "@/lib/cache/storefront-cache";
 import { productsService } from "@/lib/services/products.service";
+import { logger } from "@/lib/utils/logger";
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,20 +17,28 @@ export async function GET(req: NextRequest) {
       lang: searchParams.get("lang") || "en",
     };
 
+    const cacheKey = STOREFRONT_CACHE_KEYS.productsPriceRange(stableSearchParamsKey(searchParams));
+    const cached = await readJsonCache<unknown>(cacheKey);
+    if (cached !== null) {
+      return NextResponse.json(cached, { headers: { "X-Cache": "HIT" } });
+    }
+
     const result = await productsService.getPriceRange(filters);
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("❌ [PRODUCTS] Error:", error);
+    await writeJsonCache(cacheKey, STOREFRONT_CACHE_TTL.productsPriceRange, result);
+
+    return NextResponse.json(result, { headers: { "X-Cache": "MISS" } });
+  } catch (error: unknown) {
+    const err = error as { type?: string; title?: string; status?: number; message?: string };
+    logger.error("[PRODUCTS PRICE-RANGE] Error", error);
     return NextResponse.json(
       {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
+        type: err.type || "https://api.shop.am/problems/internal-error",
+        title: err.title || "Internal Server Error",
+        status: err.status || 500,
+        detail: err.message || "An error occurred",
         instance: req.url,
       },
-      { status: error.status || 500 }
+      { status: err.status || 500 }
     );
   }
 }
-
