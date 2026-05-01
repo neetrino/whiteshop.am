@@ -1,5 +1,8 @@
 import { revalidatePath, revalidateTag } from "next/cache";
-import { invalidateStorefrontProductRelatedCaches } from "@/lib/cache/storefront-cache";
+import {
+  invalidateProductPageCaches,
+  invalidateStorefrontProductRelatedCaches,
+} from "@/lib/cache/storefront-cache";
 import { logger } from "../../../utils/logger";
 import { cacheService } from "../../cache.service";
 
@@ -23,6 +26,7 @@ export async function revalidateProductCache(
     revalidateTag(`product-${productId}`);
 
     await cacheService.deletePattern("products:*");
+    await invalidateProductPageCaches();
     await invalidateStorefrontProductRelatedCaches();
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);

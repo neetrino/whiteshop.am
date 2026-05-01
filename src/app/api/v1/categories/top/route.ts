@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@white-shop/db";
+import { apiRouteErrorResponse } from "@/lib/http/api-route-errors";
 import { cacheService } from "@/lib/services/cache.service";
 import { processImageUrl } from "@/lib/utils/image-utils";
 
@@ -127,17 +128,6 @@ export async function GET(req: NextRequest) {
       headers: { "X-Cache": "MISS" },
     });
   } catch (error: unknown) {
-    const err = error as { type?: string; title?: string; status?: number; detail?: string; message?: string };
-    console.error("❌ [TOP CATEGORIES] Error:", error);
-    return NextResponse.json(
-      {
-        type: err.type || "https://api.shop.am/problems/internal-error",
-        title: err.title || "Internal Server Error",
-        status: err.status || 500,
-        detail: err.detail || err.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: err.status || 500 }
-    );
+    return apiRouteErrorResponse(req, error, "[TOP CATEGORIES]");
   }
 }

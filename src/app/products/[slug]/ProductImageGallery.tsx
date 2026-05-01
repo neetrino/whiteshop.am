@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Maximize2 } from "lucide-react";
 import { ProductLabels } from "../../../components/ProductLabels";
@@ -7,6 +8,8 @@ import { ProductImagePlaceholder } from "../../../components/ProductImagePlaceho
 import { t } from "../../../lib/i18n";
 import type { LanguageCode } from "../../../lib/language";
 import type { Product } from "./types";
+
+const PDP_MAIN_IMAGE_SIZES = "(max-width: 1024px) 100vw, 55vw";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -17,6 +20,8 @@ interface ProductImageGalleryProps {
   onImageIndexChange: (index: number) => void;
   thumbnailStartIndex: number;
   onThumbnailStartIndexChange: (index: number) => void;
+  /** LCP: prioritize only the first above-the-fold hero image. */
+  mainImagePriority?: boolean;
 }
 
 const THUMBNAILS_PER_VIEW = 3;
@@ -30,6 +35,7 @@ export function ProductImageGallery({
   onImageIndexChange,
   thumbnailStartIndex,
   onThumbnailStartIndexChange,
+  mainImagePriority = false,
 }: ProductImageGalleryProps) {
   const [showZoom, setShowZoom] = useState(false);
   const [failedIndices, setFailedIndices] = useState<Set<number>>(new Set());
@@ -79,10 +85,12 @@ export function ProductImageGallery({
                   {failedIndices.has(actualIndex) ? (
                     <ProductImagePlaceholder className="w-full h-full" aria-label="" />
                   ) : (
-                    <img 
-                      src={image} 
-                      alt="" 
-                      className="w-full h-full object-cover transition-transform duration-300" 
+                    <img
+                      src={image}
+                      alt=""
+                      className="w-full h-full object-cover transition-transform duration-300"
+                      loading="lazy"
+                      decoding="async"
                       onError={() => markFailed(actualIndex)}
                     />
                   )}
@@ -168,10 +176,14 @@ export function ProductImageGallery({
         <div className="flex-1">
           <div className="relative aspect-square bg-white rounded-lg overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           {images.length > 0 && !mainImageFailed ? (
-            <img 
-              src={currentSrc} 
-              alt={product.title} 
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+            <Image
+              src={currentSrc}
+              alt={product.title}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes={PDP_MAIN_IMAGE_SIZES}
+              priority={mainImagePriority}
+              unoptimized
               onError={() => markFailed(currentImageIndex)}
             />
           ) : (

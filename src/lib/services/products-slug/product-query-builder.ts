@@ -74,18 +74,20 @@ const getProductAttributesInclude = () => ({
 });
 
 /**
- * Base where clause for product queries
+ * Base where clause for product queries (published, locale slug match).
  */
-const getBaseWhere = (slug: string, lang: string) => ({
-  translations: {
-    some: {
-      slug,
-      locale: lang,
+export function getBaseWhere(slug: string, lang: string) {
+  return {
+    translations: {
+      some: {
+        slug,
+        locale: lang,
+      },
     },
-  },
-  published: true,
-  deletedAt: null,
-});
+    published: true,
+    deletedAt: null,
+  };
+}
 
 /**
  * Check if error is related to product_attributes table

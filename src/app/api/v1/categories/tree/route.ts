@@ -5,8 +5,8 @@ import {
   readJsonCache,
   writeJsonCache,
 } from "@/lib/cache/storefront-cache";
+import { apiRouteErrorResponse } from "@/lib/http/api-route-errors";
 import { categoriesService } from "@/lib/services/categories.service";
-import { logger } from "@/lib/utils/logger";
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,17 +24,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(result, { headers: { "X-Cache": "MISS" } });
   } catch (error: unknown) {
-    const err = error as { type?: string; title?: string; status?: number; message?: string };
-    logger.error("[CATEGORIES TREE] Error", error);
-    return NextResponse.json(
-      {
-        type: err.type || "https://api.shop.am/problems/internal-error",
-        title: err.title || "Internal Server Error",
-        status: err.status || 500,
-        detail: err.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: err.status || 500 }
-    );
+    return apiRouteErrorResponse(req, error, "[CATEGORIES TREE]");
   }
 }

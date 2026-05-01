@@ -32,6 +32,7 @@ export function useProductPage(params: Promise<{ slug?: string }>) {
   const {
     product,
     loading,
+    notFound,
   } = useProductFetch({
     slug,
     variantIdFromUrl,
@@ -95,7 +96,7 @@ export function useProductPage(params: Promise<{ slug?: string }>) {
 
   const { reviews, averageRating } = useProductReviews({
     slug,
-    productId: product?.id || null,
+    productId: product?.id ?? null,
   });
 
   const { handleAddToWishlist, handleCompareToggle } = useProductActions({
@@ -162,6 +163,7 @@ export function useProductPage(params: Promise<{ slug?: string }>) {
   return {
     product,
     loading,
+    notFound,
     images,
     currentImageIndex,
     setCurrentImageIndex,

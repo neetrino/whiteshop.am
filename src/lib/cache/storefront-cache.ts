@@ -11,6 +11,12 @@ export const STOREFRONT_CACHE_TTL = {
   currencyRates: 180,
   productsFilters: 120,
   productsPriceRange: 120,
+  /** PDP first paint (images + identifiers). */
+  productVisual: 300,
+  /** PDP full product JSON for info column. */
+  productDetails: 300,
+  /** PDP related carousel (same shape as list items). */
+  productRelated: 180,
 } as const;
 
 export const STOREFRONT_CACHE_KEYS = {
@@ -20,6 +26,9 @@ export const STOREFRONT_CACHE_KEYS = {
   currencyRates: () => "settings:currency-rates",
   productsFilters: (stableQuery: string) => `products:filters:${stableQuery}`,
   productsPriceRange: (stableQuery: string) => `products:price-range:${stableQuery}`,
+  productVisual: (lang: string, slug: string) => `product:visual:${lang}:${slug}`,
+  productDetails: (lang: string, slug: string) => `product:details:${lang}:${slug}`,
+  productRelated: (lang: string, slug: string) => `product:related:${lang}:${slug}`,
 } as const;
 
 /** Deterministic cache key fragment from URL search params (sorted keys). */
@@ -83,5 +92,19 @@ export async function invalidateStorefrontProductRelatedCaches(): Promise<void> 
 export async function invalidateStorefrontAfterAdminSettingsUpdate(): Promise<void> {
   await invalidateCurrencyRatesCache();
   await cacheService.deletePattern("products:*");
+  await Promise.all([
+    cacheService.deletePattern("product:visual:*"),
+    cacheService.deletePattern("product:details:*"),
+    cacheService.deletePattern("product:related:*"),
+  ]);
   await invalidateStorefrontProductRelatedCaches();
+}
+
+/** Invalidate split PDP caches (visual / details / related). */
+export async function invalidateProductPageCaches(): Promise<void> {
+  await Promise.all([
+    cacheService.deletePattern("product:visual:*"),
+    cacheService.deletePattern("product:details:*"),
+    cacheService.deletePattern("product:related:*"),
+  ]);
 }
