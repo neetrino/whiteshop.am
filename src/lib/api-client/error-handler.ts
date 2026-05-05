@@ -17,6 +17,28 @@ export function shouldLogWarning(status: number): boolean {
 }
 
 /**
+ * 422 from cart when quantity exceeds stock — expected; do not log as a client error.
+ */
+export function isInsufficientStockProblem(errorData: unknown): boolean {
+  if (!errorData || typeof errorData !== "object") {
+    return false;
+  }
+  const o = errorData as Record<string, unknown>;
+  if (o.title === "Insufficient stock") {
+    return true;
+  }
+  const detail = typeof o.detail === "string" ? o.detail : "";
+  return (
+    detail.includes("No more stock available") ||
+    detail.includes("exceeds available stock")
+  );
+}
+
+export function isQuietCartStockValidationError(status: number, errorData: unknown): boolean {
+  return status === 422 && isInsufficientStockProblem(errorData);
+}
+
+/**
  * Parse error response from API
  */
 export async function parseErrorResponse(response: Response): Promise<{

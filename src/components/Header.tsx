@@ -884,7 +884,11 @@ export function Header() {
       <header
         ref={mainNavRef}
         style={{ top: topBarHeight }}
-        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-out will-change-transform ${
+        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm will-change-transform ${
+          revealHeaderForCartFly
+            ? 'transition-none'
+            : 'transition-transform duration-300 ease-out'
+        } ${
           headerScrollVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
         }`}
       >

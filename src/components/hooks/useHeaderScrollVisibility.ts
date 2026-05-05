@@ -37,7 +37,8 @@ function normalizeWheelVerticalPixels(e: WheelEvent, direction: 'down' | 'up'): 
 /**
  * Hides after ~3mm cumulative scroll/wheel down (one transition, no flicker).
  * Shows only after ~2mm cumulative scroll/wheel up while hidden (hysteresis).
- * When suppressHide is true, the header stays visible.
+ * When suppressHide is true, the header stays visible on the same render (no
+ * useEffect lag) so fly-to-cart and similar flows can measure the real layout.
  */
 export function useHeaderScrollVisibility(suppressHide: boolean): boolean {
   const [visible, setVisible] = useState(true);
@@ -174,5 +175,5 @@ export function useHeaderScrollVisibility(suppressHide: boolean): boolean {
     };
   }, [suppressHide]);
 
-  return visible;
+  return suppressHide || visible;
 }

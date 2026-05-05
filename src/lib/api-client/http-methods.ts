@@ -3,7 +3,13 @@ import type { RequestOptions } from "./types";
 import { buildUrl } from "./url-builder";
 import { getHeaders } from "./headers";
 import { handleUnauthorized } from "./auth-utils";
-import { shouldLogError, shouldLogWarning, parseErrorResponse, createApiError } from "./error-handler";
+import {
+  shouldLogError,
+  shouldLogWarning,
+  parseErrorResponse,
+  createApiError,
+  isQuietCartStockValidationError,
+} from "./error-handler";
 import { logger } from "@/lib/utils/logger";
 
 /**
@@ -58,35 +64,36 @@ async function handleErrorResponse(
 ): Promise<never> {
   const isUnauthorized = response.status === 401;
   const isNotFound = response.status === 404;
-  
+
+  const { errorText, errorData } = await parseErrorResponse(response);
+  const quietStock422 = isQuietCartStockValidationError(response.status, errorData);
+
   // Log 404 as warning (expected situation - resource doesn't exist)
   if (shouldLogWarning(response.status)) {
     console.warn(`⚠️ [API CLIENT] Not Found (404): ${url}`);
-  }
-  // Log other errors (except 401 which is expected)
-  else if (shouldLogError(response.status)) {
+  } else if (!isUnauthorized && !quietStock422 && shouldLogError(response.status)) {
     console.error(`❌ [API CLIENT] Error: ${response.status} ${response.statusText}`, {
       url,
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries()),
     });
+  } else if (quietStock422) {
+    logger.debug("[API CLIENT] Cart stock limit (422)", { url, errorData });
   }
-  
+
   // Handle 401 Unauthorized - clear token and redirect
   if (isUnauthorized) {
     handleUnauthorized();
   }
-  
-  const { errorText, errorData } = await parseErrorResponse(response);
-  
+
   // Log error details
   if (isNotFound) {
-    console.warn('⚠️ [API CLIENT] Not Found response:', errorData || errorText);
-  } else if (!isUnauthorized && shouldLogError(response.status)) {
-    console.error('❌ [API CLIENT] Error response:', errorData || errorText);
+    console.warn("⚠️ [API CLIENT] Not Found response:", errorData || errorText);
+  } else if (!isUnauthorized && !quietStock422 && shouldLogError(response.status)) {
+    console.error("❌ [API CLIENT] Error response:", errorData || errorText);
   }
-  
+
   throw createApiError(response, errorText, errorData);
 }
 

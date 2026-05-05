@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '../../lib/api-client';
+import { ApiError } from '../../lib/api-client/types';
+import { isQuietCartStockValidationError } from '../../lib/api-client/error-handler';
+import { logger } from '../../lib/utils/logger';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useTranslation } from '../../lib/i18n-client';
 import { playCartFlyAnimation } from '../../lib/cart-fly-animation';
@@ -52,7 +55,7 @@ export function useAddToCart({ productId, productSlug, inStock, defaultVariantId
 
     // Validate product slug before making API call
     if (!productSlug || productSlug.trim() === '' || productSlug.includes(' ')) {
-      console.error('❌ [PRODUCT CARD] Invalid product slug:', productSlug);
+      logger.warn('[PRODUCT CARD] Invalid product slug', { productSlug });
       alert(t('common.alerts.invalidProduct'));
       return;
     }
@@ -115,7 +118,7 @@ export function useAddToCart({ productId, productSlug, inStock, defaultVariantId
         localStorage.setItem(CART_KEY, JSON.stringify(cart));
         window.dispatchEvent(new Event('cart-updated'));
       } catch (error: unknown) {
-        console.error('❌ [PRODUCT CARD] Error adding to guest cart:', error);
+        logger.error('[PRODUCT CARD] Error adding to guest cart', { error });
         const err = error as { message?: string; status?: number };
         if (err?.message?.includes('does not exist') || err?.message?.includes('404') || err?.status === 404) {
           alert(t('common.alerts.productNotFound'));
@@ -165,12 +168,11 @@ export function useAddToCart({ productId, productSlug, inStock, defaultVariantId
         detail: response.cartSummary || null,
       }));
     } catch (error: unknown) {
-      console.error('❌ [PRODUCT CARD] Error adding to cart:', error);
-
       const err = error as {
         message?: string;
         status?: number;
         statusCode?: number;
+        data?: unknown;
         response?: {
           data?: {
             detail?: string;
@@ -179,19 +181,30 @@ export function useAddToCart({ productId, productSlug, inStock, defaultVariantId
         };
       };
 
+      if (error instanceof ApiError && isQuietCartStockValidationError(error.status, error.data)) {
+        alert(t('common.alerts.noMoreStockAvailable'));
+        window.dispatchEvent(new Event('cart-updated'));
+        setIsAddingToCart(false);
+        return;
+      }
+
       if (err?.message?.includes('does not exist') || err?.message?.includes('404') || err?.status === 404 || err?.statusCode === 404) {
         alert(t('common.alerts.productNotFound'));
         setIsAddingToCart(false);
         return;
       }
 
-      if (err.response?.data?.detail?.includes('No more stock available') ||
-          err.response?.data?.detail?.includes('exceeds available stock') ||
-          err.response?.data?.title === 'Insufficient stock') {
+      if (
+        err.response?.data?.detail?.includes('No more stock available') ||
+        err.response?.data?.detail?.includes('exceeds available stock') ||
+        err.response?.data?.title === 'Insufficient stock'
+      ) {
         alert(t('common.alerts.noMoreStockAvailable'));
         setIsAddingToCart(false);
         return;
       }
+
+      logger.error('[PRODUCT CARD] Error adding to cart', { error });
 
       if (err.message?.includes('401') || err.message?.includes('Unauthorized') || err?.status === 401 || err?.statusCode === 401) {
         router.push(`/login?redirect=/products`);

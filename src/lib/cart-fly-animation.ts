@@ -41,8 +41,8 @@ function isTargetVisible(el: Element): boolean {
   return hasNonZeroSize(el.getBoundingClientRect());
 }
 
-function getVisibleCartTargetRect(): DOMRect | null {
-  const nodes = document.querySelectorAll(CART_FLY_TARGET_SELECTOR);
+function findVisibleCartTargetRectWithin(root: ParentNode): DOMRect | null {
+  const nodes = root.querySelectorAll(CART_FLY_TARGET_SELECTOR);
   for (const node of nodes) {
     if (!isTargetVisible(node)) continue;
     const rect = node.getBoundingClientRect();
@@ -51,9 +51,30 @@ function getVisibleCartTargetRect(): DOMRect | null {
   return null;
 }
 
+function getVisibleCartTargetRect(): DOMRect | null {
+  const mainNav = document.querySelector('header.fixed');
+  if (mainNav) {
+    const inMainNav = findVisibleCartTargetRectWithin(mainNav);
+    if (inMainNav) return inMainNav;
+  }
+  return findVisibleCartTargetRectWithin(document);
+}
+
 function getFallbackTargetRect(): DOMRect {
   const left = window.innerWidth - FALLBACK_RIGHT_INSET_PX - FALLBACK_SIZE_PX;
   return new DOMRect(left, FALLBACK_TOP_PX, FALLBACK_SIZE_PX, FALLBACK_SIZE_PX);
+}
+
+/**
+ * Header reveal is driven by React state (`revealHeaderForCartFly`). Measuring
+ * `[data-cart-fly-target]` in the same sync turn as the click runs before the
+ * nav un-hides, so we would hit the top-bar fallback. Wait until after the
+ * next frame(s) so the committed DOM includes the visible cart icon.
+ */
+function scheduleAfterHeaderLayoutCommit(run: () => void): void {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(run);
+  });
 }
 
 /** Prefer the bitmap already painted in the product block (Next/Image → real <img>, correct srcset). */
@@ -150,44 +171,57 @@ export function playCartFlyAnimation(options: CartFlyAnimationOptions): void {
     return;
   }
 
-  const targetRect = getVisibleCartTargetRect() ?? getFallbackTargetRect();
-
-  const fromCx = fromRect.left + fromRect.width / 2;
-  const fromCy = fromRect.top + fromRect.height / 2;
-  const toCx = targetRect.left + targetRect.width / 2;
-  const toCy = targetRect.top + targetRect.height / 2;
-
-  const startLeft = fromCx - FLY_START_SIZE_PX / 2;
-  const startTop = fromCy - FLY_START_SIZE_PX / 2;
-  const deltaX = toCx - fromCx;
-  const deltaY = toCy - fromCy;
-
-  const fromDomImage = resolveFlyImageFromElement(source);
-  const resolvedUrl = fromDomImage?.url ?? options.imageUrl?.trim() ?? null;
-  const shell = appendFlyShell(resolvedUrl, fromDomImage);
-  shell.style.left = `${startLeft}px`;
-  shell.style.top = `${startTop}px`;
-  shell.style.width = `${FLY_START_SIZE_PX}px`;
-  shell.style.height = `${FLY_START_SIZE_PX}px`;
-
-  const scaleEnd = FLY_END_SIZE_PX / FLY_START_SIZE_PX;
-  const midDx = deltaX * 0.52;
-  const midDy = deltaY * 0.48 - FLY_ARC_BOOST_PX;
-
-  const animation = shell.animate(
-    [
-      { transform: 'translate(0px, 0px) scale(1)', opacity: 1 },
-      { transform: `translate(${midDx}px, ${midDy}px) scale(0.82)`, opacity: 1 },
-      { transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleEnd})`, opacity: 0.92 },
-    ],
-    {
-      duration: CART_FLY_ANIMATION_DURATION_MS,
-      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      fill: 'forwards',
+  const startFly = () => {
+    if (!source.isConnected) {
+      return;
     }
-  );
 
-  animation.onfinish = () => {
-    shell.remove();
+    const from = source.getBoundingClientRect();
+    if (!hasNonZeroSize(from)) {
+      return;
+    }
+
+    const targetRect = getVisibleCartTargetRect() ?? getFallbackTargetRect();
+
+    const fromCx = from.left + from.width / 2;
+    const fromCy = from.top + from.height / 2;
+    const toCx = targetRect.left + targetRect.width / 2;
+    const toCy = targetRect.top + targetRect.height / 2;
+
+    const startLeft = fromCx - FLY_START_SIZE_PX / 2;
+    const startTop = fromCy - FLY_START_SIZE_PX / 2;
+    const deltaX = toCx - fromCx;
+    const deltaY = toCy - fromCy;
+
+    const fromDomImage = resolveFlyImageFromElement(source);
+    const resolvedUrl = fromDomImage?.url ?? options.imageUrl?.trim() ?? null;
+    const shell = appendFlyShell(resolvedUrl, fromDomImage);
+    shell.style.left = `${startLeft}px`;
+    shell.style.top = `${startTop}px`;
+    shell.style.width = `${FLY_START_SIZE_PX}px`;
+    shell.style.height = `${FLY_START_SIZE_PX}px`;
+
+    const scaleEnd = FLY_END_SIZE_PX / FLY_START_SIZE_PX;
+    const midDx = deltaX * 0.52;
+    const midDy = deltaY * 0.48 - FLY_ARC_BOOST_PX;
+
+    const animation = shell.animate(
+      [
+        { transform: 'translate(0px, 0px) scale(1)', opacity: 1 },
+        { transform: `translate(${midDx}px, ${midDy}px) scale(0.82)`, opacity: 1 },
+        { transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleEnd})`, opacity: 0.92 },
+      ],
+      {
+        duration: CART_FLY_ANIMATION_DURATION_MS,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'forwards',
+      }
+    );
+
+    animation.onfinish = () => {
+      shell.remove();
+    };
   };
+
+  scheduleAfterHeaderLayoutCommit(startFly);
 }
