@@ -10,7 +10,6 @@ if (
   typeof process.env.NEXT_PUBLIC_API_URL === 'string' &&
   process.env.NEXT_PUBLIC_API_URL.includes('localhost')
 ) {
-  // eslint-disable-next-line no-console -- intentional build-time warning for misconfiguration
   console.warn(
     '\n[Vercel] NEXT_PUBLIC_API_URL points to localhost. Set it to your real API base (https://...) in Vercel → Settings → Environment Variables. Browser CSP blocks http://localhost from the deployed origin.\n'
   );
