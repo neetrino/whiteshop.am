@@ -1,6 +1,21 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
 
+// Vercel Toolbar / Live inject scripts and WebSockets from vercel.live (preview & prod tooling).
+const VERCEL_LIVE_SCRIPT = 'https://vercel.live';
+const VERCEL_LIVE_CONNECT = `${VERCEL_LIVE_SCRIPT} wss://*.vercel.live`;
+
+if (
+  process.env.VERCEL === '1' &&
+  typeof process.env.NEXT_PUBLIC_API_URL === 'string' &&
+  process.env.NEXT_PUBLIC_API_URL.includes('localhost')
+) {
+  // eslint-disable-next-line no-console -- intentional build-time warning for misconfiguration
+  console.warn(
+    '\n[Vercel] NEXT_PUBLIC_API_URL points to localhost. Set it to your real API base (https://...) in Vercel → Settings → Environment Variables. Browser CSP blocks http://localhost from the deployed origin.\n'
+  );
+}
+
 const nextConfig = {
   reactStrictMode: true,
   // Скрыть индикатор "Compiling..." в углу в dev — не мешает на экране
@@ -26,11 +41,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${VERCEL_LIVE_SCRIPT}`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https:",
+              `connect-src 'self' https: ${VERCEL_LIVE_CONNECT}`,
               "frame-ancestors 'none'",
             ].join('; '),
           },
