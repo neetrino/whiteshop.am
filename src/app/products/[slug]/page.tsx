@@ -11,6 +11,7 @@ import { ProductImageGallery } from './ProductImageGallery';
 import { ProductInfoAndActions } from './ProductInfoAndActions';
 import { ProductPageShell } from './ProductPageShell';
 import { useProductPage } from './useProductPage';
+import { playCartFlyAnimation } from '../../../lib/cart-fly-animation';
 import type { ProductPageProps } from './types';
 
 export default function ProductPage({ params }: ProductPageProps) {
@@ -74,6 +75,12 @@ export default function ProductPage({ params }: ProductPageProps) {
 
   const handleAddToCart = async () => {
     if (!canAddToCart || !product || !currentVariant) return;
+    const flyOrigin = document.querySelector('[data-product-fly-origin]');
+    const imageUrl = images[currentImageIndex] ?? images[0] ?? null;
+    playCartFlyAnimation({
+      fromElement: flyOrigin,
+      imageUrl,
+    });
     setIsAddingToCart(true);
     try {
       if (!isLoggedIn) {

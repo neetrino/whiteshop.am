@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '../../lib/api-client';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useTranslation } from '../../lib/i18n-client';
+import { playCartFlyAnimation } from '../../lib/cart-fly-animation';
 
 interface ProductDetails {
   id: string;
@@ -16,6 +17,11 @@ interface ProductDetails {
     stock: number;
     available: boolean;
   }>;
+}
+
+export interface AddToCartFlyContext {
+  origin?: HTMLElement | null;
+  imageUrl?: string | null;
 }
 
 interface UseAddToCartProps {
@@ -39,7 +45,7 @@ export function useAddToCart({ productId, productSlug, inStock, defaultVariantId
   const { t } = useTranslation();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
-  const addToCart = async () => {
+  const addToCart = async (fly?: AddToCartFlyContext) => {
     if (!inStock) {
       return;
     }
@@ -50,6 +56,11 @@ export function useAddToCart({ productId, productSlug, inStock, defaultVariantId
       alert(t('common.alerts.invalidProduct'));
       return;
     }
+
+    playCartFlyAnimation({
+      fromElement: fly?.origin ?? null,
+      imageUrl: fly?.imageUrl ?? null,
+    });
 
     // If user is not logged in, use localStorage for cart
     if (!isLoggedIn) {

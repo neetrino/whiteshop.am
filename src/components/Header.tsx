@@ -9,6 +9,10 @@ import { useTranslation } from '../lib/i18n-client';
 import { getStoredLanguage } from '../lib/language';
 import { useInstantSearch } from './hooks/useInstantSearch';
 import { useHeaderScrollVisibility } from './hooks/useHeaderScrollVisibility';
+import {
+  CART_FLY_ANIMATION_DURATION_MS,
+  HEADER_REVEAL_FOR_CART_EVENT,
+} from '../lib/cart-fly-animation';
 import { SearchDropdown } from './SearchDropdown';
 import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
@@ -405,15 +409,34 @@ export function Header() {
   const mainNavRef = useRef<HTMLElement>(null);
   const [topBarHeight, setTopBarHeight] = useState(0);
   const [mainNavHeight, setMainNavHeight] = useState(0);
+  const [revealHeaderForCartFly, setRevealHeaderForCartFly] = useState(false);
 
   const suppressScrollHide =
     showSearchModal ||
     mobileMenuOpen ||
     showUserMenu ||
     showMobileCurrency ||
-    showProductsMenu;
+    showProductsMenu ||
+    revealHeaderForCartFly;
 
   const headerScrollVisible = useHeaderScrollVisibility(suppressScrollHide);
+
+  useEffect(() => {
+    const revealMs = CART_FLY_ANIMATION_DURATION_MS + 280;
+    let clearTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const onRevealForCart = () => {
+      setRevealHeaderForCartFly(true);
+      if (clearTimer) clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => setRevealHeaderForCartFly(false), revealMs);
+    };
+
+    window.addEventListener(HEADER_REVEAL_FOR_CART_EVENT, onRevealForCart);
+    return () => {
+      window.removeEventListener(HEADER_REVEAL_FOR_CART_EVENT, onRevealForCart);
+      if (clearTimer) clearTimeout(clearTimer);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const top = topBarRef.current;
@@ -928,6 +951,15 @@ export function Header() {
               <div className="flex h-10 items-center">
                 <LanguageSwitcherHeader />
               </div>
+              <Link
+                href="/cart"
+                className="md:hidden relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-gray-200/90 bg-white text-gray-800 shadow-sm transition-colors hover:bg-gray-50"
+                aria-label={t('common.ariaLabels.shoppingCart')}
+              >
+                <span data-cart-fly-target className="relative flex h-9 w-9 items-center justify-center">
+                  <BadgeIcon icon={<CartIcon size={18} />} badge={cartCount} />
+                </span>
+              </Link>
             </div>
           </div>
 
@@ -1120,6 +1152,7 @@ export function Header() {
                 aria-current={isHeaderNavActive(pathname, '/cart') ? 'page' : undefined}
               >
                 <div
+                  data-cart-fly-target
                   className={`w-11 h-11 flex items-center justify-center transition-colors duration-150 relative ${
                     isHeaderNavActive(pathname, '/cart')
                       ? 'text-gray-900'
