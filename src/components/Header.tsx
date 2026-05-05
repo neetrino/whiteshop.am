@@ -779,10 +779,9 @@ export function Header() {
     window.dispatchEvent(new Event('currency-updated'));
   };
 
-  // Reserve height for fixed header: full stack when top bar is visible, main nav
-  // only when the top bar is hidden on scroll (desktop).
-  const spacerHeight =
-    (headerScrollVisible ? topBarHeight : 0) + mainNavHeight;
+  // Always reserve the full fixed-header stack so toggling the top bar does not
+  // change document height / scrollY (that caused show↔hide flicker on slow scroll).
+  const spacerHeight = topBarHeight + mainNavHeight;
 
   return (
     <>

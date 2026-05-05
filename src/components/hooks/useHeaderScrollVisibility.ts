@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 const TOP_THRESHOLD_PX = 12;
-/** Cumulative downward travel before hide (≈3mm). */
-const HIDE_AFTER_MM = 3;
-/** Cumulative upward travel before show again — avoids jitter from tiny reverse deltas. */
+/** Cumulative net scroll down before hide (physical length, speed-independent). */
+const HIDE_AFTER_MM = 2;
+/** Cumulative net scroll up before show while hidden (hysteresis). */
 const SHOW_AFTER_MM = 2;
 
 function millimetersToCssPixels(mm: number): number {
@@ -20,26 +20,17 @@ function millimetersToCssPixels(mm: number): number {
   return Math.max(1, px);
 }
 
-function normalizeWheelVerticalPixels(e: WheelEvent, direction: 'down' | 'up'): number {
-  if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return 0;
-  if (direction === 'down' && e.deltaY <= 0) return 0;
-  if (direction === 'up' && e.deltaY >= 0) return 0;
-
-  let y = Math.abs(e.deltaY);
-  if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
-    y *= 16;
-  } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-    y *= window.innerHeight || 600;
-  }
-  return y;
-}
-
 /**
- * Drives scroll-hide visibility (e.g. desktop top bar): hides after ~3mm
- * cumulative scroll/wheel down (one transition, no flicker). Shows only after
- * ~2mm cumulative scroll/wheel up while hidden (hysteresis).
- * When suppressHide is true, the strip stays visible on the same render (no
- * useEffect lag) so fly-to-cart and similar flows can measure the real layout.
+ * Desktop top bar visibility from **window scroll position only** (no `wheel`):
+ * counting `scrollY` deltas avoids double-counting wheel + scroll and stops
+ * flicker on slow trackpad/mouse wheel.
+ *
+ * Hide after ~2mm cumulative **net** scroll down; show after ~2mm **net** scroll up
+ * while hidden. Small opposite-direction movement reduces the accumulator instead
+ * of wiping it, so jitter does not reset progress.
+ *
+ * When suppressHide is true, the strip stays visible (same-render) for modals /
+ * menus; closing them does not reset scroll intent until the user scrolls again.
  */
 export function useHeaderScrollVisibility(suppressHide: boolean): boolean {
   const [visible, setVisible] = useState(true);
@@ -121,6 +112,9 @@ export function useHeaderScrollVisibility(suppressHide: boolean): boolean {
       if (applyTopThreshold()) return;
 
       const prev = lastScrollY.current;
+      if (y === prev) {
+        return;
+      }
 
       if (y < prev) {
         const deltaUp = prev - y;
@@ -128,50 +122,23 @@ export function useHeaderScrollVisibility(suppressHide: boolean): boolean {
           upAccumPx.current += deltaUp;
           tryShowFromUpAccum();
         } else {
-          downAccumPx.current = 0;
+          downAccumPx.current = Math.max(0, downAccumPx.current - deltaUp);
         }
-      } else if (y > prev) {
+      } else {
+        const deltaDown = y - prev;
         if (barHiddenRef.current) {
-          upAccumPx.current = 0;
+          upAccumPx.current = Math.max(0, upAccumPx.current - deltaDown);
         } else {
-          downAccumPx.current += y - prev;
+          downAccumPx.current += deltaDown;
           tryHideFromAccum();
         }
       }
       lastScrollY.current = y;
     };
 
-    const onWheel = (e: WheelEvent) => {
-      if (suppressHide) return;
-      if (applyTopThreshold()) return;
-
-      const down = normalizeWheelVerticalPixels(e, 'down');
-      if (down > 0) {
-        if (barHiddenRef.current) {
-          upAccumPx.current = 0;
-        } else {
-          downAccumPx.current += down;
-          tryHideFromAccum();
-        }
-        return;
-      }
-
-      const up = normalizeWheelVerticalPixels(e, 'up');
-      if (up > 0) {
-        if (barHiddenRef.current) {
-          upAccumPx.current += up;
-          tryShowFromUpAccum();
-        } else {
-          downAccumPx.current = Math.max(0, downAccumPx.current - up);
-        }
-      }
-    };
-
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('wheel', onWheel, { passive: true });
     return () => {
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('wheel', onWheel);
       window.removeEventListener('resize', refreshThresholds);
     };
   }, [suppressHide]);
