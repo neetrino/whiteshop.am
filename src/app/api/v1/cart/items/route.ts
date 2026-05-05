@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateToken } from "@/lib/middleware/auth";
 import { cartService } from "@/lib/services/cart.service";
+import { logger } from "@/lib/utils/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,17 +22,32 @@ export async function POST(req: NextRequest) {
     const data = await req.json();
     const result = await cartService.addItem(user.id, data, user.locale);
     return NextResponse.json(result, { status: 201 });
-  } catch (error: any) {
-    console.error("❌ [CART] Error:", error);
+  } catch (error: unknown) {
+    const e = error as {
+      status?: number;
+      title?: string;
+      detail?: string;
+      type?: string;
+      message?: string;
+    };
+
+    if (e?.status === 422 && e?.title === "Insufficient stock") {
+      logger.warn("Cart: add item rejected — insufficient stock", {
+        detail: e.detail,
+      });
+    } else {
+      logger.error("Cart: add item failed", { error });
+    }
+
     return NextResponse.json(
       {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
+        type: e.type || "https://api.shop.am/problems/internal-error",
+        title: e.title || "Internal Server Error",
+        status: e.status || 500,
+        detail: e.detail || e.message || "An error occurred",
         instance: req.url,
       },
-      { status: error.status || 500 }
+      { status: e.status || 500 }
     );
   }
 }

@@ -174,7 +174,10 @@ export function ProductImageGallery({
         
         {/* Right Column - Main Image */}
         <div className="flex-1">
-          <div className="relative aspect-square bg-white rounded-lg overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <div
+            data-product-fly-origin
+            className="relative aspect-square bg-white rounded-lg overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+          >
           {images.length > 0 && !mainImageFailed ? (
             <Image
               src={currentSrc}

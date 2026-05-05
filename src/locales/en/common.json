@@ -175,7 +175,8 @@
     "increaseQuantity": "Increase quantity",
     "previousThumbnail": "Previous thumbnail",
     "nextThumbnail": "Next thumbnail",
-    "fullscreenImage": "Fullscreen image"
+    "fullscreenImage": "Fullscreen image",
+    "shoppingCart": "Shopping cart"
   },
   "placeholders": {
     "search": "Search products"

@@ -32,7 +32,7 @@ export function ProductCardImage({
   const showPlaceholder = !image || imageError;
 
   return (
-    <div className="aspect-square bg-gray-100 relative overflow-hidden">
+    <div data-product-fly-origin className="aspect-square bg-gray-100 relative overflow-hidden">
       <Link href={`/products/${slug}`} className="block w-full h-full">
         {showPlaceholder ? (
           <ProductImagePlaceholder

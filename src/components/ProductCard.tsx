@@ -82,7 +82,11 @@ export function ProductCard({ product, viewMode = 'grid-3' }: ProductCardProps) 
   const handleAddToCart = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart();
+    const button = e.currentTarget as HTMLElement;
+    const card = button.closest('[data-product-card]');
+    const origin =
+      (card?.querySelector('[data-product-fly-origin]') as HTMLElement | null) ?? button;
+    addToCart({ origin, imageUrl: product.image });
   };
 
   // List view layout

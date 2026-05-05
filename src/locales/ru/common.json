@@ -172,7 +172,8 @@
     "goToSlide": "Перейти к слайду {number}",
     "previousThumbnail": "Предыдущая миниатюра",
     "nextThumbnail": "Следующая миниатюра",
-    "fullscreenImage": "Полноэкранное изображение"
+    "fullscreenImage": "Полноэкранное изображение",
+    "shoppingCart": "Корзина"
   },
   "placeholders": {
     "search": "Поиск товаров"

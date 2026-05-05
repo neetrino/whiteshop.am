@@ -9,6 +9,10 @@ import { useTranslation } from '../lib/i18n-client';
 import { getStoredLanguage } from '../lib/language';
 import { useInstantSearch } from './hooks/useInstantSearch';
 import { useHeaderScrollVisibility } from './hooks/useHeaderScrollVisibility';
+import {
+  CART_FLY_ANIMATION_DURATION_MS,
+  HEADER_REVEAL_FOR_CART_EVENT,
+} from '../lib/cart-fly-animation';
 import { SearchDropdown } from './SearchDropdown';
 import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
@@ -26,6 +30,10 @@ const primaryNavLinks = [
   { href: '/about', translationKey: 'common.navigation.about' },
   { href: '/contact', translationKey: 'common.navigation.contact' },
 ];
+
+/** Same transform timing as top bar so the nav lifts in lockstep while the strip hides. */
+const HEADER_TOPBAR_SCROLL_TRANSITION_CLASS =
+  'transition-transform duration-300 ease-out will-change-transform';
 
 function isHeaderNavActive(pathname: string | null, href: string): boolean {
   if (!pathname) {
@@ -405,7 +413,10 @@ export function Header() {
   const mainNavRef = useRef<HTMLElement>(null);
   const [topBarHeight, setTopBarHeight] = useState(0);
   const [mainNavHeight, setMainNavHeight] = useState(0);
+  const [revealHeaderForCartFly, setRevealHeaderForCartFly] = useState(false);
 
+  // Cart fly sets `revealHeaderForCartFly` only to snap transform transitions; it must not
+  // join `suppressScrollHide` or the scroll hook would force the top bar open again.
   const suppressScrollHide =
     showSearchModal ||
     mobileMenuOpen ||
@@ -414,6 +425,23 @@ export function Header() {
     showProductsMenu;
 
   const headerScrollVisible = useHeaderScrollVisibility(suppressScrollHide);
+
+  useEffect(() => {
+    const revealMs = CART_FLY_ANIMATION_DURATION_MS + 280;
+    let clearTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const onRevealForCart = () => {
+      setRevealHeaderForCartFly(true);
+      if (clearTimer) clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => setRevealHeaderForCartFly(false), revealMs);
+    };
+
+    window.addEventListener(HEADER_REVEAL_FOR_CART_EVENT, onRevealForCart);
+    return () => {
+      window.removeEventListener(HEADER_REVEAL_FOR_CART_EVENT, onRevealForCart);
+      if (clearTimer) clearTimeout(clearTimer);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const top = topBarRef.current;
@@ -751,8 +779,8 @@ export function Header() {
     window.dispatchEvent(new Event('currency-updated'));
   };
 
-  // Always reserve main-nav height so toggling visibility does not change document
-  // length (which would shift scrollY and retrigger show/hide — flicker loop).
+  // Always reserve the full fixed-header stack so toggling the top bar does not
+  // change document height / scrollY (that caused show↔hide flicker on slow scroll).
   const spacerHeight = topBarHeight + mainNavHeight;
 
   return (
@@ -769,10 +797,14 @@ export function Header() {
         className="shrink-0 overflow-hidden transition-[height] duration-300 ease-out"
         style={{ height: spacerHeight }}
       />
-      {/* Desktop top bar — fixed, does not hide on scroll */}
+      {/* Desktop top bar — hides on scroll down; main nav stays visible */}
       <div
         ref={topBarRef}
-        className="fixed top-0 inset-x-0 z-[60] hidden md:block bg-white border-b border-gray-200"
+        className={`fixed top-0 inset-x-0 z-[60] hidden md:block bg-white border-b border-gray-200 ${
+          revealHeaderForCartFly ? 'transition-none' : HEADER_TOPBAR_SCROLL_TRANSITION_CLASS
+        } ${
+          headerScrollVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
@@ -857,12 +889,17 @@ export function Header() {
         </div>
       </div>
 
-      {/* Main nav row — logo, links, icons; hides on scroll down */}
+      {/* Main nav row — logo, links, icons; stays visible; moves up when top bar hides */}
       <header
         ref={mainNavRef}
-        style={{ top: topBarHeight }}
-        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm transition-transform duration-300 ease-out will-change-transform ${
-          headerScrollVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        style={{
+          top: 0,
+          transform: headerScrollVisible
+            ? `translateY(${topBarHeight}px)`
+            : 'translateY(0)',
+        }}
+        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm ${
+          revealHeaderForCartFly ? 'transition-none' : HEADER_TOPBAR_SCROLL_TRANSITION_CLASS
         }`}
       >
       <div className="max-w-7xl mx-auto pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">
@@ -928,6 +965,15 @@ export function Header() {
               <div className="flex h-10 items-center">
                 <LanguageSwitcherHeader />
               </div>
+              <Link
+                href="/cart"
+                className="md:hidden relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-gray-200/90 bg-white text-gray-800 shadow-sm transition-colors hover:bg-gray-50"
+                aria-label={t('common.ariaLabels.shoppingCart')}
+              >
+                <span data-cart-fly-target className="relative flex h-9 w-9 items-center justify-center">
+                  <BadgeIcon icon={<CartIcon size={18} />} badge={cartCount} />
+                </span>
+              </Link>
             </div>
           </div>
 
@@ -1120,6 +1166,7 @@ export function Header() {
                 aria-current={isHeaderNavActive(pathname, '/cart') ? 'page' : undefined}
               >
                 <div
+                  data-cart-fly-target
                   className={`w-11 h-11 flex items-center justify-center transition-colors duration-150 relative ${
                     isHeaderNavActive(pathname, '/cart')
                       ? 'text-gray-900'
