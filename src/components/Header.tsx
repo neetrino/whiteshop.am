@@ -31,6 +31,10 @@ const primaryNavLinks = [
   { href: '/contact', translationKey: 'common.navigation.contact' },
 ];
 
+/** Same transform timing as top bar so the nav lifts in lockstep while the strip hides. */
+const HEADER_TOPBAR_SCROLL_TRANSITION_CLASS =
+  'transition-transform duration-300 ease-out will-change-transform';
+
 function isHeaderNavActive(pathname: string | null, href: string): boolean {
   if (!pathname) {
     return false;
@@ -411,13 +415,14 @@ export function Header() {
   const [mainNavHeight, setMainNavHeight] = useState(0);
   const [revealHeaderForCartFly, setRevealHeaderForCartFly] = useState(false);
 
+  // Cart fly sets `revealHeaderForCartFly` only to snap transform transitions; it must not
+  // join `suppressScrollHide` or the scroll hook would force the top bar open again.
   const suppressScrollHide =
     showSearchModal ||
     mobileMenuOpen ||
     showUserMenu ||
     showMobileCurrency ||
-    showProductsMenu ||
-    revealHeaderForCartFly;
+    showProductsMenu;
 
   const headerScrollVisible = useHeaderScrollVisibility(suppressScrollHide);
 
@@ -774,9 +779,10 @@ export function Header() {
     window.dispatchEvent(new Event('currency-updated'));
   };
 
-  // Always reserve main-nav height so toggling visibility does not change document
-  // length (which would shift scrollY and retrigger show/hide — flicker loop).
-  const spacerHeight = topBarHeight + mainNavHeight;
+  // Reserve height for fixed header: full stack when top bar is visible, main nav
+  // only when the top bar is hidden on scroll (desktop).
+  const spacerHeight =
+    (headerScrollVisible ? topBarHeight : 0) + mainNavHeight;
 
   return (
     <>
@@ -792,10 +798,14 @@ export function Header() {
         className="shrink-0 overflow-hidden transition-[height] duration-300 ease-out"
         style={{ height: spacerHeight }}
       />
-      {/* Desktop top bar — fixed, does not hide on scroll */}
+      {/* Desktop top bar — hides on scroll down; main nav stays visible */}
       <div
         ref={topBarRef}
-        className="fixed top-0 inset-x-0 z-[60] hidden md:block bg-white border-b border-gray-200"
+        className={`fixed top-0 inset-x-0 z-[60] hidden md:block bg-white border-b border-gray-200 ${
+          revealHeaderForCartFly ? 'transition-none' : HEADER_TOPBAR_SCROLL_TRANSITION_CLASS
+        } ${
+          headerScrollVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
@@ -880,16 +890,17 @@ export function Header() {
         </div>
       </div>
 
-      {/* Main nav row — logo, links, icons; hides on scroll down */}
+      {/* Main nav row — logo, links, icons; stays visible; moves up when top bar hides */}
       <header
         ref={mainNavRef}
-        style={{ top: topBarHeight }}
-        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm will-change-transform ${
-          revealHeaderForCartFly
-            ? 'transition-none'
-            : 'transition-transform duration-300 ease-out'
-        } ${
-          headerScrollVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        style={{
+          top: 0,
+          transform: headerScrollVisible
+            ? `translateY(${topBarHeight}px)`
+            : 'translateY(0)',
+        }}
+        className={`fixed inset-x-0 z-50 border-b border-gray-200/80 bg-gradient-to-b from-gray-50 to-white bg-white/95 shadow-sm backdrop-blur-sm ${
+          revealHeaderForCartFly ? 'transition-none' : HEADER_TOPBAR_SCROLL_TRANSITION_CLASS
         }`}
       >
       <div className="max-w-7xl mx-auto pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">

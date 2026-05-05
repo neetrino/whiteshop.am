@@ -13,7 +13,7 @@ const CART_FLY_TARGET_SELECTOR = '[data-cart-fly-target]';
 /** Public so Header can match suppress-scroll duration to the fly animation. */
 export const CART_FLY_ANIMATION_DURATION_MS = 680;
 
-/** Header listens for this so the main nav un-hides while the item flies to the cart icon. */
+/** Header listens for this to briefly disable transform transitions during the fly (top bar scroll state unchanged). */
 export const HEADER_REVEAL_FOR_CART_EVENT = 'header-reveal-for-cart';
 
 function dispatchHeaderRevealForCart(): void {
@@ -66,10 +66,9 @@ function getFallbackTargetRect(): DOMRect {
 }
 
 /**
- * Header reveal is driven by React state (`revealHeaderForCartFly`). Measuring
- * `[data-cart-fly-target]` in the same sync turn as the click runs before the
- * nav un-hides, so we would hit the top-bar fallback. Wait until after the
- * next frame(s) so the committed DOM includes the visible cart icon.
+ * Measuring `[data-cart-fly-target]` in the same sync turn as the click can run
+ * before layout; wait until after the next frame(s) so the committed DOM includes
+ * the cart icon rect.
  */
 function scheduleAfterHeaderLayoutCommit(run: () => void): void {
   requestAnimationFrame(() => {
