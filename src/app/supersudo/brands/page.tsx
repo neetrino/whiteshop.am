@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, useMemo, useCallback, type ChangeEvent, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth/AuthContext';
-import { Card, Button } from '@shop/ui';
+import { Card, Button, Input } from '@shop/ui';
 import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
 import { logger } from "@/lib/utils/logger";
@@ -34,6 +34,7 @@ function BrandsSection() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise<string>((resolve, reject) => {
@@ -203,6 +204,18 @@ function BrandsSection() {
     }
   };
 
+  const filteredBrands = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return brands;
+    }
+
+    return brands.filter((brand) =>
+      brand.name.toLowerCase().includes(normalizedSearch) ||
+      brand.slug.toLowerCase().includes(normalizedSearch),
+    );
+  }, [brands, searchQuery]);
+
   if (loading) {
     return (
       <div className="text-center py-4">
@@ -227,13 +240,22 @@ function BrandsSection() {
           {t('admin.brands.addNew')}
         </Button>
       </div>
+      <div className="mb-4">
+        <Input
+          type="text"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder={t('admin.brands.enterBrandName')}
+          className="max-w-md"
+        />
+      </div>
 
       {loading ? (
         <div className="text-center py-4">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto mb-2"></div>
           <p className="text-sm text-gray-600">{t('admin.brands.loading')}</p>
         </div>
-      ) : brands.length === 0 ? (
+      ) : filteredBrands.length === 0 ? (
         <p className="text-sm text-gray-500 py-2">{t('admin.brands.noBrands')}</p>
       ) : (
         <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200">
@@ -255,7 +277,7 @@ function BrandsSection() {
               </tr>
             </thead>
             <tbody>
-              {brands.map((brand) => (
+              {filteredBrands.map((brand) => (
                 <tr key={brand.id} className="border-b border-gray-100 bg-gray-50 transition-colors hover:bg-gray-100">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">

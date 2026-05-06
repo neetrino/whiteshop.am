@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth/AuthContext';
-import { Card, Button } from '@shop/ui';
+import { Card, Button, Input } from '@shop/ui';
 import { useTranslation } from '../../../lib/i18n-client';
 import { useCategories } from './hooks/useCategories';
 import { useCategoryActions } from './hooks/useCategoryActions';
@@ -15,6 +15,7 @@ export default function CategoriesPage() {
   const { t } = useTranslation();
   const { isLoggedIn, isAdmin, isLoading } = useAuth();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
   const { categories, loading, fetchCategories } = useCategories();
   const {
     showAddModal,
@@ -78,6 +79,15 @@ export default function CategoriesPage() {
             {t('admin.categories.addCategory')}
           </Button>
         </div>
+        <div className="mb-4">
+          <Input
+            type="text"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={t('admin.categories.categoryTitlePlaceholder')}
+            className="max-w-md"
+          />
+        </div>
 
         {loading ? (
           <div className="py-4 text-center">
@@ -87,6 +97,7 @@ export default function CategoriesPage() {
         ) : (
           <CategoriesList
             categories={categories}
+            searchQuery={searchQuery}
             onEdit={handleEditCategory}
             onDelete={(categoryId, categoryTitle) =>
               handleDeleteCategory(categoryId, categoryTitle, fetchCategories)

@@ -26,6 +26,24 @@ interface AdminBrand {
   logoUrl?: string;
 }
 
+interface AdminProduct {
+  id: string;
+  title: string;
+  image?: string;
+  price?: number;
+  discountPercent?: number;
+}
+
+interface AdminProductsResponse {
+  data: AdminProduct[];
+  meta?: {
+    totalPages?: number;
+    total?: number;
+  };
+}
+
+const PRODUCTS_PAGE_LIMIT = 20;
+
 export default function QuickSettingsPage() {
   const { t } = useTranslation();
   const { isLoggedIn, isAdmin, isLoading } = useAuth();
@@ -33,10 +51,14 @@ export default function QuickSettingsPage() {
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountSaving, setDiscountSaving] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productDiscounts, setProductDiscounts] = useState<Record<string, number>>({});
   const [savingProductId, setSavingProductId] = useState<string | null>(null);
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsTotalPages, setProductsTotalPages] = useState(1);
+  const [productsTotal, setProductsTotal] = useState(0);
+  const [productsSearch, setProductsSearch] = useState('');
   const [categoryDiscounts, setCategoryDiscounts] = useState<Record<string, number>>({});
   const [brandDiscounts, setBrandDiscounts] = useState<Record<string, number>>({});
   const [categories, setCategories] = useState<AdminCategory[]>([]);
@@ -63,68 +85,57 @@ export default function QuickSettingsPage() {
     }
   }, []);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (page: number, search: string) => {
     try {
       logger.debug('📦 [QUICK SETTINGS] Fetching products...');
       setProductsLoading(true);
-      
-      // Սկզբում բեռնում ենք առաջին էջը limit=100-ով (առավելագույն արժեք)
-      const firstPageResponse = await apiClient.get<{ 
-        data: any[]; 
-        meta?: { totalPages: number; total: number } 
-      }>('/api/v1/admin/products', {
-        params: { page: '1', limit: '100' },
+      const normalizedSearch = search.trim();
+
+      const response = await apiClient.get<AdminProductsResponse>('/api/v1/admin/products', {
+        params: {
+          page: page.toString(),
+          limit: PRODUCTS_PAGE_LIMIT.toString(),
+          ...(normalizedSearch ? { search: normalizedSearch } : {}),
+        },
       });
-      
-      let allProducts: any[] = [];
-      
-      if (firstPageResponse?.data && Array.isArray(firstPageResponse.data)) {
-        allProducts = [...firstPageResponse.data];
-        logger.debug('📦 [QUICK SETTINGS] First page loaded:', firstPageResponse.data.length);
-        
-        // Եթե կան ավելի շատ էջեր, բեռնում ենք մնացածները
-        const totalPages = firstPageResponse.meta?.totalPages || 1;
-        if (totalPages > 1) {
-          logger.debug(`📦 [QUICK SETTINGS] Loading ${totalPages - 1} more pages...`);
-          
-          // Ստեղծում ենք բոլոր էջերի հարցումները
-          const pagePromises: Promise<{ data: any[] }>[] = [];
-          for (let page = 2; page <= totalPages; page++) {
-            pagePromises.push(
-              apiClient.get<{ data: any[] }>('/api/v1/admin/products', {
-                params: { page: page.toString(), limit: '100' },
-              })
-            );
-          }
-          
-          // Բեռնում ենք բոլոր էջերը զուգահեռ
-          const remainingPages = await Promise.all(pagePromises);
-          remainingPages.forEach((pageResponse, index) => {
-            if (pageResponse?.data && Array.isArray(pageResponse.data)) {
-              allProducts = [...allProducts, ...pageResponse.data];
-              logger.debug(`📦 [QUICK SETTINGS] Page ${index + 2} loaded:`, pageResponse.data.length);
-            }
-          });
+
+      if (response?.data && Array.isArray(response.data)) {
+        const safeTotalPages = Math.max(1, response.meta?.totalPages || 1);
+        const safePage = Math.min(page, safeTotalPages);
+
+        setProducts(response.data);
+        setProductsTotal(response.meta?.total || 0);
+        setProductsTotalPages(safeTotalPages);
+
+        if (safePage !== page) {
+          setProductsPage(safePage);
         }
-        
-        // Սահմանում ենք բոլոր ապրանքները
-        setProducts(allProducts);
-        
-        // Նախաձեռնում ենք ապրանքների զեղչերը API տվյալներից
-        const discounts: Record<string, number> = {};
-        allProducts.forEach((product: any) => {
-          discounts[product.id] = product.discountPercent || 0;
+
+        setProductDiscounts((prev) => {
+          const updated = { ...prev };
+          response.data.forEach((product) => {
+            updated[product.id] = product.discountPercent || 0;
+          });
+          return updated;
         });
-        setProductDiscounts(discounts);
-        
-        logger.debug('✅ [QUICK SETTINGS] All products loaded:', allProducts.length);
+
+        logger.debug('✅ [QUICK SETTINGS] Products page loaded:', {
+          page: safePage,
+          count: response.data.length,
+          total: response.meta?.total || 0,
+          search: normalizedSearch,
+        });
       } else {
         setProducts([]);
+        setProductsTotal(0);
+        setProductsTotalPages(1);
         console.warn('⚠️ [QUICK SETTINGS] No products data received');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ [QUICK SETTINGS] Error fetching products:', err);
       setProducts([]);
+      setProductsTotal(0);
+      setProductsTotalPages(1);
     } finally {
       setProductsLoading(false);
     }
@@ -254,7 +265,7 @@ export default function QuickSettingsPage() {
       });
       
       // Refresh products to get updated labels with new discount percentage
-      await fetchProducts();
+      await fetchProducts(productsPage, productsSearch);
       
       alert(t('admin.quickSettings.savedSuccess'));
       logger.debug('✅ [QUICK SETTINGS] Global discount saved');
@@ -275,7 +286,7 @@ export default function QuickSettingsPage() {
         globalDiscount,
         ...buildDiscountPayload(),
       });
-      await fetchProducts();
+      await fetchProducts(productsPage, productsSearch);
       alert(t('admin.quickSettings.savedSuccess'));
       logger.debug('✅ [QUICK SETTINGS] Category discounts saved');
     } catch (err: any) {
@@ -295,7 +306,7 @@ export default function QuickSettingsPage() {
         globalDiscount,
         ...buildDiscountPayload(),
       });
-      await fetchProducts();
+      await fetchProducts(productsPage, productsSearch);
       alert(t('admin.quickSettings.savedSuccess'));
       logger.debug('✅ [QUICK SETTINGS] Brand discounts saved');
     } catch (err: any) {
@@ -329,7 +340,7 @@ export default function QuickSettingsPage() {
       await apiClient.patch(`/api/v1/admin/products/${productId}/discount`, updateData);
       
       // Refresh products to get updated labels with new discount percentage
-      await fetchProducts();
+      await fetchProducts(productsPage, productsSearch);
       
       alert(t('admin.quickSettings.productDiscountSaved'));
       logger.debug('✅ [QUICK SETTINGS] Product discount saved');
@@ -345,11 +356,16 @@ export default function QuickSettingsPage() {
   useEffect(() => {
     if (!isLoading && isLoggedIn && isAdmin) {
       fetchSettings();
-      fetchProducts();
       fetchCategories();
       fetchBrands();
     }
-  }, [isLoading, isLoggedIn, isAdmin, fetchSettings, fetchProducts, fetchCategories, fetchBrands]);
+  }, [isLoading, isLoggedIn, isAdmin, fetchSettings, fetchCategories, fetchBrands]);
+
+  useEffect(() => {
+    if (!isLoading && isLoggedIn && isAdmin) {
+      fetchProducts(productsPage, productsSearch);
+    }
+  }, [isLoading, isLoggedIn, isAdmin, productsPage, productsSearch, fetchProducts]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -404,6 +420,15 @@ export default function QuickSettingsPage() {
       brandSaving={brandSaving}
       products={products}
       productsLoading={productsLoading}
+      productsPage={productsPage}
+      productsTotalPages={productsTotalPages}
+      productsTotal={productsTotal}
+      productsSearch={productsSearch}
+      onProductsSearchChange={(value) => {
+        setProductsPage(1);
+        setProductsSearch(value);
+      }}
+      onProductsPageChange={setProductsPage}
       productDiscounts={productDiscounts}
       setProductDiscounts={setProductDiscounts}
       handleProductDiscountSave={handleProductDiscountSave}

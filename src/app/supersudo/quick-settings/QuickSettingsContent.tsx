@@ -20,6 +20,14 @@ interface AdminBrand {
   logoUrl?: string;
 }
 
+interface AdminProduct {
+  id: string;
+  title: string;
+  image?: string;
+  price?: number;
+  discountPercent?: number;
+}
+
 interface QuickSettingsContentProps {
   globalDiscount: number;
   setGlobalDiscount: (value: number) => void;
@@ -40,8 +48,14 @@ interface QuickSettingsContentProps {
   clearBrandDiscount: (brandId: string) => void;
   handleBrandDiscountSave: () => void;
   brandSaving: boolean;
-  products: any[];
+  products: AdminProduct[];
   productsLoading: boolean;
+  productsPage: number;
+  productsTotalPages: number;
+  productsTotal: number;
+  productsSearch: string;
+  onProductsSearchChange: (value: string) => void;
+  onProductsPageChange: (page: number) => void;
   productDiscounts: Record<string, number>;
   setProductDiscounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   handleProductDiscountSave: (productId: string) => void;
@@ -70,6 +84,12 @@ export function QuickSettingsContent({
   brandSaving,
   products,
   productsLoading,
+  productsPage,
+  productsTotalPages,
+  productsTotal,
+  productsSearch,
+  onProductsSearchChange,
+  onProductsPageChange,
   productDiscounts,
   setProductDiscounts,
   handleProductDiscountSave,
@@ -127,6 +147,12 @@ export function QuickSettingsContent({
       <ProductDiscountsCard
         products={products}
         productsLoading={productsLoading}
+        productsPage={productsPage}
+        productsTotalPages={productsTotalPages}
+        productsTotal={productsTotal}
+        productsSearch={productsSearch}
+        onProductsSearchChange={onProductsSearchChange}
+        onProductsPageChange={onProductsPageChange}
         productDiscounts={productDiscounts}
         setProductDiscounts={setProductDiscounts}
         handleProductDiscountSave={handleProductDiscountSave}
