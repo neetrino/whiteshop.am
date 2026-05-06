@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button } from '@shop/ui';
 import { useTranslation } from '../../../../lib/i18n-client';
@@ -54,6 +55,30 @@ const processImageUrl = (url: string | null) => {
   return url.startsWith('/') ? url : `/${url}`;
 };
 
+const PAGE_CHUNK_SIZE = 3;
+
+function getPaginationWindow(currentPage: number, totalPages: number) {
+  if (totalPages <= 10) {
+    return {
+      start: 1,
+      end: totalPages,
+    };
+  }
+
+  const chunkIndex = Math.floor((currentPage - 1) / PAGE_CHUNK_SIZE);
+  const start = chunkIndex * PAGE_CHUNK_SIZE + 1;
+  const end = Math.min(totalPages, start + PAGE_CHUNK_SIZE - 1);
+  return { start, end };
+}
+
+function getVisiblePages(start: number, end: number) {
+  const pages: number[] = [];
+  for (let currentPage = start; currentPage <= end; currentPage++) {
+    pages.push(currentPage);
+  }
+  return pages;
+}
+
 export function ProductsTable({
   loading,
   sortedProducts,
@@ -73,6 +98,18 @@ export function ProductsTable({
 }: ProductsTableProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const totalPages = meta?.totalPages ?? 1;
+
+  const paginationWindow = useMemo(() => getPaginationWindow(page, totalPages), [page, totalPages]);
+
+  const visiblePages = useMemo(
+    () => getVisiblePages(paginationWindow.start, paginationWindow.end),
+    [paginationWindow],
+  );
+
+  const goToPage = (targetPage: number) => {
+    setPage(Math.min(totalPages, Math.max(1, targetPage)));
+  };
 
   return (
     <Card className={loading || sortedProducts.length === 0 ? ADMIN_TABLE_STATE_INSET : ADMIN_TABLE_CARD}>
@@ -406,21 +443,48 @@ export function ProductsTable({
               <div className="text-sm text-gray-700">
                 {t('admin.products.showingPage').replace('{page}', meta.page.toString()).replace('{totalPages}', meta.totalPages.toString()).replace('{total}', meta.total.toString())}
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                {meta.totalPages > 10 && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => goToPage(paginationWindow.start - PAGE_CHUNK_SIZE)}
+                    disabled={paginationWindow.start <= 1}
+                  >
+                    -{PAGE_CHUNK_SIZE}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => goToPage(page - 1)}
                   disabled={page === 1}
                 >
                   {t('admin.products.previous')}
                 </Button>
+                {visiblePages.map((visiblePage) => (
+                  <Button
+                    key={visiblePage}
+                    variant={page === visiblePage ? 'primary' : 'ghost'}
+                    onClick={() => goToPage(visiblePage)}
+                  >
+                    {visiblePage}
+                  </Button>
+                ))}
                 <Button
                   variant="ghost"
-                  onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
+                  onClick={() => goToPage(page + 1)}
                   disabled={page === meta.totalPages}
                 >
                   {t('admin.products.next')}
                 </Button>
+                {meta.totalPages > 10 && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => goToPage(paginationWindow.end + 1)}
+                    disabled={paginationWindow.end >= meta.totalPages}
+                  >
+                    +{PAGE_CHUNK_SIZE}
+                  </Button>
+                )}
               </div>
             </div>
           )}

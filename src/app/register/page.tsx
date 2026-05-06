@@ -137,6 +137,7 @@ export default function RegisterPage() {
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
                 {t('register.form.firstName')}
+                <span className="ml-0.5 text-red-500">*</span>
               </label>
               <Input
                 id="firstName"
@@ -146,11 +147,13 @@ export default function RegisterPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 disabled={isSubmitting || isLoading}
+                required
               />
             </div>
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
                 {t('register.form.lastName')}
+                <span className="ml-0.5 text-red-500">*</span>
               </label>
               <Input
                 id="lastName"
@@ -160,12 +163,14 @@ export default function RegisterPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 disabled={isSubmitting || isLoading}
+                required
               />
             </div>
           </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               {t('register.form.email')}
+              <span className="ml-0.5 text-red-500">*</span>
             </label>
             <Input
               id="email"
@@ -175,6 +180,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting || isLoading}
+              required
             />
           </div>
           <div>
@@ -194,6 +200,7 @@ export default function RegisterPage() {
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               {t('register.form.password')}
+              <span className="ml-0.5 text-red-500">*</span>
             </label>
             <div className="relative">
               <Input
@@ -226,6 +233,7 @@ export default function RegisterPage() {
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
               {t('register.form.confirmPassword')}
+              <span className="ml-0.5 text-red-500">*</span>
             </label>
             <div className="relative">
               <Input

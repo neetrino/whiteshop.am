@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useEffect, useLayoutEffect, useRef, Suspense } from 'react';
-import type { FormEvent, ReactNode, CSSProperties } from 'react';
+import type { FormEvent, ReactNode, CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
 import { getStoredLanguage } from '../lib/language';
@@ -394,7 +394,8 @@ export function Header() {
   const [showMobileCurrency, setShowMobileCurrency] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProductsMenu, setShowProductsMenu] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchHoverExpanded, setSearchHoverExpanded] = useState(false);
+  const [searchFocusExpanded, setSearchFocusExpanded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>('AMD');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -407,7 +408,6 @@ export function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const productsMenuRef = useRef<HTMLDivElement>(null);
   const productsMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchModalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const topBarRef = useRef<HTMLDivElement>(null);
   const mainNavRef = useRef<HTMLElement>(null);
@@ -418,7 +418,6 @@ export function Header() {
   // Cart fly sets `revealHeaderForCartFly` only to snap transform transitions; it must not
   // join `suppressScrollHide` or the scroll hook would force the top bar open again.
   const suppressScrollHide =
-    showSearchModal ||
     mobileMenuOpen ||
     showUserMenu ||
     showMobileCurrency ||
@@ -663,6 +662,7 @@ export function Header() {
   };
 
   const selectedCurrencyInfo = CURRENCIES[selectedCurrency];
+  const searchExpanded = searchHoverExpanded || searchFocusExpanded || searchQuery.trim().length > 0;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -678,9 +678,6 @@ export function Header() {
       }
       if (productsMenuRef.current && !productsMenuRef.current.contains(event.target as Node)) {
         setShowProductsMenu(false);
-      }
-      if (searchModalRef.current && !searchModalRef.current.contains(event.target as Node)) {
-        setShowSearchModal(false);
       }
     };
 
@@ -713,25 +710,11 @@ export function Header() {
     };
   }, []);
 
-  // Focus search input when modal opens; show dropdown if query present
-  useEffect(() => {
-    if (showSearchModal && searchInputRef.current) {
-      searchInputRef.current.focus();
-      setSearchDropdownOpen(searchQuery.trim().length >= 1);
-    } else {
-      setSearchDropdownOpen(false);
-    }
-  }, [showSearchModal, searchQuery]);
-
-  // Close search modal on ESC key
+  // Close mobile menu on ESC key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') {
         return;
-      }
-
-      if (showSearchModal) {
-        setShowSearchModal(false);
       }
 
       if (mobileMenuOpen) {
@@ -743,13 +726,12 @@ export function Header() {
     return () => {
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [showSearchModal, mobileMenuOpen]);
+  }, [mobileMenuOpen]);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
     const query = searchQuery.trim();
     const selected = searchSelectedIndex >= 0 && searchResults[searchSelectedIndex];
-    setShowSearchModal(false);
     if (selected) {
       router.push(`/products/${selected.slug}`);
       clearSearch();
@@ -1050,17 +1032,76 @@ export function Header() {
 
           {/* Right Side Actions - Icons Only */}
           <div className="ml-auto hidden items-center gap-2 md:flex">
-            {/* Search Icon Button */}
-            <button
-              onClick={() => {
-                setShowSearchModal(!showSearchModal);
-                setShowCurrency(false);
-              }}
-              className="w-11 h-11 flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors duration-150"
-              aria-label={t('common.ariaLabels.search')}
+            <div
+              className="relative mr-1"
+              onMouseEnter={() => setSearchHoverExpanded(true)}
+              onMouseLeave={() => setSearchHoverExpanded(false)}
             >
-              <SearchIcon />
-            </button>
+              <form onSubmit={handleSearch} className="relative flex items-center h-11">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onFocus={() => {
+                    setSearchFocusExpanded(true);
+                    if (searchQuery.trim().length >= 1) {
+                      setSearchDropdownOpen(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setSearchFocusExpanded(false);
+                  }}
+                  onChange={(e) => {
+                    const nextQuery = e.target.value;
+                    setSearchQuery(nextQuery);
+                    setSearchDropdownOpen(nextQuery.trim().length >= 1);
+                  }}
+                  onKeyDown={searchHandleKeyDown}
+                  placeholder={t('common.placeholders.search')}
+                  className={`h-11 rounded-lg text-sm transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+                    searchExpanded
+                      ? 'w-64 lg:w-72 border-2 border-gray-200 bg-white pl-4 pr-12 text-gray-900 placeholder:text-gray-400 focus:border-transparent'
+                      : 'w-11 border border-gray-200/90 bg-white pl-0 pr-0 text-transparent placeholder:text-transparent caret-transparent cursor-pointer'
+                  }`}
+                  aria-controls="search-results"
+                  aria-expanded={searchDropdownOpen && searchResults.length > 0}
+                  aria-autocomplete="list"
+                />
+                <button
+                  type="submit"
+                  onClick={(event: ReactMouseEvent<HTMLButtonElement>) => {
+                    if (!searchExpanded) {
+                      event.preventDefault();
+                      setSearchHoverExpanded(true);
+                      searchInputRef.current?.focus();
+                    }
+                  }}
+                  className={`absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
+                    searchExpanded
+                      ? 'bg-gray-900 text-white hover:bg-gray-800'
+                      : 'bg-transparent text-gray-700 hover:text-gray-900'
+                  }`}
+                  aria-label={t('common.ariaLabels.search')}
+                >
+                  <SearchIcon />
+                </button>
+              </form>
+              <SearchDropdown
+                results={searchResults}
+                loading={searchLoading}
+                error={searchError}
+                isOpen={searchDropdownOpen}
+                selectedIndex={searchSelectedIndex}
+                query={searchQuery}
+                onResultClick={(result) => {
+                  router.push(`/products/${result.slug}`);
+                  setSearchDropdownOpen(false);
+                  clearSearch();
+                }}
+                onClose={() => setSearchDropdownOpen(false)}
+                onSeeAllClick={() => setSearchDropdownOpen(false)}
+              />
+            </div>
 
             {/* Icons */}
               {/* Profile / User Menu */}
@@ -1385,69 +1426,6 @@ export function Header() {
       )}
     </header>
 
-      {/* Search overlay lives outside <header> so fixed positioning is viewport-relative (header uses transform for scroll-hide). */}
-      {showSearchModal && (
-        <div
-          className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 backdrop-blur-sm pt-20 px-4"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setShowSearchModal(false);
-            }
-          }}
-        >
-          <div
-            ref={searchModalRef}
-            className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-gray-200/80 p-4 animate-in fade-in slide-in-from-top-2 duration-200 relative"
-          >
-            <form onSubmit={handleSearch} className="flex items-center gap-2">
-              {/* Search Input */}
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (e.target.value.trim().length >= 1) setSearchDropdownOpen(true);
-                }}
-                onFocus={() => {
-                  if (searchQuery.trim().length >= 1) setSearchDropdownOpen(true);
-                }}
-                onKeyDown={searchHandleKeyDown}
-                placeholder={t('common.placeholders.search')}
-                className="flex-1 h-11 px-4 border-2 border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-sm placeholder:text-gray-400"
-                aria-controls="search-results"
-                aria-expanded={searchDropdownOpen && searchResults.length > 0}
-                aria-autocomplete="list"
-              />
-
-              {/* Search Button */}
-              <button
-                type="submit"
-                className="h-11 px-6 bg-gray-900 text-white rounded-r-lg hover:bg-gray-800 transition-colors flex items-center justify-center"
-              >
-                <SearchIcon />
-              </button>
-            </form>
-
-            <SearchDropdown
-              results={searchResults}
-              loading={searchLoading}
-              error={searchError}
-              isOpen={searchDropdownOpen}
-              selectedIndex={searchSelectedIndex}
-              query={searchQuery}
-              onResultClick={(result) => {
-                router.push(`/products/${result.slug}`);
-                setShowSearchModal(false);
-                clearSearch();
-              }}
-              onClose={() => setSearchDropdownOpen(false)}
-              onSeeAllClick={() => setShowSearchModal(false)}
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 }

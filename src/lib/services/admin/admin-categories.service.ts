@@ -3,6 +3,67 @@ import { toSlug } from "@/lib/utils/slug";
 import { logger } from "@/lib/utils/logger";
 
 class AdminCategoriesService {
+  private extractImageUrl(media: unknown): string | null {
+    if (!Array.isArray(media)) {
+      return null;
+    }
+
+    const firstItem = media[0];
+    if (!firstItem || typeof firstItem !== "object") {
+      return null;
+    }
+
+    const url = (firstItem as { url?: unknown }).url;
+    return typeof url === "string" ? url : null;
+  }
+
+  private async detachCategoryFromProducts(categoryId: string): Promise<void> {
+    const linkedProducts = await db.product.findMany({
+      where: {
+        OR: [
+          { primaryCategoryId: categoryId },
+          { categoryIds: { has: categoryId } },
+        ],
+      },
+      select: {
+        id: true,
+        categoryIds: true,
+      },
+    });
+
+    if (linkedProducts.length === 0) {
+      return;
+    }
+
+    await db.$transaction(async (tx) => {
+      await tx.product.updateMany({
+        where: { primaryCategoryId: categoryId },
+        data: { primaryCategoryId: null },
+      });
+
+      for (const product of linkedProducts) {
+        if (!product.categoryIds.includes(categoryId)) {
+          continue;
+        }
+
+        const nextCategoryIds = product.categoryIds.filter((id) => id !== categoryId);
+        await tx.product.update({
+          where: { id: product.id },
+          data: { categoryIds: nextCategoryIds },
+        });
+      }
+
+      await tx.category.update({
+        where: { id: categoryId },
+        data: {
+          products: {
+            set: [],
+          },
+        },
+      });
+    });
+  }
+
   /**
    * Get categories for admin
    */
@@ -23,7 +84,7 @@ class AdminCategoriesService {
     });
 
     return {
-      data: categories.map((category: { id: string; parentId: string | null; requiresSizes: boolean | null; translations?: Array<{ title: string; slug: string }> }) => {
+      data: categories.map((category: { id: string; parentId: string | null; requiresSizes: boolean | null; published: boolean | null; media: unknown[]; translations?: Array<{ title: string; slug: string }> }) => {
         const translations = Array.isArray(category.translations) ? category.translations : [];
         const translation = translations[0] || null;
         return {
@@ -32,6 +93,8 @@ class AdminCategoriesService {
           slug: translation?.slug || "",
           parentId: category.parentId,
           requiresSizes: category.requiresSizes || false,
+          published: Boolean(category.published),
+          imageUrl: this.extractImageUrl(category.media),
         };
       }),
     };
@@ -45,6 +108,8 @@ class AdminCategoriesService {
     locale?: string;
     parentId?: string;
     requiresSizes?: boolean;
+    imageUrl?: string;
+    published?: boolean;
   }) {
     const locale = data.locale || "en";
     
@@ -71,7 +136,10 @@ class AdminCategoriesService {
       data: {
         parentId: data.parentId || undefined,
         requiresSizes: data.requiresSizes || false,
-        published: true,
+        published: data.published ?? true,
+        media: data.imageUrl
+          ? [{ type: "image", url: data.imageUrl }]
+          : [],
         translations: {
           create: {
             locale,
@@ -97,6 +165,8 @@ class AdminCategoriesService {
         slug: translation?.slug || "",
         parentId: category.parentId,
         requiresSizes: category.requiresSizes || false,
+        imageUrl: this.extractImageUrl(category.media),
+        published: Boolean(category.published),
       },
     };
   }
@@ -136,6 +206,8 @@ class AdminCategoriesService {
       slug: translation?.slug || "",
       parentId: category.parentId,
       requiresSizes: category.requiresSizes || false,
+      published: Boolean(category.published),
+      imageUrl: this.extractImageUrl(category.media),
       children: category.children.map((child: { id: string; parentId: string | null; requiresSizes: boolean | null; translations?: Array<{ title: string; slug: string }> }) => {
         const childTranslations = Array.isArray(child.translations) ? child.translations : [];
         const childTranslation = childTranslations[0] || null;
@@ -159,6 +231,8 @@ class AdminCategoriesService {
     parentId?: string | null;
     requiresSizes?: boolean;
     subcategoryIds?: string[];
+    imageUrl?: string | null;
+    published?: boolean;
   }) {
     const locale = data.locale || "en";
     
@@ -269,6 +343,16 @@ class AdminCategoriesService {
       updateData.requiresSizes = data.requiresSizes;
     }
 
+    if (data.published !== undefined) {
+      updateData.published = data.published;
+    }
+
+    if (data.imageUrl !== undefined) {
+      updateData.media = data.imageUrl
+        ? [{ type: "image", url: data.imageUrl }]
+        : [];
+    }
+
     // Update translation if title is provided
     if (data.title) {
       const slug = toSlug(data.title);
@@ -318,6 +402,8 @@ class AdminCategoriesService {
         slug: translation?.slug || "",
         parentId: updatedCategory.parentId,
         requiresSizes: updatedCategory.requiresSizes || false,
+        published: Boolean(updatedCategory.published),
+        imageUrl: this.extractImageUrl(updatedCategory.media),
       },
     };
   }
@@ -388,26 +474,7 @@ class AdminCategoriesService {
       };
     }
 
-    // Check if category has products (using count for better performance)
-    const productsCount = await db.product.count({
-      where: {
-        OR: [
-          { primaryCategoryId: categoryId },
-          { categoryIds: { has: categoryId } },
-        ],
-        deletedAt: null,
-      },
-    });
-
-    if (productsCount > 0) {
-      throw {
-        status: 400,
-        type: "https://api.shop.am/problems/bad-request",
-        title: "Cannot delete category",
-        detail: `This category has ${productsCount} associated product${productsCount > 1 ? 's' : ''}. Please remove products from this category first.`,
-        productsCount,
-      };
-    }
+    await this.detachCategoryFromProducts(categoryId);
 
     await db.category.update({
       where: { id: categoryId },

@@ -6,6 +6,7 @@ import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
 import { formatPriceInCurrency, convertPrice, getStoredCurrency, initializeCurrencyRates, CurrencyCode } from '../../../lib/currency';
 import { logger } from "@/lib/utils/logger";
+import { useAdminDialogs } from '../context/AdminDialogsContext';
 
 export interface Order {
   id: string;
@@ -99,6 +100,7 @@ export interface OrderDetails {
 
 export function useOrders() {
   const { t } = useTranslation();
+  const { confirm: confirmDialog } = useAdminDialogs();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -282,7 +284,13 @@ export function useOrders() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(t('admin.orders.deleteConfirm').replace('{count}', selectedIds.size.toString()))) return;
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.orders.deleteConfirm').replace('{count}', selectedIds.size.toString()),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) return;
     setBulkDeleting(true);
     try {
       const ids = Array.from(selectedIds);

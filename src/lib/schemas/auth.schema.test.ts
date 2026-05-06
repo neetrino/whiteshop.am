@@ -14,13 +14,7 @@ describe("auth.schema", () => {
       expect(safeParseLogin(body).success).toBe(true);
     });
 
-    it("parses valid login with phone", () => {
-      const body = { phone: "+123", password: "secret" };
-      expect(parseLoginBody(body)).toEqual(body);
-      expect(safeParseLogin(body).success).toBe(true);
-    });
-
-    it("rejects missing email and phone", () => {
+    it("rejects missing email", () => {
       const body = { password: "secret" };
       expect(() => parseLoginBody(body)).toThrow();
       const result = safeParseLogin(body);

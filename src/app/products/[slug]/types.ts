@@ -77,6 +77,8 @@ export interface Product {
   brand?: {
     id: string;
     name: string;
+    logo?: string | null;
+    logoUrl?: string | null;
   };
   categories?: Array<{
     id: string;
@@ -89,7 +91,7 @@ export interface Product {
 }
 
 // Reserved routes that should not be treated as product slugs
-export const RESERVED_ROUTES = ['admin', 'login', 'register', 'cart', 'checkout', 'profile', 'orders', 'wishlist', 'compare', 'categories', 'products', 'about', 'contact', 'delivery', 'shipping', 'returns', 'faq', 'support', 'stores', 'privacy', 'terms', 'cookies'];
+export const RESERVED_ROUTES = ['admin', 'login', 'register', 'cart', 'checkout', 'profile', 'orders', 'wishlist', 'compare', 'categories', 'products', 'about', 'contact', 'delivery', 'shipping', 'returns', 'faq', 'support', 'stores', 'privacy', 'terms'];
 
 export const WISHLIST_KEY = 'shop_wishlist';
 export const COMPARE_KEY = 'shop_compare';

@@ -5,6 +5,7 @@ import { useTranslation } from '../../../../../lib/i18n-client';
 import { getColorHex } from '../../../../../lib/colorMap';
 import type { Attribute, GeneratedVariant } from '../types';
 import { logger } from "@/lib/utils/logger";
+import { useBodyScrollLock } from '../../../hooks/useBodyScrollLock';
 
 interface ValueSelectionModalProps {
   openValueModal: { variantId: string; attributeId: string } | null;
@@ -26,6 +27,7 @@ export function ValueSelectionModal({
   selectedAttributeValueIds,
 }: ValueSelectionModalProps) {
   const { t } = useTranslation();
+  useBodyScrollLock(Boolean(openValueModal && variant && attribute));
 
   if (!openValueModal || !variant || !attribute) return null;
 

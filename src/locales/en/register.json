@@ -5,7 +5,7 @@
     "firstName": "First Name",
     "lastName": "Last Name",
     "email": "Email",
-    "phone": "Phone (optional if email is provided)",
+    "phone": "Phone (optional)",
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "acceptTerms": "I agree to",

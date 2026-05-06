@@ -7,6 +7,7 @@ import { OrderDetailsAddresses } from './OrderDetailsAddresses';
 import { OrderDetailsTotals } from './OrderDetailsTotals';
 import { OrderDetailsItems } from './OrderDetailsItems';
 import type { OrderDetails } from '../useOrders';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface OrderDetailsModalProps {
   orderDetails: OrderDetails | null;
@@ -24,6 +25,7 @@ export function OrderDetailsModal({
   formatCurrency,
 }: OrderDetailsModalProps) {
   const { t } = useTranslation();
+  useBodyScrollLock(Boolean(orderDetails));
 
   if (!orderDetails) {
     return null;

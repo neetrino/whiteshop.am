@@ -9,30 +9,37 @@ import type { Category, CategoryWithLevel } from '../types';
 
 interface CategoriesListProps {
   categories: Category[];
+  searchQuery: string;
   onEdit: (category: Category) => void;
   onDelete: (categoryId: string, categoryTitle: string) => void;
 }
 
 const ITEMS_PER_PAGE = 20;
 
-export function CategoriesList({ categories, onEdit, onDelete }: CategoriesListProps) {
+export function CategoriesList({ categories, searchQuery, onEdit, onDelete }: CategoriesListProps) {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
 
   const categoryTree = buildCategoryTree(categories);
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredCategories = normalizedSearch
+    ? categoryTree.filter((category) =>
+        category.title.toLowerCase().includes(normalizedSearch),
+      )
+    : categoryTree;
 
   // Pagination calculations
-  const totalPages = Math.ceil(categoryTree.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedCategories = categoryTree.slice(startIndex, endIndex);
+  const paginatedCategories = filteredCategories.slice(startIndex, endIndex);
 
-  // Reset to page 1 when categories change
+  // Reset to page 1 when categories or search query change
   useEffect(() => {
     setCurrentPage(1);
-  }, [categories.length]);
+  }, [categories.length, normalizedSearch]);
 
-  if (categoryTree.length === 0) {
+  if (filteredCategories.length === 0) {
     return <p className="text-sm text-gray-500 py-2">{t('admin.categories.noCategories')}</p>;
   }
 
@@ -59,7 +66,7 @@ export function CategoriesList({ categories, onEdit, onDelete }: CategoriesListP
       <CategoriesPagination
         currentPage={currentPage}
         totalPages={totalPages}
-        totalItems={categoryTree.length}
+        totalItems={filteredCategories.length}
         onPageChange={setCurrentPage}
       />
     </>

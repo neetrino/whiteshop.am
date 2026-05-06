@@ -1,17 +1,21 @@
 'use client';
 
 import { Button, Input } from '@shop/ui';
+import { type ChangeEvent } from 'react';
 import { useTranslation } from '../../../../lib/i18n-client';
-import { showToast } from '../../../../components/Toast';
 import type { Category, CategoryFormData } from '../types';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface AddCategoryModalProps {
   isOpen: boolean;
   formData: CategoryFormData;
   categories: Category[];
   saving: boolean;
+  imageUploading: boolean;
   onClose: () => void;
   onFormDataChange: (data: CategoryFormData) => void;
+  onImageUpload: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  onRemoveImage: () => void;
   onSubmit: () => Promise<void>;
 }
 
@@ -20,11 +24,15 @@ export function AddCategoryModal({
   formData,
   categories,
   saving,
+  imageUploading,
   onClose,
   onFormDataChange,
+  onImageUpload,
+  onRemoveImage,
   onSubmit,
 }: AddCategoryModalProps) {
   const { t } = useTranslation();
+  useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;
 
@@ -65,6 +73,74 @@ export function AddCategoryModal({
             </select>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('admin.categories.status')}
+            </label>
+            <select
+              value={formData.published}
+              onChange={(e) =>
+                onFormDataChange({
+                  ...formData,
+                  published: e.target.value as CategoryFormData['published'],
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="published">{t('admin.categories.published')}</option>
+              <option value="draft">{t('admin.categories.draft')}</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('admin.categories.image')}
+            </label>
+            {formData.imageUrl ? (
+              <div className="space-y-3">
+                <div className="relative inline-block">
+                  <img
+                    src={formData.imageUrl}
+                    alt={t('admin.categories.imagePreview')}
+                    className="h-24 w-24 rounded-lg border border-gray-300 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={onRemoveImage}
+                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white transition-colors hover:bg-red-700"
+                    title={t('admin.categories.removeImage')}
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-md bg-gray-100 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200">
+              {imageUploading ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-600 border-t-transparent" />
+                  {t('admin.categories.uploadingImage')}
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {formData.imageUrl ? t('admin.categories.changeImage') : t('admin.categories.uploadImage')}
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  void onImageUpload(event);
+                }}
+                disabled={imageUploading}
+              />
+            </label>
+          </div>
+          <div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -82,7 +158,7 @@ export function AddCategoryModal({
           <Button
             variant="primary"
             onClick={onSubmit}
-            disabled={saving || !formData.title.trim()}
+            disabled={saving || imageUploading || !formData.title.trim()}
             className="flex-1"
           >
             {saving ? t('admin.categories.creating') : t('admin.categories.createCategory')}

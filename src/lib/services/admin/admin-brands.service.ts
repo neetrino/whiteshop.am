@@ -23,13 +23,15 @@ class AdminBrandsService {
     });
 
     return {
-      data: brands.map((brand: { id: string; slug: string; translations?: Array<{ name: string }> }) => {
+      data: brands.map((brand: { id: string; slug: string; logoUrl: string | null; published: boolean | null; translations?: Array<{ name: string }> }) => {
         const translations = Array.isArray(brand.translations) ? brand.translations : [];
         const translation = translations[0] || null;
         return {
           id: brand.id,
           name: translation?.name || "",
           slug: brand.slug,
+          logoUrl: brand.logoUrl,
+          published: Boolean(brand.published),
         };
       }),
     };
@@ -42,6 +44,7 @@ class AdminBrandsService {
     name: string;
     locale?: string;
     logoUrl?: string;
+    published?: boolean;
   }) {
     const locale = data.locale || "en";
     
@@ -77,7 +80,7 @@ class AdminBrandsService {
       data: {
         slug,
         logoUrl: data.logoUrl || undefined,
-        published: true,
+        published: data.published ?? true,
         translations: {
           create: {
             locale,
@@ -99,6 +102,8 @@ class AdminBrandsService {
         id: brand.id,
         name: translation?.name || "",
         slug: brand.slug,
+        logoUrl: brand.logoUrl,
+        published: Boolean(brand.published),
       },
     };
   }
@@ -112,6 +117,7 @@ class AdminBrandsService {
       name?: string;
       locale?: string;
       logoUrl?: string;
+      published?: boolean;
     }
   ) {
     logger.debug('🔄 [ADMIN SERVICE] updateBrand called:', brandId, data);
@@ -138,6 +144,10 @@ class AdminBrandsService {
     // Update logo URL if provided
     if (data.logoUrl !== undefined) {
       updateData.logoUrl = data.logoUrl || null;
+    }
+
+    if (data.published !== undefined) {
+      updateData.published = data.published;
     }
 
     // Update translation if name is provided
@@ -194,6 +204,8 @@ class AdminBrandsService {
         id: updatedBrand!.id,
         name: translation?.name || "",
         slug: updatedBrand!.slug,
+        logoUrl: updatedBrand!.logoUrl,
+        published: Boolean(updatedBrand!.published),
       },
     };
   }

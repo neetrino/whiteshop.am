@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { apiClient } from '../../../../lib/api-client';
 import { logger } from '../../../../lib/utils/logger';
 import { showToast } from '../../../../components/Toast';
@@ -8,16 +8,23 @@ import type { Category, CategoryFormData } from '../types';
 interface UseCategoryActionsReturn {
   showAddModal: boolean;
   showEditModal: boolean;
+  pendingDeleteCategory: { id: string; title: string } | null;
   editingCategory: Category | null;
   formData: CategoryFormData;
   saving: boolean;
+  imageUploading: boolean;
+  deleting: boolean;
   setShowAddModal: (show: boolean) => void;
   setShowEditModal: (show: boolean) => void;
   setFormData: (data: CategoryFormData) => void;
+  handleImageUpload: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  removeImage: () => void;
   handleAddCategory: (fetchCategories: () => Promise<void>) => Promise<void>;
   handleEditCategory: (category: Category) => Promise<void>;
   handleUpdateCategory: (fetchCategories: () => Promise<void>) => Promise<void>;
-  handleDeleteCategory: (categoryId: string, categoryTitle: string, fetchCategories: () => Promise<void>) => Promise<void>;
+  handleDeleteCategory: (categoryId: string, categoryTitle: string) => void;
+  cancelDeleteCategory: () => void;
+  confirmDeleteCategory: (fetchCategories: () => Promise<void>) => Promise<void>;
   resetForm: () => void;
 }
 
@@ -26,6 +33,8 @@ const initialFormData: CategoryFormData = {
   parentId: '',
   requiresSizes: false,
   subcategoryIds: [],
+  imageUrl: '',
+  published: 'published',
 };
 
 /**
@@ -36,8 +45,19 @@ export function useCategoryActions(): UseCategoryActionsReturn {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [pendingDeleteCategory, setPendingDeleteCategory] = useState<{ id: string; title: string } | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>(initialFormData);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
   const resetForm = () => {
     setFormData(initialFormData);
@@ -55,6 +75,8 @@ export function useCategoryActions(): UseCategoryActionsReturn {
         title: formData.title.trim(),
         parentId: formData.parentId || undefined,
         requiresSizes: formData.requiresSizes,
+        imageUrl: formData.imageUrl.trim() || undefined,
+        published: formData.published === 'published',
         locale: 'en',
       });
       setShowAddModal(false);
@@ -86,6 +108,8 @@ export function useCategoryActions(): UseCategoryActionsReturn {
         parentId: category.parentId || '',
         requiresSizes: category.requiresSizes || false,
         subcategoryIds: categoryWithChildren.children?.map(child => child.id) || [],
+        imageUrl: category.imageUrl || '',
+        published: category.published ? 'published' : 'draft',
       });
     } catch (err: unknown) {
       logger.error('Error fetching category children', { error: err });
@@ -94,6 +118,8 @@ export function useCategoryActions(): UseCategoryActionsReturn {
         parentId: category.parentId || '',
         requiresSizes: category.requiresSizes || false,
         subcategoryIds: [],
+        imageUrl: category.imageUrl || '',
+        published: category.published ? 'published' : 'draft',
       });
     }
     
@@ -113,6 +139,8 @@ export function useCategoryActions(): UseCategoryActionsReturn {
         parentId: formData.parentId || null,
         requiresSizes: formData.requiresSizes,
         subcategoryIds: formData.subcategoryIds,
+        imageUrl: formData.imageUrl.trim() || null,
+        published: formData.published === 'published',
         locale: 'en',
       });
       setShowEditModal(false);
@@ -133,20 +161,65 @@ export function useCategoryActions(): UseCategoryActionsReturn {
     }
   };
 
-  const handleDeleteCategory = async (
-    categoryId: string,
-    categoryTitle: string,
-    fetchCategories: () => Promise<void>
-  ) => {
-    if (!confirm(t('admin.categories.deleteConfirm').replace('{name}', categoryTitle))) {
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const imageFile = files.find((file) => file.type.startsWith('image/'));
+    if (!imageFile) {
+      showToast(t('admin.attributes.valueModal.selectImageFile'), 'warning');
+      if (event.target) {
+        event.target.value = '';
+      }
       return;
     }
 
     try {
-      logger.info('Deleting category', { categoryId, categoryTitle });
-      await apiClient.delete(`/api/v1/admin/categories/${categoryId}`);
+      setImageUploading(true);
+      const base64 = await fileToBase64(imageFile);
+      setFormData((current) => ({ ...current, imageUrl: base64 }));
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : t('admin.attributes.valueModal.failedToProcessImage');
+      showToast(errorMessage, 'error');
+    } finally {
+      setImageUploading(false);
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setFormData((current) => ({ ...current, imageUrl: '' }));
+  };
+
+  const handleDeleteCategory = (categoryId: string, categoryTitle: string) => {
+    setPendingDeleteCategory({ id: categoryId, title: categoryTitle });
+  };
+
+  const cancelDeleteCategory = () => {
+    if (deleting) {
+      return;
+    }
+    setPendingDeleteCategory(null);
+  };
+
+  const confirmDeleteCategory = async (fetchCategories: () => Promise<void>) => {
+    if (!pendingDeleteCategory) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      logger.info('Deleting category', {
+        categoryId: pendingDeleteCategory.id,
+        categoryTitle: pendingDeleteCategory.title,
+      });
+      await apiClient.delete(`/api/v1/admin/categories/${pendingDeleteCategory.id}`);
       logger.info('Category deleted successfully');
       await fetchCategories();
+      setPendingDeleteCategory(null);
       showToast(t('admin.categories.deletedSuccess'), 'success');
     } catch (err: unknown) {
       logger.error('Error deleting category', { error: err });
@@ -166,22 +239,31 @@ export function useCategoryActions(): UseCategoryActionsReturn {
         }
       }
       showToast(t('admin.categories.errorDeleting').replace('{message}', errorMessage), 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
   return {
     showAddModal,
     showEditModal,
+    pendingDeleteCategory,
     editingCategory,
     formData,
     saving,
+    imageUploading,
+    deleting,
     setShowAddModal,
     setShowEditModal,
     setFormData,
+    handleImageUpload,
+    removeImage,
     handleAddCategory,
     handleEditCategory,
     handleUpdateCategory,
     handleDeleteCategory,
+    cancelDeleteCategory,
+    confirmDeleteCategory,
     resetForm,
   };
 }

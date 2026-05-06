@@ -59,9 +59,10 @@ export default function ContactPage() {
       });
       
       alert(t('contact.form.submitSuccess') || 'Ձեր հաղորդագրությունը հաջողությամբ ուղարկվեց');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Չհաջողվեց ուղարկել հաղորդագրությունը';
       console.error('Error submitting contact form:', error);
-      alert(t('contact.form.submitError') || 'Սխալ: ' + (error.message || 'Չհաջողվեց ուղարկել հաղորդագրությունը'));
+      alert(t('contact.form.submitError') || 'Սխալ: ' + errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -168,7 +169,6 @@ export default function ContactPage() {
                   id="subject"
                   name="subject"
                   type="text"
-                  required
                   value={formData.subject}
                   onChange={handleChange}
                   className="w-full"
@@ -183,6 +183,7 @@ export default function ContactPage() {
                   id="message"
                   name="message"
                   rows={6}
+                  required
                   value={formData.message}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"

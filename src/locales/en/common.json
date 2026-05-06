@@ -39,7 +39,6 @@
     "support": "Support",
     "privacy": "Privacy",
     "terms": "Terms",
-    "cookies": "Cookies",
     "delivery": "Delivery",
     "stores": "Stores"
   },
@@ -195,7 +194,6 @@
     "contactInfo": "Contact Information",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "cookiePolicy": "Cookie Policy",
     "refundPolicy": "Refund Policy",
     "deliveryTerms": "Delivery Terms",
     "copyright": "© {year} Shop. All rights reserved.",

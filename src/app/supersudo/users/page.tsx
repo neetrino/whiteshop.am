@@ -22,6 +22,7 @@ import {
   ADMIN_TABLE_THEAD,
 } from '../constants/admin-table-classes';
 import { logger } from "@/lib/utils/logger";
+import { useAdminDialogs } from '../context/AdminDialogsContext';
 
 interface User {
   id: string;
@@ -47,6 +48,7 @@ interface UsersResponse {
 
 export default function UsersPage() {
   const { t } = useTranslation();
+  const { confirm: confirmDialog } = useAdminDialogs();
   const { isLoggedIn, isAdmin, isLoading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
@@ -134,7 +136,13 @@ export default function UsersPage() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(t('admin.users.deleteConfirm').replace('{count}', selectedIds.size.toString()))) return;
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.users.deleteConfirm').replace('{count}', selectedIds.size.toString()),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) return;
     setBulkDeleting(true);
     try {
       const ids = Array.from(selectedIds);

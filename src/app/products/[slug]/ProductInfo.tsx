@@ -1,6 +1,7 @@
 'use client';
 
 import { formatPrice } from '../../../lib/currency';
+import Image from 'next/image';
 import type { CurrencyCode } from '../../../lib/currency';
 import { getProductText } from '../../../lib/i18n';
 import type { LanguageCode } from '../../../lib/language';
@@ -37,7 +38,23 @@ export function ProductInfo({
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1">
-        {product.brand && <p className="text-sm text-gray-500 mb-2">{product.brand.name}</p>}
+        {product.brand && (
+          <div className="mb-2 flex items-center gap-2">
+            {(product.brand.logo || product.brand.logoUrl) ? (
+              <div className="relative h-5 w-5 overflow-hidden rounded-full border border-gray-200">
+                <Image
+                  src={product.brand.logo || product.brand.logoUrl || ''}
+                  alt={product.brand.name}
+                  fill
+                  className="object-cover"
+                  sizes="20px"
+                  unoptimized
+                />
+              </div>
+            ) : null}
+            <p className="text-sm text-gray-500">{product.brand.name}</p>
+          </div>
+        )}
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           {getProductText(language, product.id, 'title') || product.title}
         </h1>

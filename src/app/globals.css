@@ -6,6 +6,10 @@
   body {
     @apply bg-white text-gray-900;
   }
+
+  button {
+    @apply rounded-xl;
+  }
   
   /* Prevent text selection and caret on all text elements */
   p, span, div, h1, h2, h3, h4, h5, h6, 

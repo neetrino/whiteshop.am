@@ -39,7 +39,6 @@
     "support": "Поддержка",
     "privacy": "Конфиденциальность",
     "terms": "Условия",
-    "cookies": "Файлы cookie",
     "delivery": "Доставка",
     "stores": "Магазины"
   },
@@ -192,7 +191,6 @@
     "contactInfo": "Контактная информация",
     "privacyPolicy": "Политика конфиденциальности",
     "termsOfService": "Условия использования",
-    "cookiePolicy": "Политика использования файлов cookie",
     "refundPolicy": "Политика возврата",
     "deliveryTerms": "Условия доставки",
     "copyright": "© {year} Shop. Все права защищены.",
