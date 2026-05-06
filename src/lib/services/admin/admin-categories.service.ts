@@ -17,6 +17,53 @@ class AdminCategoriesService {
     return typeof url === "string" ? url : null;
   }
 
+  private async detachCategoryFromProducts(categoryId: string): Promise<void> {
+    const linkedProducts = await db.product.findMany({
+      where: {
+        OR: [
+          { primaryCategoryId: categoryId },
+          { categoryIds: { has: categoryId } },
+        ],
+      },
+      select: {
+        id: true,
+        categoryIds: true,
+      },
+    });
+
+    if (linkedProducts.length === 0) {
+      return;
+    }
+
+    await db.$transaction(async (tx) => {
+      await tx.product.updateMany({
+        where: { primaryCategoryId: categoryId },
+        data: { primaryCategoryId: null },
+      });
+
+      for (const product of linkedProducts) {
+        if (!product.categoryIds.includes(categoryId)) {
+          continue;
+        }
+
+        const nextCategoryIds = product.categoryIds.filter((id) => id !== categoryId);
+        await tx.product.update({
+          where: { id: product.id },
+          data: { categoryIds: nextCategoryIds },
+        });
+      }
+
+      await tx.category.update({
+        where: { id: categoryId },
+        data: {
+          products: {
+            set: [],
+          },
+        },
+      });
+    });
+  }
+
   /**
    * Get categories for admin
    */
@@ -427,26 +474,7 @@ class AdminCategoriesService {
       };
     }
 
-    // Check if category has products (using count for better performance)
-    const productsCount = await db.product.count({
-      where: {
-        OR: [
-          { primaryCategoryId: categoryId },
-          { categoryIds: { has: categoryId } },
-        ],
-        deletedAt: null,
-      },
-    });
-
-    if (productsCount > 0) {
-      throw {
-        status: 400,
-        type: "https://api.shop.am/problems/bad-request",
-        title: "Cannot delete category",
-        detail: `This category has ${productsCount} associated product${productsCount > 1 ? 's' : ''}. Please remove products from this category first.`,
-        productsCount,
-      };
-    }
+    await this.detachCategoryFromProducts(categoryId);
 
     await db.category.update({
       where: { id: categoryId },
