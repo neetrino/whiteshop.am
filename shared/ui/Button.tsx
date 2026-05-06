@@ -13,7 +13,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     { variant = 'primary', size = 'md', className = '', children, ...props },
     ref
   ): ReactElement {
-    const baseStyles = 'font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseStyles = 'font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
     
     const variantStyles = {
       primary: 'bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-900',
