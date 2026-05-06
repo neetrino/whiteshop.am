@@ -4,6 +4,7 @@ import { Button, Input } from '@shop/ui';
 import { type ChangeEvent } from 'react';
 import { useTranslation } from '../../../../lib/i18n-client';
 import type { Category, CategoryFormData } from '../types';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface EditCategoryModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export function EditCategoryModal({
   onSubmit,
 }: EditCategoryModalProps) {
   const { t } = useTranslation();
+  useBodyScrollLock(isOpen && Boolean(editingCategory));
 
   if (!isOpen || !editingCategory) return null;
 

@@ -8,6 +8,7 @@ import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
 import { logger } from "@/lib/utils/logger";
 import { useAdminDialogs } from '../context/AdminDialogsContext';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 interface Brand {
   id: string;
   name: string;
@@ -37,6 +38,7 @@ function BrandsSection() {
   const [submitting, setSubmitting] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  useBodyScrollLock(showModal);
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise<string>((resolve, reject) => {

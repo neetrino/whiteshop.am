@@ -2,6 +2,7 @@
 
 import { Button } from '@shop/ui';
 import { useTranslation } from '../../../../lib/i18n-client';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface DeleteCategoryModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function DeleteCategoryModal({
   onConfirm,
 }: DeleteCategoryModalProps) {
   const { t } = useTranslation();
+  useBodyScrollLock(isOpen);
 
   if (!isOpen) {
     return null;

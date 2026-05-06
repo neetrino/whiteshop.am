@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from '../../../lib/i18n-client';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 type DialogType = 'confirm' | 'alert';
 
@@ -55,6 +56,7 @@ export function AdminDialogsProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog | null>(null);
   const queueRef = useRef<ActiveDialog[]>([]);
+  useBodyScrollLock(Boolean(activeDialog));
 
   const openDialog = useCallback(
     (type: DialogType, rawOptions: ConfirmDialogOptions | AlertDialogOptions | string) =>
