@@ -39,19 +39,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!subject || typeof subject !== 'string' || subject.trim().length === 0) {
-      return NextResponse.json(
-        {
-          type: "https://api.shop.am/problems/validation-error",
-          title: "Validation Error",
-          status: 400,
-          detail: "Field 'subject' is required",
-          instance: req.url,
-        },
-        { status: 400 }
-      );
-    }
-
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return NextResponse.json(
         {
@@ -79,12 +66,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedSubject = typeof subject === "string" ? subject.trim() : "";
+
     // Create contact message
     const contactMessage = await db.contactMessage.create({
       data: {
         name: name.trim(),
         email: email.trim(),
-        subject: subject.trim(),
+        subject: normalizedSubject,
         message: message.trim(),
       },
     });
