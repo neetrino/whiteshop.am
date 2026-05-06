@@ -5,6 +5,7 @@ import { apiClient } from '../../../../lib/api-client';
 import { useTranslation } from '../../../../lib/i18n-client';
 import type { Product, ProductsResponse } from '../types';
 import { logger } from "@/lib/utils/logger";
+import { useAdminDialogs } from '../../context/AdminDialogsContext';
 
 interface UseProductHandlersProps {
   products: Product[];
@@ -28,6 +29,7 @@ export function useProductHandlers({
   setTogglingAllFeatured,
 }: UseProductHandlersProps) {
   const { t } = useTranslation();
+  const { confirm: confirmDialog } = useAdminDialogs();
   const router = useRouter();
 
   const handleSearch = (e: FormEvent) => {
@@ -55,7 +57,13 @@ export function useProductHandlers({
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(t('admin.products.bulkDeleteConfirm').replace('{count}', selectedIds.size.toString()))) return;
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.products.bulkDeleteConfirm').replace('{count}', selectedIds.size.toString()),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) return;
     setBulkDeleting(true);
     try {
       const ids = Array.from(selectedIds);
@@ -75,7 +83,13 @@ export function useProductHandlers({
   };
 
   const handleDeleteProduct = async (productId: string, productTitle: string) => {
-    if (!confirm(t('admin.products.deleteConfirm').replace('{title}', productTitle))) {
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.products.deleteConfirm').replace('{title}', productTitle),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) {
       return;
     }
 

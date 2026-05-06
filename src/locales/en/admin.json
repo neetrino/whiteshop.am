@@ -672,6 +672,7 @@
     "error": "Error",
     "success": "Success",
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "close": "Close",
     "save": "Save",
     "delete": "Delete",

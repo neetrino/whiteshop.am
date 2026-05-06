@@ -7,6 +7,7 @@ import { Card, Button } from '@shop/ui';
 import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
 import { logger } from "@/lib/utils/logger";
+import { useAdminDialogs } from '../context/AdminDialogsContext';
 
 interface DeliveryLocation {
   id?: string;
@@ -21,6 +22,7 @@ interface DeliverySettings {
 
 export default function DeliveryPage() {
   const { t } = useTranslation();
+  const { confirm: confirmDialog } = useAdminDialogs();
   const { isLoggedIn, isAdmin, isLoading } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -88,11 +90,19 @@ export default function DeliveryPage() {
     setLocations(updated);
   };
 
-  const handleDeleteLocation = (index: number) => {
-    if (confirm(t('admin.delivery.deleteLocation'))) {
-      const updated = locations.filter((_, i) => i !== index);
-      setLocations(updated);
+  const handleDeleteLocation = async (index: number) => {
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.delivery.deleteLocation'),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) {
+      return;
     }
+
+    const updated = locations.filter((_, i) => i !== index);
+    setLocations(updated);
   };
 
   if (isLoading || loading) {

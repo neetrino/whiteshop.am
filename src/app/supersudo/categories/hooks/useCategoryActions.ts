@@ -8,10 +8,12 @@ import type { Category, CategoryFormData } from '../types';
 interface UseCategoryActionsReturn {
   showAddModal: boolean;
   showEditModal: boolean;
+  pendingDeleteCategory: { id: string; title: string } | null;
   editingCategory: Category | null;
   formData: CategoryFormData;
   saving: boolean;
   imageUploading: boolean;
+  deleting: boolean;
   setShowAddModal: (show: boolean) => void;
   setShowEditModal: (show: boolean) => void;
   setFormData: (data: CategoryFormData) => void;
@@ -20,7 +22,9 @@ interface UseCategoryActionsReturn {
   handleAddCategory: (fetchCategories: () => Promise<void>) => Promise<void>;
   handleEditCategory: (category: Category) => Promise<void>;
   handleUpdateCategory: (fetchCategories: () => Promise<void>) => Promise<void>;
-  handleDeleteCategory: (categoryId: string, categoryTitle: string, fetchCategories: () => Promise<void>) => Promise<void>;
+  handleDeleteCategory: (categoryId: string, categoryTitle: string) => void;
+  cancelDeleteCategory: () => void;
+  confirmDeleteCategory: (fetchCategories: () => Promise<void>) => Promise<void>;
   resetForm: () => void;
 }
 
@@ -41,9 +45,11 @@ export function useCategoryActions(): UseCategoryActionsReturn {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [pendingDeleteCategory, setPendingDeleteCategory] = useState<{ id: string; title: string } | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>(initialFormData);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise<string>((resolve, reject) => {
@@ -188,20 +194,32 @@ export function useCategoryActions(): UseCategoryActionsReturn {
     setFormData((current) => ({ ...current, imageUrl: '' }));
   };
 
-  const handleDeleteCategory = async (
-    categoryId: string,
-    categoryTitle: string,
-    fetchCategories: () => Promise<void>
-  ) => {
-    if (!confirm(t('admin.categories.deleteConfirm').replace('{name}', categoryTitle))) {
+  const handleDeleteCategory = (categoryId: string, categoryTitle: string) => {
+    setPendingDeleteCategory({ id: categoryId, title: categoryTitle });
+  };
+
+  const cancelDeleteCategory = () => {
+    if (deleting) {
+      return;
+    }
+    setPendingDeleteCategory(null);
+  };
+
+  const confirmDeleteCategory = async (fetchCategories: () => Promise<void>) => {
+    if (!pendingDeleteCategory) {
       return;
     }
 
+    setDeleting(true);
     try {
-      logger.info('Deleting category', { categoryId, categoryTitle });
-      await apiClient.delete(`/api/v1/admin/categories/${categoryId}`);
+      logger.info('Deleting category', {
+        categoryId: pendingDeleteCategory.id,
+        categoryTitle: pendingDeleteCategory.title,
+      });
+      await apiClient.delete(`/api/v1/admin/categories/${pendingDeleteCategory.id}`);
       logger.info('Category deleted successfully');
       await fetchCategories();
+      setPendingDeleteCategory(null);
       showToast(t('admin.categories.deletedSuccess'), 'success');
     } catch (err: unknown) {
       logger.error('Error deleting category', { error: err });
@@ -221,16 +239,20 @@ export function useCategoryActions(): UseCategoryActionsReturn {
         }
       }
       showToast(t('admin.categories.errorDeleting').replace('{message}', errorMessage), 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
   return {
     showAddModal,
     showEditModal,
+    pendingDeleteCategory,
     editingCategory,
     formData,
     saving,
     imageUploading,
+    deleting,
     setShowAddModal,
     setShowEditModal,
     setFormData,
@@ -240,6 +262,8 @@ export function useCategoryActions(): UseCategoryActionsReturn {
     handleEditCategory,
     handleUpdateCategory,
     handleDeleteCategory,
+    cancelDeleteCategory,
+    confirmDeleteCategory,
     resetForm,
   };
 }

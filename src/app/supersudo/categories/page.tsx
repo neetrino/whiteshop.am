@@ -10,6 +10,7 @@ import { useCategoryActions } from './hooks/useCategoryActions';
 import { CategoriesList } from './components/CategoriesList';
 import { AddCategoryModal } from './components/AddCategoryModal';
 import { EditCategoryModal } from './components/EditCategoryModal';
+import { DeleteCategoryModal } from './components/DeleteCategoryModal';
 
 export default function CategoriesPage() {
   const { t } = useTranslation();
@@ -20,10 +21,12 @@ export default function CategoriesPage() {
   const {
     showAddModal,
     showEditModal,
+    pendingDeleteCategory,
     editingCategory,
     formData,
     saving,
     imageUploading,
+    deleting,
     setShowAddModal,
     setShowEditModal,
     setFormData,
@@ -33,6 +36,8 @@ export default function CategoriesPage() {
     handleEditCategory,
     handleUpdateCategory,
     handleDeleteCategory,
+    cancelDeleteCategory,
+    confirmDeleteCategory,
     resetForm,
   } = useCategoryActions();
 
@@ -99,9 +104,7 @@ export default function CategoriesPage() {
             categories={categories}
             searchQuery={searchQuery}
             onEdit={handleEditCategory}
-            onDelete={(categoryId, categoryTitle) =>
-              handleDeleteCategory(categoryId, categoryTitle, fetchCategories)
-            }
+            onDelete={handleDeleteCategory}
           />
         )}
       </Card>
@@ -137,6 +140,14 @@ export default function CategoriesPage() {
         onImageUpload={handleImageUpload}
         onRemoveImage={removeImage}
         onSubmit={() => handleUpdateCategory(fetchCategories)}
+      />
+
+      <DeleteCategoryModal
+        isOpen={pendingDeleteCategory !== null}
+        categoryTitle={pendingDeleteCategory?.title ?? ''}
+        deleting={deleting}
+        onCancel={cancelDeleteCategory}
+        onConfirm={() => confirmDeleteCategory(fetchCategories)}
       />
     </>
   );

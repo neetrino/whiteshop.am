@@ -7,6 +7,7 @@ import { Card, Button, Input } from '@shop/ui';
 import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
 import { logger } from "@/lib/utils/logger";
+import { useAdminDialogs } from '../context/AdminDialogsContext';
 interface Brand {
   id: string;
   name: string;
@@ -23,6 +24,7 @@ interface BrandFormData {
 
 function BrandsSection() {
   const { t } = useTranslation();
+  const { confirm: confirmDialog } = useAdminDialogs();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -64,7 +66,13 @@ function BrandsSection() {
   }, [fetchBrands]);
 
   const handleDeleteBrand = async (brandId: string, brandName: string) => {
-    if (!confirm(t('admin.brands.deleteConfirm').replace('{name}', brandName))) {
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.brands.deleteConfirm').replace('{name}', brandName),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) {
       return;
     }
 

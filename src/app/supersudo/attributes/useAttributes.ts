@@ -5,6 +5,7 @@ import { apiClient } from '../../../lib/api-client';
 import { useTranslation } from '../../../lib/i18n-client';
 import { showToast } from '../../../components/Toast';
 import { logger } from "@/lib/utils/logger";
+import { useAdminDialogs } from '../context/AdminDialogsContext';
 
 export interface AttributeValue {
   id: string;
@@ -25,6 +26,7 @@ export interface Attribute {
 
 export function useAttributes() {
   const { t } = useTranslation();
+  const { confirm: confirmDialog } = useAdminDialogs();
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -126,7 +128,13 @@ export function useAttributes() {
   };
 
   const handleDeleteAttribute = async (attributeId: string, attributeName: string) => {
-    if (!confirm(t('admin.attributes.deleteConfirm').replace('{name}', attributeName))) {
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.attributes.deleteConfirm').replace('{name}', attributeName),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) {
       return;
     }
 
@@ -249,7 +257,13 @@ export function useAttributes() {
   };
 
   const handleDeleteValue = async (attributeId: string, valueId: string, valueLabel: string) => {
-    if (!confirm(t('admin.attributes.deleteValueConfirm').replace('{label}', valueLabel))) {
+    const isConfirmed = await confirmDialog({
+      title: t('admin.common.delete'),
+      message: t('admin.attributes.deleteValueConfirm').replace('{label}', valueLabel),
+      confirmText: t('admin.common.delete'),
+      destructive: true,
+    });
+    if (!isConfirmed) {
       return;
     }
 
