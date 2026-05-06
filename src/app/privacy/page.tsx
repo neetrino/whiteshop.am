@@ -2,7 +2,6 @@
 
 import { Card } from '@shop/ui';
 import { useTranslation } from '../../lib/i18n-client';
-import Link from 'next/link';
 
 /**
  * Privacy Policy page - displays privacy policy information
@@ -98,18 +97,6 @@ export default function PrivacyPage() {
               <li>{t('privacy.yourRights.items.portability')}</li>
               <li>{t('privacy.yourRights.items.withdraw')}</li>
             </ul>
-
-            <h2 className="text-2xl font-semibold text-gray-900">{t('privacy.cookies.title')}</h2>
-            <p className="text-gray-600">
-              {t('privacy.cookies.description1')}
-            </p>
-            <p className="text-gray-600">
-              {t('privacy.cookies.description2')}{' '}
-              <Link href="/cookies" className="text-blue-600 hover:underline">
-                {t('privacy.cookies.linkText')}
-              </Link>
-              .
-            </p>
 
             <h2 className="text-2xl font-semibold text-gray-900">{t('privacy.contact.title')}</h2>
             <p className="text-gray-600">
