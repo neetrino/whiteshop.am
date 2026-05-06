@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { formatPrice } from '../../lib/currency';
-import { useTranslation } from '../../lib/i18n-client';
 import { ProductColors } from './ProductColors';
 import type { CurrencyCode } from '../../lib/currency';
 
@@ -10,6 +10,7 @@ interface ProductCardInfoProps {
   slug: string;
   title: string;
   brandName?: string | null;
+  brandLogoUrl?: string | null;
   price: number;
   originalPrice?: number | null;
   compareAtPrice?: number | null;
@@ -26,6 +27,7 @@ export function ProductCardInfo({
   slug,
   title,
   brandName,
+  brandLogoUrl,
   price,
   originalPrice,
   compareAtPrice,
@@ -34,8 +36,6 @@ export function ProductCardInfo({
   colors,
   isCompact = false,
 }: ProductCardInfoProps) {
-  const { t } = useTranslation();
-
   return (
     <div className={isCompact ? 'p-2.5' : 'p-4'}>
       <Link href={`/products/${slug}`} className="block">
@@ -44,10 +44,21 @@ export function ProductCardInfo({
           {title}
         </h3>
         
-        {/* Category - Using brand name as category or default */}
-        <p className={`${isCompact ? 'text-sm' : 'text-lg'} text-gray-500 ${isCompact ? 'mb-1' : 'mb-2'}`}>
-          {brandName || t('common.defaults.category')}
-        </p>
+        {/* Brand */}
+        {brandLogoUrl ? (
+          <div className={`${isCompact ? 'mb-1' : 'mb-2'}`}>
+            <div className={`relative ${isCompact ? 'h-4 w-4' : 'h-6 w-6'}`}>
+              <Image
+                src={brandLogoUrl}
+                alt={brandName || 'Brand logo'}
+                fill
+                className="object-contain"
+                sizes={isCompact ? '16px' : '24px'}
+                unoptimized
+              />
+            </div>
+          </div>
+        ) : null}
       </Link>
 
       {/* Available Colors */}

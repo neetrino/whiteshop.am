@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ChangeEvent, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth/AuthContext';
 import { Card, Button } from '@shop/ui';
@@ -11,6 +11,14 @@ interface Brand {
   id: string;
   name: string;
   slug: string;
+  logoUrl?: string | null;
+  published?: boolean;
+}
+
+interface BrandFormData {
+  name: string;
+  logoUrl: string;
+  published: 'published' | 'draft';
 }
 
 function BrandsSection() {
@@ -19,8 +27,21 @@ function BrandsSection() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
-  const [formData, setFormData] = useState({ name: '' });
+  const [formData, setFormData] = useState<BrandFormData>({
+    name: '',
+    logoUrl: '',
+    published: 'published',
+  });
   const [submitting, setSubmitting] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
   const fetchBrands = useCallback(async () => {
     try {
@@ -70,23 +91,67 @@ function BrandsSection() {
 
   const handleOpenAddModal = () => {
     setEditingBrand(null);
-    setFormData({ name: '' });
+    setFormData({
+      name: '',
+      logoUrl: '',
+      published: 'published',
+    });
     setShowModal(true);
   };
 
   const handleOpenEditModal = (brand: Brand) => {
     setEditingBrand(brand);
-    setFormData({ name: brand.name });
+    setFormData({
+      name: brand.name,
+      logoUrl: brand.logoUrl || '',
+      published: brand.published ? 'published' : 'draft',
+    });
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingBrand(null);
-    setFormData({ name: '' });
+    setFormData({
+      name: '',
+      logoUrl: '',
+      published: 'published',
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    const imageFile = files.find((file) => file.type.startsWith('image/'));
+    if (!imageFile) {
+      alert(t('admin.attributes.valueModal.selectImageFile'));
+      if (event.target) {
+        event.target.value = '';
+      }
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      const base64 = await fileToBase64(imageFile);
+      setFormData((current) => ({ ...current, logoUrl: base64 }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('admin.attributes.valueModal.failedToProcessImage');
+      alert(message);
+    } finally {
+      setImageUploading(false);
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setFormData((current) => ({ ...current, logoUrl: '' }));
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
@@ -101,6 +166,8 @@ function BrandsSection() {
         logger.debug('🔄 [ADMIN] Updating brand:', editingBrand.id);
         await apiClient.put(`/api/v1/admin/brands/${editingBrand.id}`, {
           name: formData.name.trim(),
+          logoUrl: formData.logoUrl.trim() || null,
+          published: formData.published === 'published',
         });
         logger.debug('✅ [ADMIN] Brand updated successfully');
         alert(t('admin.brands.updatedSuccess'));
@@ -109,6 +176,8 @@ function BrandsSection() {
         logger.debug('➕ [ADMIN] Creating brand:', formData.name);
         await apiClient.post('/api/v1/admin/brands', {
           name: formData.name.trim(),
+          logoUrl: formData.logoUrl.trim() || undefined,
+          published: formData.published === 'published',
         });
         logger.debug('✅ [ADMIN] Brand created successfully');
         alert(t('admin.brands.createdSuccess'));
@@ -167,46 +236,77 @@ function BrandsSection() {
       ) : brands.length === 0 ? (
         <p className="text-sm text-gray-500 py-2">{t('admin.brands.noBrands')}</p>
       ) : (
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-        {brands.map((brand) => (
-          <div
-            key={brand.id}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <div>
-              <div className="text-sm font-medium text-gray-900">{brand.name}</div>
-              <div className="text-xs text-gray-500">{brand.slug}</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleOpenEditModal(brand)}
-                className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                aria-label={t('admin.brands.edit')}
-                title={t('admin.brands.edit')}
-              >
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteBrand(brand.id, brand.name)}
-                className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                aria-label={t('admin.brands.delete')}
-                title={t('admin.brands.delete')}
-              >
-                <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </Button>
-            </div>
-          </div>
-        ))}
+        <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200">
+          <table className="min-w-full border-collapse">
+            <thead className="sticky top-0 z-10 bg-white">
+              <tr className="border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t('admin.brands.brandName')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Slug
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t('admin.brands.status')}
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t('admin.products.actions')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {brands.map((brand) => (
+                <tr key={brand.id} className="border-b border-gray-100 bg-gray-50 transition-colors hover:bg-gray-100">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      {brand.logoUrl ? (
+                        <img
+                          src={brand.logoUrl}
+                          alt={brand.name}
+                          className="h-10 w-10 rounded-md border border-gray-200 object-cover"
+                        />
+                      ) : null}
+                      <span className="text-sm font-medium text-gray-900">{brand.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{brand.slug}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500">
+                    {brand.published ? t('admin.brands.published') : t('admin.brands.draft')}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEditModal(brand)}
+                        className="text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                        aria-label={t('admin.brands.edit')}
+                        title={t('admin.brands.edit')}
+                      >
+                        <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteBrand(brand.id, brand.name)}
+                        className="text-red-600 hover:bg-red-50 hover:text-red-800"
+                        aria-label={t('admin.brands.delete')}
+                        title={t('admin.brands.delete')}
+                      >
+                        <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -243,6 +343,75 @@ function BrandsSection() {
                   required
                 />
               </div>
+              <div>
+                <label htmlFor="brand-status" className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('admin.brands.status')}
+                </label>
+                <select
+                  id="brand-status"
+                  value={formData.published}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      published: e.target.value as BrandFormData['published'],
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                >
+                  <option value="published">{t('admin.brands.published')}</option>
+                  <option value="draft">{t('admin.brands.draft')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('admin.brands.logo')}
+                </label>
+                {formData.logoUrl ? (
+                  <div className="mb-3">
+                    <div className="relative inline-block">
+                      <img
+                        src={formData.logoUrl}
+                        alt={t('admin.brands.logoPreview')}
+                        className="h-24 w-24 rounded-lg border border-gray-300 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white transition-colors hover:bg-red-700"
+                        title={t('admin.brands.removeLogo')}
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200">
+                  {imageUploading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-600 border-t-transparent" />
+                      {t('admin.brands.uploadingLogo')}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      {formData.logoUrl ? t('admin.brands.changeLogo') : t('admin.brands.uploadLogo')}
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      void handleImageUpload(event);
+                    }}
+                    disabled={imageUploading}
+                  />
+                </label>
+              </div>
 
               <div className="flex items-center justify-end gap-3 pt-4">
                 <Button
@@ -256,7 +425,7 @@ function BrandsSection() {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={submitting}
+                  disabled={submitting || imageUploading}
                 >
                   {submitting ? t('admin.brands.saving') : (editingBrand ? t('admin.brands.update') : t('admin.brands.create'))}
                 </Button>

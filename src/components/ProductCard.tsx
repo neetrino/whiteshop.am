@@ -21,6 +21,7 @@ interface Product {
   brand: {
     id: string;
     name: string;
+    logoUrl?: string | null;
   } | null;
   defaultVariantId?: string | null;
   labels?: import('./ProductLabels').ProductLabel[];

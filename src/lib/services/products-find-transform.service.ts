@@ -217,6 +217,7 @@ class ProductsFindTransformService {
           ? {
               id: product.brand.id,
               name: brandTranslation?.name || "",
+              logoUrl: product.brand.logoUrl || null,
             }
           : null,
         categories,

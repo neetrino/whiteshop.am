@@ -22,9 +22,12 @@ export default function CategoriesPage() {
     editingCategory,
     formData,
     saving,
+    imageUploading,
     setShowAddModal,
     setShowEditModal,
     setFormData,
+    handleImageUpload,
+    removeImage,
     handleAddCategory,
     handleEditCategory,
     handleUpdateCategory,
@@ -97,11 +100,14 @@ export default function CategoriesPage() {
         formData={formData}
         categories={categories}
         saving={saving}
+        imageUploading={imageUploading}
         onClose={() => {
           setShowAddModal(false);
           resetForm();
         }}
         onFormDataChange={setFormData}
+        onImageUpload={handleImageUpload}
+        onRemoveImage={removeImage}
         onSubmit={() => handleAddCategory(fetchCategories)}
       />
 
@@ -111,11 +117,14 @@ export default function CategoriesPage() {
         formData={formData}
         categories={categories}
         saving={saving}
+        imageUploading={imageUploading}
         onClose={() => {
           setShowEditModal(false);
           resetForm();
         }}
         onFormDataChange={setFormData}
+        onImageUpload={handleImageUpload}
+        onRemoveImage={removeImage}
         onSubmit={() => handleUpdateCategory(fetchCategories)}
       />
     </>

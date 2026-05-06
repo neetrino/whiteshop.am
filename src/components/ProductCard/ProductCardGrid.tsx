@@ -17,7 +17,7 @@ interface ProductCardGridProps {
     price: number;
     image: string | null;
     inStock: boolean;
-    brand: { id: string; name: string } | null;
+    brand: { id: string; name: string; logoUrl?: string | null } | null;
     labels?: ProductLabel[];
     compareAtPrice?: number | null;
     originalPrice?: number | null;
@@ -90,6 +90,7 @@ export function ProductCardGrid({
         slug={product.slug}
         title={product.title}
         brandName={product.brand?.name}
+        brandLogoUrl={product.brand?.logoUrl}
         price={product.price}
         originalPrice={product.originalPrice}
         compareAtPrice={product.compareAtPrice}
