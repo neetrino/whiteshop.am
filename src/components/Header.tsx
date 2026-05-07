@@ -18,7 +18,7 @@ import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
 import { CART_KEY, getCompareCount, getWishlistCount } from '../lib/storageCounts';
 import { LanguageSwitcherHeader } from './LanguageSwitcherHeader';
-import { Instagram, Facebook, Linkedin } from 'lucide-react';
+import { Instagram, Facebook, Linkedin, Globe } from 'lucide-react';
 import { CompareIcon } from './icons/CompareIcon';
 import { BrandLogoLink } from './BrandLogoLink';
 import { CartIcon } from './icons/CartIcon';
@@ -684,75 +684,70 @@ export function Header() {
       <div className="max-w-7xl mx-auto pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">
         <div className="flex flex-wrap items-center gap-2 sm:gap-4 py-4 md:py-3">
           {/* Logo + Mobile Menu */}
-          <div className="flex w-full items-center justify-between md:w-auto md:justify-start">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
-                aria-label={t('common.ariaLabels.openMenu')}
-                aria-expanded={mobileMenuOpen}
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
-                </svg>
-              </button>
+          <div className="relative flex w-full items-center justify-between md:w-auto md:justify-start">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+              aria-label={t('common.ariaLabels.openMenu')}
+              aria-expanded={mobileMenuOpen}
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+            <div className="hidden md:block">
               <BrandLogoLink />
             </div>
-            {/* Mobile Currency and Language - on same line as logo */}
+            <div className="absolute left-1/2 -translate-x-1/2 md:hidden">
+              <BrandLogoLink />
+            </div>
+            {/* Mobile language + currency via single globe */}
             <div className="flex items-center gap-1 sm:gap-2 md:hidden">
-              {/* Currency Switcher */}
               <div className="relative" ref={mobileCurrencyRef}>
                 <button
                   type="button"
                   onClick={() => {
                     setShowMobileCurrency(!showMobileCurrency);
                   }}
-                  className={`inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200/90 px-3 text-sm font-medium text-gray-800 shadow-sm transition-colors cursor-pointer ${
+                  className={`inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200/90 bg-gray-100 text-gray-800 shadow-sm transition-colors cursor-pointer ${
                     showMobileCurrency ? 'bg-gray-200' : 'bg-gray-100 hover:bg-gray-200/90'
                   }`}
+                  aria-label="Change language and currency"
                 >
-                  <span className="font-semibold leading-none tabular-nums">{selectedCurrencyInfo.symbol}</span>
-                  <span className="font-medium leading-none tabular-nums">{selectedCurrency}</span>
-                  <ChevronDownIcon />
+                  <Globe className="h-5 w-5" />
                 </button>
                 {showMobileCurrency && (
-                  <div className="absolute top-full right-0 mt-2 w-40 bg-white shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {Object.values(CURRENCIES).map((currency) => (
-                      <button
-                        key={currency.code}
-                        onClick={() => {
-                          handleCurrencyChange(currency.code);
-                          setShowMobileCurrency(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition-all duration-150 ${
-                          selectedCurrency === currency.code
-                            ? 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 font-semibold'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{currency.code}</span>
-                          <span className="text-gray-500">{currency.symbol}</span>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="absolute top-full right-0 mt-2 w-52 rounded-xl border border-gray-200 bg-white p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="rounded-lg border border-gray-100 px-2 py-2">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Language</p>
+                      <LanguageSwitcherHeader />
+                    </div>
+                    <div className="mt-2 rounded-lg border border-gray-100 p-1">
+                      <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Currency</p>
+                      {Object.values(CURRENCIES).map((currency) => (
+                        <button
+                          key={currency.code}
+                          onClick={() => {
+                            handleCurrencyChange(currency.code);
+                            setShowMobileCurrency(false);
+                          }}
+                          className={`w-full rounded-md px-3 py-2 text-left text-sm transition-all duration-150 ${
+                            selectedCurrency === currency.code
+                              ? 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 font-semibold'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{currency.code}</span>
+                            <span className="text-gray-500">{currency.symbol}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
-              {/* Language Switcher */}
-              <div className="flex h-10 items-center">
-                <LanguageSwitcherHeader />
-              </div>
-              <Link
-                href="/cart"
-                className="md:hidden relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-gray-200/90 bg-white text-gray-800 shadow-sm transition-colors hover:bg-gray-50"
-                aria-label={t('common.ariaLabels.shoppingCart')}
-              >
-                <span data-cart-fly-target className="relative flex h-9 w-9 items-center justify-center">
-                  <BadgeIcon icon={<CartIcon size={18} />} badge={cartCount} />
-                </span>
-              </Link>
             </div>
           </div>
 
@@ -1076,43 +1071,8 @@ export function Header() {
                     )}
                   </Link>
 
-                  <Link
-                    href="/cart"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={headerMobileRowClassName(isHeaderNavActive(pathname, '/cart'))}
-                    aria-current={isHeaderNavActive(pathname, '/cart') ? 'page' : undefined}
-                  >
-                    <span
-                      className={`flex items-center gap-2 normal-case font-medium ${
-                        isHeaderNavActive(pathname, '/cart') ? 'text-gray-900' : 'text-gray-700'
-                      }`}
-                    >
-                      <CartIcon size={19} />
-                      Cart
-                    </span>
-                    {cartCount > 0 && (
-                      <span className="rounded-full bg-gray-900 px-2 py-0.5 text-xs font-semibold text-white">
-                        {cartCount > 99 ? '99+' : cartCount}
-                      </span>
-                    )}
-                  </Link>
-
                   {isLoggedIn ? (
                     <>
-                      <Link
-                        href="/profile"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`${headerMobileRowClassName(isHeaderNavActive(pathname, '/profile'))} normal-case`}
-                        aria-current={isHeaderNavActive(pathname, '/profile') ? 'page' : undefined}
-                      >
-                        <span className="flex items-center gap-2">
-                          <ProfileIconFilled />
-                          Profile
-                        </span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
                       {isAdmin && (
                         <Link
                           href="/supersudo"
@@ -1130,18 +1090,6 @@ export function Header() {
                           </svg>
                         </Link>
                       )}
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          logout();
-                        }}
-                        className="flex w-full items-center justify-between px-4 py-3 text-left text-red-600 hover:bg-red-50 normal-case font-semibold"
-                      >
-                        Logout
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
                     </>
                   ) : (
                     <>
