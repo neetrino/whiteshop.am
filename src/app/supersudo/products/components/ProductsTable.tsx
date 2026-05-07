@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, type MouseEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button } from '@shop/ui';
 import { useTranslation } from '../../../../lib/i18n-client';
@@ -109,6 +109,18 @@ export function ProductsTable({
 
   const goToPage = (targetPage: number) => {
     setPage(Math.min(totalPages, Math.max(1, targetPage)));
+  };
+
+  const openProductEditor = (productId: string) => {
+    router.push(`/supersudo/products/add?id=${productId}`);
+  };
+
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, productId: string) => {
+    const clickedElement = event.target as HTMLElement;
+    if (clickedElement.closest('button, input, a, textarea, select, [role="button"]')) {
+      return;
+    }
+    openProductEditor(productId);
   };
 
   return (
@@ -244,7 +256,7 @@ export function ProductsTable({
                   </th>
                   <th className={ADMIN_TABLE_TH}>{t('admin.products.category')}</th>
                   <th className={ADMIN_TABLE_TH_CENTER}>{t('admin.products.featured')}</th>
-                  <th className={`${ADMIN_TABLE_TH} pl-6`}>{t('admin.products.actions')}</th>
+                  <th className={ADMIN_TABLE_TH_CENTER}>{t('admin.products.actions')}</th>
                   <th className="p-0 align-middle">
                     <button
                       type="button"
@@ -284,7 +296,11 @@ export function ProductsTable({
               </thead>
               <tbody className={ADMIN_TABLE_TBODY}>
                 {sortedProducts.map((product) => (
-                  <tr key={product.id} className={ADMIN_TABLE_ROW}>
+                  <tr
+                    key={product.id}
+                    className={`${ADMIN_TABLE_ROW} cursor-pointer`}
+                    onClick={(event) => handleRowClick(event, product.id)}
+                  >
                     <td className={ADMIN_TABLE_TD_CHECK}>
                       <div className="flex min-w-0 justify-center">
                         <input
@@ -381,13 +397,13 @@ export function ProductsTable({
                         </svg>
                       </button>
                     </td>
-                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap pl-6 text-left font-medium text-gray-900`}>
-                      <div className="flex items-center gap-1 flex-wrap">
+                    <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-center font-medium text-gray-900`}>
+                      <div className="flex items-center justify-center gap-1 flex-wrap">
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/supersudo/products/add?id=${product.id}`)}
+                          onClick={() => openProductEditor(product.id)}
                           className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                           aria-label={t('admin.products.edit')}
                           title={t('admin.products.edit')}

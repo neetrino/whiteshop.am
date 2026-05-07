@@ -167,6 +167,13 @@ export function AddProductFormContent({
   generateSlug,
   handleSubmit,
 }: AddProductFormContentProps) {
+  const shouldShowSimpleFields =
+    productType === 'simple' ||
+    (productType === 'variable' &&
+      selectedAttributesForVariants.size === 0 &&
+      generatedVariants.length === 0 &&
+      !hasVariantsToLoad);
+
   return (
     <Card className="p-6 pb-24 sm:pb-24">
       <form onSubmit={handleSubmit} className="space-y-14">
@@ -216,7 +223,7 @@ export function AddProductFormContent({
           onVariantsUpdate={onVariantsUpdate}
         />
 
-        {productType === 'simple' && (
+        {shouldShowSimpleFields && (
           <SimpleProductFields
             price={simpleProductData.price}
             compareAtPrice={simpleProductData.compareAtPrice}

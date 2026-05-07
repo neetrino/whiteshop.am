@@ -44,6 +44,68 @@ interface MessagesResponse {
   };
 }
 
+interface MessageDetailsModalProps {
+  message: Message | null;
+  onClose: () => void;
+  t: (key: string) => string;
+}
+
+function MessageDetailsModal({ message, onClose, t }: MessageDetailsModalProps) {
+  if (!message) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">{t('admin.messages.message')}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            aria-label={t('admin.common.cancel')}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('admin.messages.name')}</p>
+            <p className="mt-1 text-sm text-gray-900">{message.name}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('admin.messages.email')}</p>
+            <p className="mt-1 text-sm text-gray-900 break-all">{message.email}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('admin.messages.subject')}</p>
+            <p className="mt-1 text-sm text-gray-900 break-words">{message.subject}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('admin.messages.message')}</p>
+            <p className="mt-1 max-h-72 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-gray-900">
+              {message.message}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('admin.messages.date')}</p>
+            <p className="mt-1 text-sm text-gray-900">{new Date(message.createdAt).toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {t('admin.common.cancel')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MessagesPage() {
   const { t } = useTranslation();
   const { confirm: confirmDialog } = useAdminDialogs();
@@ -55,6 +117,7 @@ export default function MessagesPage() {
   const [meta, setMeta] = useState<MessagesResponse['meta'] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     if (!isLoading) {
@@ -221,10 +284,24 @@ export default function MessagesPage() {
                           {message.email}
                         </td>
                         <td className={`${ADMIN_TABLE_TD} text-left text-gray-900`}>
-                          {message.subject}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedMessage(message)}
+                            className="w-full truncate text-left hover:text-blue-600"
+                            title={message.subject}
+                          >
+                            {message.subject}
+                          </button>
                         </td>
                         <td className={`${ADMIN_TABLE_TD} text-left text-gray-900`}>
-                          <div className="max-w-md truncate">{message.message}</div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedMessage(message)}
+                            className="w-full max-w-md truncate text-left hover:text-blue-600"
+                            title={message.message}
+                          >
+                            {message.message}
+                          </button>
                         </td>
                         <td className={`${ADMIN_TABLE_TD} whitespace-nowrap text-left tabular-nums text-gray-600`}>
                           {new Date(message.createdAt).toLocaleDateString()}
@@ -272,6 +349,7 @@ export default function MessagesPage() {
             </>
           )}
         </Card>
+        <MessageDetailsModal message={selectedMessage} onClose={() => setSelectedMessage(null)} t={t} />
     </>
   );
 }

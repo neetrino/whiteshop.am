@@ -15,7 +15,7 @@ import { OrderDetailsModal } from './OrderDetailsModal';
 import type { ProfileTab, ProfileTabConfig } from './types';
 
 function ProfilePageContent() {
-  const { isLoggedIn, isLoading: authLoading } = useAuth();
+  const { isLoggedIn, isLoading: authLoading, logout } = useAuth();
   const { t } = useTranslation();
   
   const {
@@ -152,12 +152,13 @@ function ProfilePageContent() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-10 lg:gap-12">
-        <aside className="w-full shrink-0 sm:sticky sm:top-24 sm:w-56 sm:self-start sm:border-r sm:border-gray-200/90 sm:pr-8 lg:w-64">
+        <aside className="w-full shrink-0 sm:sticky sm:top-24 sm:w-64 sm:self-start sm:border-r sm:border-gray-200/90 sm:pr-8 lg:w-72">
           <ProfileHeader
             profile={profile}
             tabs={tabs}
             activeTab={activeTab}
             onTabChange={handleTabChange}
+            onLogout={logout}
             t={t}
           />
         </aside>

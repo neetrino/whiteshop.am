@@ -66,14 +66,6 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/terms"
-                  className="text-sm text-gray-300 hover:text-white transition-colors"
-                >
-                  {t('common.footer.termsOfService')}
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/refund-policy"
                   className="text-sm text-gray-300 hover:text-white transition-colors"
                 >
@@ -167,7 +159,7 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-300">
-              {t('common.footer.copyright').replace('{year}', new Date().getFullYear().toString())}
+              {`Copyright © ${new Date().getFullYear().toString()} | All Rights Reserved, Created by`}
             </p>
             
             {/* Payment Methods */}

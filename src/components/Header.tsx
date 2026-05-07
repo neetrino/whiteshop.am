@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useEffect, useLayoutEffect, useRef, Suspense } from 'react';
-import type { FormEvent, ReactNode, CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
+import type { FormEvent, ReactNode, MouseEvent as ReactMouseEvent } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
 import { getStoredLanguage } from '../lib/language';
@@ -83,13 +83,6 @@ interface CategoriesResponse {
 const ChevronDownIcon = () => (
   <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-// Arrow icon for categories with subcategories (▶)
-const ArrowRightIcon = () => (
-  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-auto">
-    <path d="M3 2L5 4L3 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -211,176 +204,6 @@ function HeaderSearchSync({
   return null;
 }
 
-/**
- * Category Menu Item Component with nested submenu support
- * Displays subcategories in a multi-column layout without scroll
- */
-function CategoryMenuItem({ 
-  category, 
-  onClose 
-}: { 
-  category: Category; 
-  onClose: () => void;
-}) {
-  const [showSubmenu, setShowSubmenu] = useState(false);
-  const [submenuStyle, setSubmenuStyle] = useState<CSSProperties>({});
-  const submenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const submenuRef = useRef<HTMLDivElement>(null);
-  const menuItemRef = useRef<HTMLDivElement>(null);
-  const hasChildren = category.children && category.children.length > 0;
-
-  const handleMouseEnter = () => {
-    if (hasChildren) {
-      if (submenuTimeoutRef.current) {
-        clearTimeout(submenuTimeoutRef.current);
-        submenuTimeoutRef.current = null;
-      }
-      setShowSubmenu(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (hasChildren) {
-      submenuTimeoutRef.current = setTimeout(() => {
-        setShowSubmenu(false);
-      }, 150);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (submenuTimeoutRef.current) {
-        clearTimeout(submenuTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Calculate submenu position relative to Products dropdown
-  useEffect(() => {
-    if (showSubmenu && submenuRef.current && menuItemRef.current) {
-      const menuItem = menuItemRef.current;
-      
-      // Find Products dropdown container (parent with w-64 class)
-      const productsDropdown = menuItem.closest('.w-64');
-      if (productsDropdown) {
-        const dropdownRect = productsDropdown.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        
-        // Position submenu to the right of Products dropdown, aligned higher than dropdown
-        const leftPosition = dropdownRect.width; // Right edge of Products dropdown
-        const topPosition = -12; // Move up a bit from top of dropdown
-        const maxWidth = Math.min(600, viewportWidth - dropdownRect.right - 20);
-        
-        setSubmenuStyle({
-          left: `${leftPosition}px`,
-          top: `${topPosition}px`,
-          maxWidth: `${maxWidth}px`
-        });
-      }
-    }
-  }, [showSubmenu]);
-
-  // Organize subcategories into columns (4 columns max)
-  // Distributes items evenly across columns
-  const organizeIntoColumns = (items: Category[], columnsCount: number = 4) => {
-    if (items.length === 0) return [];
-    
-    // Calculate optimal number of columns based on items count
-    const optimalColumns = Math.min(columnsCount, Math.ceil(items.length / 8));
-    const itemsPerColumn = Math.ceil(items.length / optimalColumns);
-    const columns: Category[][] = [];
-    
-    for (let i = 0; i < optimalColumns; i++) {
-      const start = i * itemsPerColumn;
-      const end = start + itemsPerColumn;
-      const column = items.slice(start, end);
-      if (column.length > 0) {
-        columns.push(column);
-      }
-    }
-    
-    return columns;
-  };
-
-  const subcategoryColumns = hasChildren 
-    ? organizeIntoColumns(category.children, 4)
-    : [];
-
-  return (
-    <div 
-      ref={menuItemRef}
-      className="relative group"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <Link
-        href={`/products?category=${category.slug}`}
-        className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-all duration-150"
-        onClick={onClose}
-      >
-        <span>{category.title}</span>
-        {hasChildren && (
-          <ArrowRightIcon />
-        )}
-      </Link>
-      {hasChildren && showSubmenu && (
-        <div 
-          ref={submenuRef}
-          className="absolute top-0 z-[60]"
-          style={submenuStyle}
-          onMouseEnter={() => {
-            if (submenuTimeoutRef.current) {
-              clearTimeout(submenuTimeoutRef.current);
-              submenuTimeoutRef.current = null;
-            }
-            setShowSubmenu(true);
-          }}
-          onMouseLeave={() => {
-            submenuTimeoutRef.current = setTimeout(() => {
-              setShowSubmenu(false);
-            }, 150);
-          }}
-        >
-          <div 
-            className="bg-white rounded-xl shadow-2xl border border-gray-200/80 p-6 min-w-[500px]"
-          >
-            <div 
-              className="grid gap-6"
-              style={{ gridTemplateColumns: `repeat(${subcategoryColumns.length}, minmax(150px, 1fr))` }}
-            >
-              {subcategoryColumns.map((column, columnIndex) => (
-                <div key={columnIndex} className="flex flex-col">
-                  <div className="mb-4 pb-2 border-b border-gray-200">
-                    <Link
-                      href={`/products?category=${category.slug}`}
-                      className="text-sm font-bold text-gray-900 hover:text-gray-700 uppercase tracking-wide"
-                      onClick={onClose}
-                    >
-                      {category.title}
-                    </Link>
-                  </div>
-                  <div className="space-y-2.5">
-                    {column.map((subCategory) => (
-                      <Link
-                        key={subCategory.id}
-                        href={`/products?category=${subCategory.slug}`}
-                        className="block text-sm text-gray-700 hover:text-gray-900 transition-colors duration-150 py-1"
-                        onClick={onClose}
-                      >
-                        {subCategory.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
@@ -393,21 +216,17 @@ export function Header() {
   const [showCurrency, setShowCurrency] = useState(false);
   const [showMobileCurrency, setShowMobileCurrency] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showProductsMenu, setShowProductsMenu] = useState(false);
   const [searchHoverExpanded, setSearchHoverExpanded] = useState(false);
   const [searchFocusExpanded, setSearchFocusExpanded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>('AMD');
   const [categories, setCategories] = useState<Category[]>([]);
   const [, setSelectedCategory] = useState<Category | null>(null);
-  const [loadingCategories, setLoadingCategories] = useState(false);
   const currentYear = new Date().getFullYear();
 
   const currencyRef = useRef<HTMLDivElement>(null);
   const mobileCurrencyRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const productsMenuRef = useRef<HTMLDivElement>(null);
-  const productsMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const topBarRef = useRef<HTMLDivElement>(null);
   const mainNavRef = useRef<HTMLElement>(null);
@@ -420,8 +239,7 @@ export function Header() {
   const suppressScrollHide =
     mobileMenuOpen ||
     showUserMenu ||
-    showMobileCurrency ||
-    showProductsMenu;
+    showMobileCurrency;
 
   const headerScrollVisible = useHeaderScrollVisibility(suppressScrollHide);
 
@@ -638,7 +456,6 @@ export function Header() {
 
   const fetchCategories = async () => {
     try {
-      setLoadingCategories(true);
       // Small delay to avoid simultaneous requests
       await new Promise(resolve => setTimeout(resolve, 200));
       
@@ -650,15 +467,7 @@ export function Header() {
     } catch (err: any) {
       console.error('Error fetching categories:', err);
       setCategories([]);
-    } finally {
-      setLoadingCategories(false);
     }
-  };
-
-  // Get only root categories (parent categories) for main dropdown
-  // API already returns root categories in tree structure, so we just return them as-is
-  const getRootCategories = (cats: Category[]): Category[] => {
-    return cats; // API already returns only root categories
   };
 
   const selectedCurrencyInfo = CURRENCIES[selectedCurrency];
@@ -675,9 +484,6 @@ export function Header() {
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
-      }
-      if (productsMenuRef.current && !productsMenuRef.current.contains(event.target as Node)) {
-        setShowProductsMenu(false);
       }
     };
 
@@ -700,15 +506,6 @@ export function Header() {
       };
     }
   }, [mobileMenuOpen]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (productsMenuTimeoutRef.current) {
-        clearTimeout(productsMenuTimeoutRef.current);
-      }
-    };
-  }, []);
 
   // Close mobile menu on ESC key
   useEffect(() => {
@@ -968,51 +765,13 @@ export function Header() {
             >
               {t('common.navigation.home')}
             </Link>
-            <div 
-              className="relative" 
-              ref={productsMenuRef}
-              onMouseEnter={() => {
-                if (productsMenuTimeoutRef.current) {
-                  clearTimeout(productsMenuTimeoutRef.current);
-                  productsMenuTimeoutRef.current = null;
-                }
-                setShowProductsMenu(true);
-              }}
-              onMouseLeave={() => {
-                productsMenuTimeoutRef.current = setTimeout(() => {
-                  setShowProductsMenu(false);
-                }, 150);
-              }}
+            <Link
+              href="/products"
+              className={headerTextNavClassName(isHeaderNavActive(pathname, '/products'))}
+              aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
             >
-              <Link
-                href="/products"
-                className={`${headerTextNavClassName(isHeaderNavActive(pathname, '/products'))} flex items-center gap-1`}
-                aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
-              >
-                {t('common.navigation.products')}
-                <ChevronDownIcon />
-              </Link>
-              {showProductsMenu && (
-                <>
-                  <div className="absolute top-full left-0 w-full h-2" />
-                  <div className="absolute top-full left-0 pt-2 w-64 z-50">
-                    <div className="bg-white rounded-xl shadow-2xl border border-gray-200/80 overflow-visible">
-                      {loadingCategories ? (
-                        <div className="px-4 py-2 text-sm text-gray-500">{t('common.messages.loading')}</div>
-                      ) : (
-                        getRootCategories(categories).map((category) => (
-                          <CategoryMenuItem
-                            key={category.id}
-                            category={category}
-                            onClose={() => setShowProductsMenu(false)}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+              {t('common.navigation.products')}
+            </Link>
             <Link
               href="/about"
               className={headerTextNavClassName(isHeaderNavActive(pathname, '/about'))}

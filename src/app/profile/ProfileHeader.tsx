@@ -6,6 +6,7 @@ interface ProfileHeaderProps {
   tabs: ProfileTabConfig[];
   activeTab: ProfileTab;
   onTabChange: (tab: ProfileTab) => void;
+  onLogout: () => void;
   t: (key: string) => string;
 }
 
@@ -41,6 +42,7 @@ function ProfileUserIdentity({
           <UserAvatar
             firstName={profile?.firstName}
             lastName={profile?.lastName}
+            avatarUrl={profile?.avatarUrl || profile?.avatar || profile?.imageUrl || profile?.image || null}
             size="md"
             className="shadow-md sm:h-[4.5rem] sm:w-[4.5rem] sm:text-xl"
           />
@@ -64,9 +66,9 @@ function ProfileUserIdentity({
       </div>
       <div className="flex w-full flex-col gap-2">
           {profile?.email && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-gray-200/60 bg-white/70 px-3 py-2.5 shadow-sm backdrop-blur-sm">
+            <div className="flex items-start gap-2.5 rounded-xl border border-gray-200/60 bg-white/70 px-3.5 py-2.5 shadow-sm backdrop-blur-sm">
               <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-              <p className="min-w-0 text-xs font-medium leading-relaxed text-gray-700 break-all sm:text-sm">{profile.email}</p>
+              <p className="min-w-0 text-xs font-medium leading-relaxed text-gray-700 break-words sm:text-sm">{profile.email}</p>
             </div>
           )}
           {profile?.phone && (
@@ -131,7 +133,7 @@ function ProfileTabNav({
   );
 }
 
-export function ProfileHeader({ profile, tabs, activeTab, onTabChange, t }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, tabs, activeTab, onTabChange, onLogout, t }: ProfileHeaderProps) {
   const displayName =
     profile?.firstName && profile?.lastName
       ? `${profile.firstName} ${profile.lastName}`
@@ -151,6 +153,20 @@ export function ProfileHeader({ profile, tabs, activeTab, onTabChange, t }: Prof
       </div>
       <div className="p-2 sm:bg-gray-50/30 sm:p-3">
         <ProfileTabNav tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
+        <div className="mt-2 border-t border-gray-200/70 pt-2">
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex w-full items-center gap-3 rounded-md border-l-[3px] border-transparent px-3 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-red-50 text-red-500">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+              </svg>
+            </span>
+            <span className="min-w-0 flex-1 leading-snug">{t('common.navigation.logout')}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
