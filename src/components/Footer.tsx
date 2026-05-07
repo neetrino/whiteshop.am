@@ -159,12 +159,11 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-300">
-              {`Copyright © ${new Date().getFullYear().toString()} | All Rights Reserved, Created by`}
+              {`Copyright © ${new Date().getFullYear().toString()} | All Rights Reserved, Created by NEETRINO IT COMPANY`}
             </p>
             
             {/* Payment Methods */}
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400 mr-2">{t('common.footer.paymentMethods')}</span>
               <div className="flex items-center gap-3">
                 <Image
                   src="https://static.tert.am/storage/files/tert/2020/04/27/idram_main_visual-770x_.png"
