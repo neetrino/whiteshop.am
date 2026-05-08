@@ -20,6 +20,10 @@ export interface UserProfile {
   phone?: string;
   firstName?: string;
   lastName?: string;
+  avatarUrl?: string | null;
+  avatar?: string | null;
+  imageUrl?: string | null;
+  image?: string | null;
   locale?: string;
   emailVerified?: boolean;
   phoneVerified?: boolean;

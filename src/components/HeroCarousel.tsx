@@ -49,7 +49,7 @@ export function HeroCarousel() {
   };
 
   return (
-    <div className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+    <div className="relative w-full h-[560px] sm:h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent z-10" />
       
@@ -75,26 +75,26 @@ export function HeroCarousel() {
       </div>
 
       {/* Overlay Content - Text and Buttons */}
-      <div className="absolute inset-0 flex flex-col items-start justify-center z-20 px-4 sm:px-6 md:px-12 lg:px-20 xl:px-32 pointer-events-none">
-        <div className="text-left pointer-events-auto max-w-2xl">
+      <div className="absolute inset-0 flex flex-col items-start justify-start pt-28 pb-16 sm:justify-center sm:pt-0 sm:pb-0 z-20 px-4 sm:px-6 md:px-12 lg:px-20 xl:px-32 pointer-events-none">
+        <div className="text-left pointer-events-auto max-w-full sm:max-w-2xl">
           {/* Background overlay for better text readability */}
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-8 md:p-10 lg:p-12 shadow-2xl border border-white/5">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-10 lg:p-12 shadow-2xl border border-white/5">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
               {t('home.hero_title')}
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-gray-700 mb-8 leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-700 mb-5 sm:mb-8 leading-relaxed">
               {t('home.hero_subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={handleShopNow}
-                className="px-10 py-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="px-6 sm:px-10 py-3 sm:py-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 {t('home.hero_button_products')}
               </button>
               <button
                 onClick={handleBrowseCategories}
-                className="px-10 py-4 bg-white text-gray-900 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="px-6 sm:px-10 py-3 sm:py-4 bg-white text-gray-900 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-all font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 {t('home.hero_button_view_more')}
               </button>
@@ -106,7 +106,7 @@ export function HeroCarousel() {
       {/* Navigation Arrows */}
       <button
         onClick={goToPrevious}
-        className="absolute left-6 md:left-8 top-1/2 transform -translate-y-1/2 bg-white/50 hover:bg-white/70 text-gray-900 p-2 md:p-3 rounded-full shadow-lg transition-all z-30 cursor-pointer hover:scale-110"
+        className="hidden sm:block absolute left-6 md:left-8 top-1/2 transform -translate-y-1/2 bg-white/50 hover:bg-white/70 text-gray-900 p-2 md:p-3 rounded-full shadow-lg transition-all z-30 cursor-pointer hover:scale-110"
         aria-label="Previous image"
       >
         <svg
@@ -126,7 +126,7 @@ export function HeroCarousel() {
 
       <button
         onClick={goToNext}
-        className="absolute right-6 md:right-8 top-1/2 transform -translate-y-1/2 bg-white/50 hover:bg-white/70 text-gray-900 p-2 md:p-3 rounded-full shadow-lg transition-all z-30 cursor-pointer hover:scale-110"
+        className="hidden sm:block absolute right-6 md:right-8 top-1/2 transform -translate-y-1/2 bg-white/50 hover:bg-white/70 text-gray-900 p-2 md:p-3 rounded-full shadow-lg transition-all z-30 cursor-pointer hover:scale-110"
         aria-label="Next image"
       >
         <svg
@@ -145,7 +145,7 @@ export function HeroCarousel() {
       </button>
 
       {/* Dots Indicator */}
-      <div className="absolute bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-30">
+      <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3 z-30">
         {heroImages.map((_, index) => (
           <button
             key={index}

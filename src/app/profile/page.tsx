@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useTranslation } from '../../lib/i18n-client';
 import { useProfilePage } from './useProfilePage';
 import { ProfileHeader } from './ProfileHeader';
+import { ProfileMobilePage } from './ProfileMobilePage';
 import { ProfileDashboard } from './ProfileDashboard';
 import { ProfilePersonalInfo } from './ProfilePersonalInfo';
 import { ProfileAddresses } from './ProfileAddresses';
@@ -15,7 +16,7 @@ import { OrderDetailsModal } from './OrderDetailsModal';
 import type { ProfileTab, ProfileTabConfig } from './types';
 
 function ProfilePageContent() {
-  const { isLoggedIn, isLoading: authLoading } = useAuth();
+  const { isLoggedIn, isLoading: authLoading, logout } = useAuth();
   const { t } = useTranslation();
   
   const {
@@ -70,6 +71,7 @@ function ProfilePageContent() {
     deletingAccount,
     handleDeleteAccount,
   } = useProfilePage();
+  const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
 
   if (authLoading || loading) {
     return (
@@ -149,132 +151,127 @@ function ProfilePageContent() {
     },
   ];
 
+  const tabContent = (
+    <>
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">{error}</div>}
+      {success && <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-600">{success}</div>}
+      {activeTab === 'dashboard' && (
+        <ProfileDashboard
+          dashboardData={dashboardData}
+          dashboardLoading={dashboardLoading}
+          currency={currency}
+          onTabChange={handleTabChange}
+          onOrderClick={handleOrderClick}
+          t={t}
+        />
+      )}
+      {activeTab === 'personal' && (
+        <ProfilePersonalInfo
+          personalInfo={personalInfo}
+          setPersonalInfo={setPersonalInfo}
+          savingPersonal={savingPersonal}
+          onSave={handleSavePersonalInfo}
+          profile={profile}
+          t={t}
+        />
+      )}
+      {activeTab === 'addresses' && (
+        <ProfileAddresses
+          profile={profile}
+          showAddressForm={showAddressForm}
+          setShowAddressForm={setShowAddressForm}
+          editingAddress={editingAddress}
+          addressForm={addressForm}
+          setAddressForm={setAddressForm}
+          savingAddress={savingAddress}
+          onSave={handleSaveAddress}
+          onDelete={handleDeleteAddress}
+          onSetDefault={handleSetDefaultAddress}
+          onEdit={handleEditAddress}
+          onResetForm={resetAddressForm}
+          t={t}
+        />
+      )}
+      {activeTab === 'orders' && (
+        <ProfileOrders
+          orders={orders}
+          ordersLoading={ordersLoading}
+          ordersPage={ordersPage}
+          setOrdersPage={setOrdersPage}
+          ordersMeta={ordersMeta}
+          currency={currency}
+          onOrderClick={handleOrderClick}
+          t={t}
+        />
+      )}
+      {activeTab === 'password' && (
+        <ProfilePassword
+          passwordForm={passwordForm}
+          setPasswordForm={setPasswordForm}
+          savingPassword={savingPassword}
+          onSave={handleChangePassword}
+          t={t}
+        />
+      )}
+      {activeTab === 'deleteAccount' && (
+        <ProfileDeleteAccount
+          profile={profile}
+          password={deleteAccountPassword}
+          setPassword={setDeleteAccountPassword}
+          confirmation={deleteAccountConfirmation}
+          setConfirmation={setDeleteAccountConfirmation}
+          acknowledged={deleteAccountAcknowledged}
+          setAcknowledged={setDeleteAccountAcknowledged}
+          deleting={deletingAccount}
+          onSubmit={handleDeleteAccount}
+          t={t}
+        />
+      )}
+    </>
+  );
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:gap-10 lg:gap-12">
-        <aside className="w-full shrink-0 sm:sticky sm:top-24 sm:w-56 sm:self-start sm:border-r sm:border-gray-200/90 sm:pr-8 lg:w-64">
-          <ProfileHeader
-            profile={profile}
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            t={t}
-          />
-        </aside>
-
-        <main className="min-w-0 flex-1">
-          <div className="space-y-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200/80 sm:space-y-8 sm:p-6 lg:rounded-3xl lg:p-8">
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-sm text-red-600">{error}</p>
+    <>
+      <ProfileMobilePage
+        profile={profile}
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabSelect={(tab) => {
+          handleTabChange(tab);
+          setIsMobileSheetOpen(true);
+        }}
+        onLogout={logout}
+        t={t}
+        isSheetOpen={isMobileSheetOpen}
+        onCloseSheet={() => setIsMobileSheetOpen(false)}
+      >
+        {tabContent}
+      </ProfileMobilePage>
+      <div className="mx-auto hidden max-w-7xl px-4 py-8 md:block md:px-6 lg:px-8">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-10 lg:gap-12">
+          <aside className="w-full shrink-0 md:sticky md:top-24 md:w-64 md:self-start md:border-r md:border-gray-200/90 md:pr-8 lg:w-72">
+            <ProfileHeader profile={profile} tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} onLogout={logout} t={t} />
+          </aside>
+          <main className="min-w-0 flex-1">
+            <div className="space-y-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-200/80 md:space-y-8 md:p-6 lg:rounded-3xl lg:p-8">
+              {tabContent}
             </div>
-          )}
-          {success && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <p className="text-sm text-green-600">{success}</p>
-            </div>
-          )}
-
-          {/* Dashboard Tab */}
-          {activeTab === 'dashboard' && (
-            <ProfileDashboard
-              dashboardData={dashboardData}
-              dashboardLoading={dashboardLoading}
-              currency={currency}
-              onTabChange={handleTabChange}
-              onOrderClick={handleOrderClick}
-              t={t}
-            />
-          )}
-
-          {/* Personal Information Tab */}
-          {activeTab === 'personal' && (
-            <ProfilePersonalInfo
-              personalInfo={personalInfo}
-              setPersonalInfo={setPersonalInfo}
-              savingPersonal={savingPersonal}
-              onSave={handleSavePersonalInfo}
-              profile={profile}
-              t={t}
-            />
-          )}
-
-          {/* Addresses Tab */}
-          {activeTab === 'addresses' && (
-            <ProfileAddresses
-              profile={profile}
-              showAddressForm={showAddressForm}
-              setShowAddressForm={setShowAddressForm}
-              editingAddress={editingAddress}
-              addressForm={addressForm}
-              setAddressForm={setAddressForm}
-              savingAddress={savingAddress}
-              onSave={handleSaveAddress}
-              onDelete={handleDeleteAddress}
-              onSetDefault={handleSetDefaultAddress}
-              onEdit={handleEditAddress}
-              onResetForm={resetAddressForm}
-              t={t}
-            />
-          )}
-
-          {/* Orders Tab */}
-          {activeTab === 'orders' && (
-            <ProfileOrders
-              orders={orders}
-              ordersLoading={ordersLoading}
-              ordersPage={ordersPage}
-              setOrdersPage={setOrdersPage}
-              ordersMeta={ordersMeta}
-              currency={currency}
-              onOrderClick={handleOrderClick}
-              t={t}
-            />
-          )}
-
-          {/* Password Tab */}
-          {activeTab === 'password' && (
-            <ProfilePassword
-              passwordForm={passwordForm}
-              setPasswordForm={setPasswordForm}
-              savingPassword={savingPassword}
-              onSave={handleChangePassword}
-              t={t}
-            />
-          )}
-
-          {activeTab === 'deleteAccount' && (
-            <ProfileDeleteAccount
-              profile={profile}
-              password={deleteAccountPassword}
-              setPassword={setDeleteAccountPassword}
-              confirmation={deleteAccountConfirmation}
-              setConfirmation={setDeleteAccountConfirmation}
-              acknowledged={deleteAccountAcknowledged}
-              setAcknowledged={setDeleteAccountAcknowledged}
-              deleting={deletingAccount}
-              onSubmit={handleDeleteAccount}
-              t={t}
-            />
-          )}
-
-          {/* Order Details Modal */}
-          {selectedOrder && (
-            <OrderDetailsModal
-              selectedOrder={selectedOrder}
-              orderDetailsLoading={orderDetailsLoading}
-              orderDetailsError={orderDetailsError}
-              isReordering={isReordering}
-              currency={currency}
-              onClose={() => setSelectedOrder(null)}
-              onReOrder={handleReOrder}
-              t={t}
-            />
-          )}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+      {selectedOrder && (
+        <OrderDetailsModal
+          selectedOrder={selectedOrder}
+          orderDetailsLoading={orderDetailsLoading}
+          orderDetailsError={orderDetailsError}
+          isReordering={isReordering}
+          currency={currency}
+          onClose={() => setSelectedOrder(null)}
+          onReOrder={handleReOrder}
+          t={t}
+        />
+      )}
+    </>
   );
 }
 

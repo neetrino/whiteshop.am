@@ -207,6 +207,7 @@ export default function UsersPage() {
             ? user.roles?.includes('admin')
             : user.roles?.includes('customer')
         );
+  const totalUsersCount = meta?.total ?? filteredUsers.length;
 
   return (
     <>
@@ -277,6 +278,9 @@ export default function UsersPage() {
                   {t('admin.users.customers')}
                 </button>
               </div>
+            </div>
+            <div className="border-t border-gray-200 pt-3 text-sm text-gray-700">
+              {t('admin.users.totalUsersCount').replace('{count}', totalUsersCount.toString())}
             </div>
           </form>
         </Card>

@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ClientProviders } from '../components/ClientProviders';
 import { ConditionalHeader } from '../components/ConditionalHeader';
-import { Footer } from '../components/Footer';
+import { ConditionalFooter } from '../components/ConditionalFooter';
 import { MobileBottomNav } from '../components/MobileBottomNav';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -29,7 +29,7 @@ export default function RootLayout({
               <main className="flex-1 w-full">
                 {children}
               </main>
-              <Footer />
+              <ConditionalFooter />
               <MobileBottomNav />
             </div>
           </ClientProviders>

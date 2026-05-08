@@ -60,8 +60,23 @@ export function UserAvatar({
           className="w-full h-full rounded-full object-cover border-2 border-gray-200"
         />
       ) : (
-        <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white font-semibold border-2 border-gray-200 shadow-sm">
-          {initials}
+        <div className="relative h-full w-full rounded-full border border-gray-300 bg-gray-100 shadow-[0_0_0_2px_rgba(255,255,255,0.95),0_0_0_4px_rgba(0,0,0,0.2)]">
+          <div className="absolute inset-[5%] rounded-full bg-black">
+            {initials !== '?' && (
+              <span className="absolute left-1/2 top-[36%] -translate-x-1/2 -translate-y-1/2 text-[0.38em] font-semibold tracking-wide text-white/80">
+                {initials}
+              </span>
+            )}
+            <svg
+              className="absolute left-1/2 top-1/2 h-[64%] w-[64%] -translate-x-1/2 -translate-y-1/2 text-white"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden={true}
+            >
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4.418 3.582-8 8-8s8 3.582 8 8H4z" />
+            </svg>
+          </div>
         </div>
       )}
     </div>

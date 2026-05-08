@@ -312,6 +312,8 @@ export default function ProductsPage() {
     return null;
   }
 
+  const totalProductsCount = meta?.total ?? products.length;
+
   return (
     <>
       {(search || selectedCategories.size > 0 || skuSearch || stockFilter !== 'all') && (
@@ -325,6 +327,10 @@ export default function ProductsPage() {
           </button>
         </div>
       )}
+            <div className="mb-4 text-sm text-gray-700">
+              {t('admin.products.totalProductsCount').replace('{count}', totalProductsCount.toString())}
+            </div>
+
             <ProductFilters
               search={search}
               setSearch={setSearch}

@@ -134,11 +134,16 @@ export function useCategoryActions(): UseCategoryActionsReturn {
 
     setSaving(true);
     try {
+      const normalizedParentId = formData.parentId || null;
+      const sanitizedSubcategoryIds = normalizedParentId
+        ? []
+        : Array.from(new Set(formData.subcategoryIds)).filter((subcategoryId) => subcategoryId !== editingCategory.id);
+
       await apiClient.put(`/api/v1/admin/categories/${editingCategory.id}`, {
         title: formData.title.trim(),
-        parentId: formData.parentId || null,
+        parentId: normalizedParentId,
         requiresSizes: formData.requiresSizes,
-        subcategoryIds: formData.subcategoryIds,
+        subcategoryIds: sanitizedSubcategoryIds,
         imageUrl: formData.imageUrl.trim() || null,
         published: formData.published === 'published',
         locale: 'en',

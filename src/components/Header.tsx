@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useEffect, useLayoutEffect, useRef, Suspense } from 'react';
-import type { FormEvent, ReactNode, CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
+import type { FormEvent, ReactNode, MouseEvent as ReactMouseEvent } from 'react';
 import { getStoredCurrency, setStoredCurrency, type CurrencyCode, CURRENCIES, formatPrice, initializeCurrencyRates, clearCurrencyRatesCache } from '../lib/currency';
 import { useTranslation } from '../lib/i18n-client';
 import { getStoredLanguage } from '../lib/language';
@@ -18,7 +18,7 @@ import { useAuth } from '../lib/auth/AuthContext';
 import { apiClient } from '../lib/api-client';
 import { CART_KEY, getCompareCount, getWishlistCount } from '../lib/storageCounts';
 import { LanguageSwitcherHeader } from './LanguageSwitcherHeader';
-import { Instagram, Facebook, Linkedin } from 'lucide-react';
+import { Instagram, Facebook, Linkedin, Globe } from 'lucide-react';
 import { CompareIcon } from './icons/CompareIcon';
 import { BrandLogoLink } from './BrandLogoLink';
 import { CartIcon } from './icons/CartIcon';
@@ -83,13 +83,6 @@ interface CategoriesResponse {
 const ChevronDownIcon = () => (
   <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-// Arrow icon for categories with subcategories (▶)
-const ArrowRightIcon = () => (
-  <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-auto">
-    <path d="M3 2L5 4L3 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -211,176 +204,6 @@ function HeaderSearchSync({
   return null;
 }
 
-/**
- * Category Menu Item Component with nested submenu support
- * Displays subcategories in a multi-column layout without scroll
- */
-function CategoryMenuItem({ 
-  category, 
-  onClose 
-}: { 
-  category: Category; 
-  onClose: () => void;
-}) {
-  const [showSubmenu, setShowSubmenu] = useState(false);
-  const [submenuStyle, setSubmenuStyle] = useState<CSSProperties>({});
-  const submenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const submenuRef = useRef<HTMLDivElement>(null);
-  const menuItemRef = useRef<HTMLDivElement>(null);
-  const hasChildren = category.children && category.children.length > 0;
-
-  const handleMouseEnter = () => {
-    if (hasChildren) {
-      if (submenuTimeoutRef.current) {
-        clearTimeout(submenuTimeoutRef.current);
-        submenuTimeoutRef.current = null;
-      }
-      setShowSubmenu(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (hasChildren) {
-      submenuTimeoutRef.current = setTimeout(() => {
-        setShowSubmenu(false);
-      }, 150);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (submenuTimeoutRef.current) {
-        clearTimeout(submenuTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Calculate submenu position relative to Products dropdown
-  useEffect(() => {
-    if (showSubmenu && submenuRef.current && menuItemRef.current) {
-      const menuItem = menuItemRef.current;
-      
-      // Find Products dropdown container (parent with w-64 class)
-      const productsDropdown = menuItem.closest('.w-64');
-      if (productsDropdown) {
-        const dropdownRect = productsDropdown.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        
-        // Position submenu to the right of Products dropdown, aligned higher than dropdown
-        const leftPosition = dropdownRect.width; // Right edge of Products dropdown
-        const topPosition = -12; // Move up a bit from top of dropdown
-        const maxWidth = Math.min(600, viewportWidth - dropdownRect.right - 20);
-        
-        setSubmenuStyle({
-          left: `${leftPosition}px`,
-          top: `${topPosition}px`,
-          maxWidth: `${maxWidth}px`
-        });
-      }
-    }
-  }, [showSubmenu]);
-
-  // Organize subcategories into columns (4 columns max)
-  // Distributes items evenly across columns
-  const organizeIntoColumns = (items: Category[], columnsCount: number = 4) => {
-    if (items.length === 0) return [];
-    
-    // Calculate optimal number of columns based on items count
-    const optimalColumns = Math.min(columnsCount, Math.ceil(items.length / 8));
-    const itemsPerColumn = Math.ceil(items.length / optimalColumns);
-    const columns: Category[][] = [];
-    
-    for (let i = 0; i < optimalColumns; i++) {
-      const start = i * itemsPerColumn;
-      const end = start + itemsPerColumn;
-      const column = items.slice(start, end);
-      if (column.length > 0) {
-        columns.push(column);
-      }
-    }
-    
-    return columns;
-  };
-
-  const subcategoryColumns = hasChildren 
-    ? organizeIntoColumns(category.children, 4)
-    : [];
-
-  return (
-    <div 
-      ref={menuItemRef}
-      className="relative group"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <Link
-        href={`/products?category=${category.slug}`}
-        className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-all duration-150"
-        onClick={onClose}
-      >
-        <span>{category.title}</span>
-        {hasChildren && (
-          <ArrowRightIcon />
-        )}
-      </Link>
-      {hasChildren && showSubmenu && (
-        <div 
-          ref={submenuRef}
-          className="absolute top-0 z-[60]"
-          style={submenuStyle}
-          onMouseEnter={() => {
-            if (submenuTimeoutRef.current) {
-              clearTimeout(submenuTimeoutRef.current);
-              submenuTimeoutRef.current = null;
-            }
-            setShowSubmenu(true);
-          }}
-          onMouseLeave={() => {
-            submenuTimeoutRef.current = setTimeout(() => {
-              setShowSubmenu(false);
-            }, 150);
-          }}
-        >
-          <div 
-            className="bg-white rounded-xl shadow-2xl border border-gray-200/80 p-6 min-w-[500px]"
-          >
-            <div 
-              className="grid gap-6"
-              style={{ gridTemplateColumns: `repeat(${subcategoryColumns.length}, minmax(150px, 1fr))` }}
-            >
-              {subcategoryColumns.map((column, columnIndex) => (
-                <div key={columnIndex} className="flex flex-col">
-                  <div className="mb-4 pb-2 border-b border-gray-200">
-                    <Link
-                      href={`/products?category=${category.slug}`}
-                      className="text-sm font-bold text-gray-900 hover:text-gray-700 uppercase tracking-wide"
-                      onClick={onClose}
-                    >
-                      {category.title}
-                    </Link>
-                  </div>
-                  <div className="space-y-2.5">
-                    {column.map((subCategory) => (
-                      <Link
-                        key={subCategory.id}
-                        href={`/products?category=${subCategory.slug}`}
-                        className="block text-sm text-gray-700 hover:text-gray-900 transition-colors duration-150 py-1"
-                        onClick={onClose}
-                      >
-                        {subCategory.title}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
@@ -393,21 +216,17 @@ export function Header() {
   const [showCurrency, setShowCurrency] = useState(false);
   const [showMobileCurrency, setShowMobileCurrency] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showProductsMenu, setShowProductsMenu] = useState(false);
   const [searchHoverExpanded, setSearchHoverExpanded] = useState(false);
   const [searchFocusExpanded, setSearchFocusExpanded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>('AMD');
   const [categories, setCategories] = useState<Category[]>([]);
   const [, setSelectedCategory] = useState<Category | null>(null);
-  const [loadingCategories, setLoadingCategories] = useState(false);
   const currentYear = new Date().getFullYear();
 
   const currencyRef = useRef<HTMLDivElement>(null);
   const mobileCurrencyRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const productsMenuRef = useRef<HTMLDivElement>(null);
-  const productsMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const topBarRef = useRef<HTMLDivElement>(null);
   const mainNavRef = useRef<HTMLElement>(null);
@@ -420,8 +239,7 @@ export function Header() {
   const suppressScrollHide =
     mobileMenuOpen ||
     showUserMenu ||
-    showMobileCurrency ||
-    showProductsMenu;
+    showMobileCurrency;
 
   const headerScrollVisible = useHeaderScrollVisibility(suppressScrollHide);
 
@@ -638,7 +456,6 @@ export function Header() {
 
   const fetchCategories = async () => {
     try {
-      setLoadingCategories(true);
       // Small delay to avoid simultaneous requests
       await new Promise(resolve => setTimeout(resolve, 200));
       
@@ -650,15 +467,7 @@ export function Header() {
     } catch (err: any) {
       console.error('Error fetching categories:', err);
       setCategories([]);
-    } finally {
-      setLoadingCategories(false);
     }
-  };
-
-  // Get only root categories (parent categories) for main dropdown
-  // API already returns root categories in tree structure, so we just return them as-is
-  const getRootCategories = (cats: Category[]): Category[] => {
-    return cats; // API already returns only root categories
   };
 
   const selectedCurrencyInfo = CURRENCIES[selectedCurrency];
@@ -675,9 +484,6 @@ export function Header() {
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
-      }
-      if (productsMenuRef.current && !productsMenuRef.current.contains(event.target as Node)) {
-        setShowProductsMenu(false);
       }
     };
 
@@ -700,15 +506,6 @@ export function Header() {
       };
     }
   }, [mobileMenuOpen]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (productsMenuTimeoutRef.current) {
-        clearTimeout(productsMenuTimeoutRef.current);
-      }
-    };
-  }, []);
 
   // Close mobile menu on ESC key
   useEffect(() => {
@@ -887,75 +684,70 @@ export function Header() {
       <div className="max-w-7xl mx-auto pl-2 sm:pl-4 md:pl-6 lg:pl-8 pr-2 sm:pr-4 md:pr-6 lg:pr-8">
         <div className="flex flex-wrap items-center gap-2 sm:gap-4 py-4 md:py-3">
           {/* Logo + Mobile Menu */}
-          <div className="flex w-full items-center justify-between md:w-auto md:justify-start">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
-                aria-label={t('common.ariaLabels.openMenu')}
-                aria-expanded={mobileMenuOpen}
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
-                </svg>
-              </button>
+          <div className="relative flex w-full items-center justify-between md:w-auto md:justify-start">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+              aria-label={t('common.ariaLabels.openMenu')}
+              aria-expanded={mobileMenuOpen}
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+            <div className="hidden md:block">
               <BrandLogoLink />
             </div>
-            {/* Mobile Currency and Language - on same line as logo */}
+            <div className="absolute left-1/2 -translate-x-1/2 md:hidden">
+              <BrandLogoLink />
+            </div>
+            {/* Mobile language + currency via single globe */}
             <div className="flex items-center gap-1 sm:gap-2 md:hidden">
-              {/* Currency Switcher */}
               <div className="relative" ref={mobileCurrencyRef}>
                 <button
                   type="button"
                   onClick={() => {
                     setShowMobileCurrency(!showMobileCurrency);
                   }}
-                  className={`inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200/90 px-3 text-sm font-medium text-gray-800 shadow-sm transition-colors cursor-pointer ${
+                  className={`inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200/90 bg-gray-100 text-gray-800 shadow-sm transition-colors cursor-pointer ${
                     showMobileCurrency ? 'bg-gray-200' : 'bg-gray-100 hover:bg-gray-200/90'
                   }`}
+                  aria-label="Change language and currency"
                 >
-                  <span className="font-semibold leading-none tabular-nums">{selectedCurrencyInfo.symbol}</span>
-                  <span className="font-medium leading-none tabular-nums">{selectedCurrency}</span>
-                  <ChevronDownIcon />
+                  <Globe className="h-5 w-5" />
                 </button>
                 {showMobileCurrency && (
-                  <div className="absolute top-full right-0 mt-2 w-40 bg-white shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {Object.values(CURRENCIES).map((currency) => (
-                      <button
-                        key={currency.code}
-                        onClick={() => {
-                          handleCurrencyChange(currency.code);
-                          setShowMobileCurrency(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm transition-all duration-150 ${
-                          selectedCurrency === currency.code
-                            ? 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 font-semibold'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span>{currency.code}</span>
-                          <span className="text-gray-500">{currency.symbol}</span>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="absolute top-full right-0 mt-2 w-52 rounded-xl border border-gray-200 bg-white p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="rounded-lg border border-gray-100 px-2 py-2">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Language</p>
+                      <LanguageSwitcherHeader />
+                    </div>
+                    <div className="mt-2 rounded-lg border border-gray-100 p-1">
+                      <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Currency</p>
+                      {Object.values(CURRENCIES).map((currency) => (
+                        <button
+                          key={currency.code}
+                          onClick={() => {
+                            handleCurrencyChange(currency.code);
+                            setShowMobileCurrency(false);
+                          }}
+                          className={`w-full rounded-md px-3 py-2 text-left text-sm transition-all duration-150 ${
+                            selectedCurrency === currency.code
+                              ? 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 font-semibold'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{currency.code}</span>
+                            <span className="text-gray-500">{currency.symbol}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
-              {/* Language Switcher */}
-              <div className="flex h-10 items-center">
-                <LanguageSwitcherHeader />
-              </div>
-              <Link
-                href="/cart"
-                className="md:hidden relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-gray-200/90 bg-white text-gray-800 shadow-sm transition-colors hover:bg-gray-50"
-                aria-label={t('common.ariaLabels.shoppingCart')}
-              >
-                <span data-cart-fly-target className="relative flex h-9 w-9 items-center justify-center">
-                  <BadgeIcon icon={<CartIcon size={18} />} badge={cartCount} />
-                </span>
-              </Link>
             </div>
           </div>
 
@@ -968,51 +760,13 @@ export function Header() {
             >
               {t('common.navigation.home')}
             </Link>
-            <div 
-              className="relative" 
-              ref={productsMenuRef}
-              onMouseEnter={() => {
-                if (productsMenuTimeoutRef.current) {
-                  clearTimeout(productsMenuTimeoutRef.current);
-                  productsMenuTimeoutRef.current = null;
-                }
-                setShowProductsMenu(true);
-              }}
-              onMouseLeave={() => {
-                productsMenuTimeoutRef.current = setTimeout(() => {
-                  setShowProductsMenu(false);
-                }, 150);
-              }}
+            <Link
+              href="/products"
+              className={headerTextNavClassName(isHeaderNavActive(pathname, '/products'))}
+              aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
             >
-              <Link
-                href="/products"
-                className={`${headerTextNavClassName(isHeaderNavActive(pathname, '/products'))} flex items-center gap-1`}
-                aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
-              >
-                {t('common.navigation.products')}
-                <ChevronDownIcon />
-              </Link>
-              {showProductsMenu && (
-                <>
-                  <div className="absolute top-full left-0 w-full h-2" />
-                  <div className="absolute top-full left-0 pt-2 w-64 z-50">
-                    <div className="bg-white rounded-xl shadow-2xl border border-gray-200/80 overflow-visible">
-                      {loadingCategories ? (
-                        <div className="px-4 py-2 text-sm text-gray-500">{t('common.messages.loading')}</div>
-                      ) : (
-                        getRootCategories(categories).map((category) => (
-                          <CategoryMenuItem
-                            key={category.id}
-                            category={category}
-                            onClose={() => setShowProductsMenu(false)}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+              {t('common.navigation.products')}
+            </Link>
             <Link
               href="/about"
               className={headerTextNavClassName(isHeaderNavActive(pathname, '/about'))}
@@ -1317,43 +1071,8 @@ export function Header() {
                     )}
                   </Link>
 
-                  <Link
-                    href="/cart"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={headerMobileRowClassName(isHeaderNavActive(pathname, '/cart'))}
-                    aria-current={isHeaderNavActive(pathname, '/cart') ? 'page' : undefined}
-                  >
-                    <span
-                      className={`flex items-center gap-2 normal-case font-medium ${
-                        isHeaderNavActive(pathname, '/cart') ? 'text-gray-900' : 'text-gray-700'
-                      }`}
-                    >
-                      <CartIcon size={19} />
-                      Cart
-                    </span>
-                    {cartCount > 0 && (
-                      <span className="rounded-full bg-gray-900 px-2 py-0.5 text-xs font-semibold text-white">
-                        {cartCount > 99 ? '99+' : cartCount}
-                      </span>
-                    )}
-                  </Link>
-
                   {isLoggedIn ? (
                     <>
-                      <Link
-                        href="/profile"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`${headerMobileRowClassName(isHeaderNavActive(pathname, '/profile'))} normal-case`}
-                        aria-current={isHeaderNavActive(pathname, '/profile') ? 'page' : undefined}
-                      >
-                        <span className="flex items-center gap-2">
-                          <ProfileIconFilled />
-                          Profile
-                        </span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
                       {isAdmin && (
                         <Link
                           href="/supersudo"
@@ -1371,18 +1090,6 @@ export function Header() {
                           </svg>
                         </Link>
                       )}
-                      <button
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          logout();
-                        }}
-                        className="flex w-full items-center justify-between px-4 py-3 text-left text-red-600 hover:bg-red-50 normal-case font-semibold"
-                      >
-                        Logout
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
                     </>
                   ) : (
                     <>

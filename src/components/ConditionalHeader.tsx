@@ -8,5 +8,8 @@ export function ConditionalHeader() {
   if (pathname?.startsWith('/supersudo')) {
     return null;
   }
+  if (pathname?.startsWith('/profile')) {
+    return <div className="hidden md:block"><Header /></div>;
+  }
   return <Header />;
 }

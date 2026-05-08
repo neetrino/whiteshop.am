@@ -8,6 +8,7 @@ interface OrdersFiltersProps {
   statusFilter: string;
   paymentStatusFilter: string;
   searchQuery: string;
+  totalCount: number;
   updateMessage: { type: 'success' | 'error'; text: string } | null;
   setStatusFilter: (value: string) => void;
   setPaymentStatusFilter: (value: string) => void;
@@ -21,6 +22,7 @@ export function OrdersFilters({
   statusFilter,
   paymentStatusFilter,
   searchQuery,
+  totalCount,
   updateMessage,
   setStatusFilter,
   setPaymentStatusFilter,
@@ -112,6 +114,9 @@ export function OrdersFilters({
             {updateMessage.text}
           </div>
         )}
+      </div>
+      <div className="mt-3 border-t border-gray-200 pt-3 text-sm text-gray-700">
+        {t('admin.orders.totalOrdersCount').replace('{count}', totalCount.toString())}
       </div>
     </Card>
   );
