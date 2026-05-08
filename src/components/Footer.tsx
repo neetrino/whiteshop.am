@@ -159,7 +159,7 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-300">
-              {`Copyright © ${new Date().getFullYear().toString()} | All Rights Reserved, Created by NEETRINO IT COMPANY`}
+              {`Copyright © ${new Date().getFullYear().toString()} | All Rights Reserved, Created by NEETRINO IT COMPANY  `}
             </p>
             
             {/* Payment Methods */}
