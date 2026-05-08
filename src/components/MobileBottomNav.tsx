@@ -187,7 +187,6 @@ export function MobileBottomNav() {
                   </span>
                 )}
               </div>
-              <span className="mt-1 text-[11px]">{label}</span>
             </>
           );
           const shopContent = (
@@ -204,7 +203,6 @@ export function MobileBottomNav() {
                   </span>
                 )}
               </div>
-              <span className={`mt-1 text-[11px] font-semibold ${isActive ? 'text-emerald-700' : 'text-gray-600'}`}>{label}</span>
             </>
           );
 
@@ -214,6 +212,7 @@ export function MobileBottomNav() {
                   key={label}
                   type="button"
                   onClick={action}
+                  aria-label={label}
                   className={`flex flex-col items-center rounded-xl px-2 py-1 text-xs font-medium text-gray-500 transition ${slotClass}`}
                 >
                   {isShopItem ? shopContent : defaultContent}
@@ -226,6 +225,7 @@ export function MobileBottomNav() {
                 key={label}
                 href={href || '#'}
                 onClick={onClick}
+                aria-label={label}
                 className={`flex flex-col items-center rounded-xl px-2 py-1 text-xs font-medium transition ${slotClass} ${
                   isActive ? 'text-gray-900' : 'text-gray-500'
                 }`}
