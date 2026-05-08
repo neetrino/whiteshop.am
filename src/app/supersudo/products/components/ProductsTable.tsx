@@ -79,6 +79,20 @@ function getVisiblePages(start: number, end: number) {
   return pages;
 }
 
+const INTERACTIVE_CELL_SELECTOR = 'button, input, a, textarea, select, [role="button"]';
+
+function handleProductRowClick(
+  event: MouseEvent<HTMLTableRowElement>,
+  productId: string,
+  openProductEditor: (id: string) => void,
+) {
+  const clickedElement = event.target;
+  if (clickedElement instanceof HTMLElement && clickedElement.closest(INTERACTIVE_CELL_SELECTOR)) {
+    return;
+  }
+  openProductEditor(productId);
+}
+
 export function ProductsTable({
   loading,
   sortedProducts,
@@ -99,28 +113,16 @@ export function ProductsTable({
   const { t } = useTranslation();
   const router = useRouter();
   const totalPages = meta?.totalPages ?? 1;
-
   const paginationWindow = useMemo(() => getPaginationWindow(page, totalPages), [page, totalPages]);
-
   const visiblePages = useMemo(
     () => getVisiblePages(paginationWindow.start, paginationWindow.end),
     [paginationWindow],
   );
-
   const goToPage = (targetPage: number) => {
     setPage(Math.min(totalPages, Math.max(1, targetPage)));
   };
-
   const openProductEditor = (productId: string) => {
     router.push(`/supersudo/products/add?id=${productId}`);
-  };
-
-  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, productId: string) => {
-    const clickedElement = event.target as HTMLElement;
-    if (clickedElement.closest('button, input, a, textarea, select, [role="button"]')) {
-      return;
-    }
-    openProductEditor(productId);
   };
 
   return (
@@ -299,7 +301,7 @@ export function ProductsTable({
                   <tr
                     key={product.id}
                     className={`${ADMIN_TABLE_ROW} cursor-pointer`}
-                    onClick={(event) => handleRowClick(event, product.id)}
+                    onClick={(event) => handleProductRowClick(event, product.id, openProductEditor)}
                   >
                     <td className={ADMIN_TABLE_TD_CHECK}>
                       <div className="flex min-w-0 justify-center">

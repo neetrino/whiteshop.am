@@ -315,7 +315,7 @@ export function MobileBottomNav() {
                 </div>
               ) : categorySearchQuery.trim().length > 0 ? (
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-                  No categories found for "{categorySearchQuery}".
+                  No categories found for &quot;{categorySearchQuery}&quot;.
                 </div>
               ) : (
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
