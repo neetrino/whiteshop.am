@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
-import { Home, Settings } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { UserAvatar } from '../../components/UserAvatar';
 import type { ProfileTab, ProfileTabConfig, UserProfile } from './types';
 
@@ -86,19 +86,6 @@ export function ProfileMobilePage({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-              <button
-                type="button"
-                onClick={() => onTabSelect(dashboardTab.id)}
-                className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-              >
-                <span className="flex items-center gap-3 text-base font-medium text-gray-800">
-                  <span className="text-gray-500">{dashboardTab.icon}</span>
-                  {dashboardTab.label}
-                </span>
-                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
             </>
           )}
           {otherTabs
@@ -134,21 +121,6 @@ export function ProfileMobilePage({
               </svg>
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => onTabSelect('personal')}
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-          >
-            <span className="flex items-center gap-3 text-base font-medium text-gray-800">
-              <span className="text-gray-500">
-                <Settings className="h-5 w-5" strokeWidth={1.75} />
-              </span>
-              Settings
-            </span>
-            <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
           {otherTabs
             .filter((tab) => tab.id === 'deleteAccount')
             .map((tab) => (
