@@ -20,9 +20,18 @@ function buildProductsCacheKey(searchParams: URLSearchParams): string {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
+    const idsParam = searchParams.get("ids");
+    const ids = idsParam
+      ? idsParam
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0)
+      : undefined;
+
     const filters = {
       category: searchParams.get("category") || undefined,
       search: searchParams.get("search") || undefined,
+      ids,
       filter: searchParams.get("filter") || searchParams.get("filters") || undefined,
       minPrice: searchParams.get("minPrice")
         ? parseFloat(searchParams.get("minPrice")!)

@@ -1,5 +1,6 @@
 import { apiClient } from '../../lib/api-client';
 import { logger } from '../../lib/utils/logger';
+import { getStoredLanguage } from '../../lib/language';
 import type { Cart, CartItem } from './types';
 import { CART_KEY } from './constants';
 
@@ -29,6 +30,12 @@ interface GuestCartItem {
   productSlug?: string;
   variantId: string;
   quantity: number;
+  price?: number;
+}
+
+interface GuestCartBatchResponse {
+  cart: Cart | null;
+  normalizedItems: GuestCartItem[];
 }
 
 /**
@@ -139,6 +146,26 @@ export async function fetchGuestCart(
     
     if (guestCart.length === 0) {
       return null;
+    }
+
+    try {
+      const batch = await apiClient.post<GuestCartBatchResponse>('/api/v1/cart/guest', {
+        items: guestCart,
+        lang: getStoredLanguage(),
+      });
+
+      const normalized = Array.isArray(batch.normalizedItems) ? batch.normalizedItems : [];
+      const needsSync =
+        normalized.length !== guestCart.length ||
+        JSON.stringify(normalized) !== JSON.stringify(guestCart);
+
+      if (needsSync) {
+        localStorage.setItem(CART_KEY, JSON.stringify(normalized));
+      }
+
+      return batch.cart;
+    } catch (batchError: unknown) {
+      logger.warn('[CART] Guest batch fetch failed, using fallback', { error: batchError });
     }
 
     // Get product details from API

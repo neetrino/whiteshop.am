@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 export interface ProductFilters {
   category?: string;
   search?: string;
+  ids?: string[];
   filter?: string;
   minPrice?: number;
   maxPrice?: number;

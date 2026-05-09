@@ -101,15 +101,24 @@ export default function ComparePage() {
         };
       }>('/api/v1/products', {
         params: {
-          limit: '1000',
+          ids: idsToLoad.join(','),
+          limit: String(idsToLoad.length),
           lang: languagePreference,
         },
       });
 
-      const compareProducts = response.data.filter((product) =>
-        idsToLoad.includes(product.id)
-      );
+      const productById = new Map(response.data.map((product) => [product.id, product]));
+      const compareProducts = idsToLoad
+        .map((id) => productById.get(id))
+        .filter((product): product is CompareProduct => product !== undefined);
       setProducts(compareProducts);
+
+      const normalizedIds = compareProducts.map((product) => product.id);
+      if (normalizedIds.length !== idsToLoad.length) {
+        localStorage.setItem(COMPARE_KEY, JSON.stringify(normalizedIds));
+        setCompareIds(normalizedIds);
+        window.dispatchEvent(new Event('compare-updated'));
+      }
     } catch (error) {
       console.error('[Compare] Error fetching compare products:', error);
     } finally {
