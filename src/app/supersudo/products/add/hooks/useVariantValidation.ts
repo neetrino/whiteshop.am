@@ -31,16 +31,13 @@ export function useVariantValidation({
       const skuSet = new Set<string>();
       for (const variant of variants) {
         const variantSku = variant.sku ? variant.sku.trim() : '';
-        if (!variantSku || variantSku === '') {
+        if (variantSku !== '' && skuSet.has(variantSku)) {
           setLoading(false);
           return false;
         }
-        
-        if (skuSet.has(variantSku)) {
-          setLoading(false);
-          return false;
+        if (variantSku !== '') {
+          skuSet.add(variantSku);
         }
-        skuSet.add(variantSku);
         
         const categoryRequiresSizes = isClothingCategory();
         const colorData = variant.colors && variant.colors.length > 0 ? variant.colors : [];
@@ -90,10 +87,6 @@ export function useVariantValidation({
     // Validate simple product fields
     if (productType === 'simple') {
       if (!simpleProductData.price || simpleProductData.price.trim() === '') {
-        setLoading(false);
-        return false;
-      }
-      if (!simpleProductData.sku || simpleProductData.sku.trim() === '') {
         setLoading(false);
         return false;
       }
