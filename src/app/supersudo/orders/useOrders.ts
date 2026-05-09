@@ -103,12 +103,13 @@ export function useOrders() {
   const { confirm: confirmDialog } = useAdminDialogs();
   const router = useRouter();
   const searchParams = useSearchParams();
+  /** Single source of truth with the URL — avoids an extra fetch from state/URL mismatch on mount. */
+  const statusFilter = searchParams.get('status') ?? '';
+  const paymentStatusFilter = searchParams.get('paymentStatus') ?? '';
+  const searchQuery = searchParams.get('search') ?? '';
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<CurrencyCode>(getStoredCurrency());
-  const [statusFilter, setStatusFilter] = useState('');
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState<OrdersResponse['meta'] | null>(null);
   const [sortBy, setSortBy] = useState<string>('createdAt');
@@ -121,18 +122,6 @@ export function useOrders() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
-
-  // Initialize filters from URL params on mount and when URL changes
-  useEffect(() => {
-    if (searchParams) {
-      const status = searchParams.get('status') || '';
-      const paymentStatus = searchParams.get('paymentStatus') || '';
-      const search = searchParams.get('search') || '';
-      setStatusFilter(status);
-      setPaymentStatusFilter(paymentStatus);
-      setSearchQuery(search);
-    }
-  }, [searchParams]);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -160,6 +149,10 @@ export function useOrders() {
       setLoading(false);
     }
   }, [page, statusFilter, paymentStatusFilter, searchQuery, sortBy, sortOrder]);
+
+  useEffect(() => {
+    void fetchOrders();
+  }, [fetchOrders]);
 
   // Initialize currency rates and listen for currency changes
   useEffect(() => {
@@ -191,11 +184,6 @@ export function useOrders() {
       };
     }
   }, []);
-
-  useEffect(() => {
-    fetchOrders();
-     
-  }, [page, statusFilter, paymentStatusFilter, searchQuery, sortBy, sortOrder]);
 
   const formatCurrency: (amount: number, orderCurrency?: string, fromCurrency?: CurrencyCode) => string = (amount: number, orderCurrency: string = 'AMD', fromCurrency: CurrencyCode = 'USD') => {
     // Use the selected display currency instead of order currency
@@ -442,9 +430,6 @@ export function useOrders() {
     orderDetails,
     loadingOrderDetails,
     // Actions
-    setStatusFilter,
-    setPaymentStatusFilter,
-    setSearchQuery,
     setPage,
     fetchOrders,
     formatCurrency,

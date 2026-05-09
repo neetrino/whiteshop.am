@@ -35,6 +35,8 @@ interface ProductsTableProps {
   handleHeaderSort: (field: 'price' | 'createdAt' | 'title' | 'stock') => void;
   currency: CurrencyCode;
   handleDeleteProduct: (productId: string, productTitle: string) => void;
+  handleDuplicateProduct: (productId: string) => void;
+  duplicatingProductId: string | null;
   handleTogglePublished: (productId: string, currentStatus: boolean, productTitle: string) => void;
   handleToggleFeatured: (productId: string, currentStatus: boolean, productTitle: string) => void;
   meta: ProductsResponse['meta'] | null;
@@ -104,6 +106,8 @@ export function ProductsTable({
   handleHeaderSort,
   currency,
   handleDeleteProduct,
+  handleDuplicateProduct,
+  duplicatingProductId,
   handleTogglePublished,
   handleToggleFeatured,
   meta,
@@ -414,6 +418,31 @@ export function ProductsTable({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </Button>
+                        <button
+                          type="button"
+                          disabled={duplicatingProductId === product.id}
+                          onClick={() => handleDuplicateProduct(product.id)}
+                          className={`inline-flex h-9 w-9 items-center justify-center rounded-[6px] transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${
+                            duplicatingProductId === product.id
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-transparent text-gray-900 hover:bg-gray-100'
+                          }`}
+                          aria-label={t('admin.products.duplicate')}
+                          title={t('admin.products.duplicateHint')}
+                        >
+                          {duplicatingProductId === product.id ? (
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+                              <circle cx="12" cy="12" r="9" className="opacity-30" stroke="currentColor" strokeWidth="2.5" />
+                              <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden>
+                              <rect x="4.5" y="7.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="2" />
+                              <path d="M9 3.5h8a2 2 0 0 1 2 2v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                              <path d="M9.6 13h4.8M12 10.6v4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                          )}
+                        </button>
                         <Button
                           type="button"
                           variant="ghost"

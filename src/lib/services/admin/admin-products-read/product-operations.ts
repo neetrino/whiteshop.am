@@ -10,7 +10,7 @@ import { formatVariantForAdmin } from "./variant-formatter";
  * Get products for admin
  */
 export async function getProducts(filters: ProductFilters) {
-  logger.info('getProducts called with filters', { filters });
+  logger.debug("getProducts called with filters", { filters });
   const startTime = Date.now();
   
   const page = filters.page || 1;
@@ -27,7 +27,7 @@ export async function getProducts(filters: ProductFilters) {
   const data = products.map(formatProductForList);
 
   const totalTime = Date.now() - startTime;
-  logger.info(`getProducts completed in ${totalTime}ms. Returning ${data.length} products`);
+  logger.debug(`getProducts completed in ${totalTime}ms. Returning ${data.length} products`);
 
   return {
     data,

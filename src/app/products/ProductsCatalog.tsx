@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { unstable_cache } from 'next/cache';
 import { Button } from '@shop/ui';
 import { getStoredLanguage } from '../../lib/language';
 import { t } from '../../lib/i18n';
@@ -13,6 +14,7 @@ import { MobileFiltersDrawer } from '../../components/MobileFiltersDrawer';
 import { ProductsFiltersProvider } from '../../components/ProductsFiltersProvider';
 import { MOBILE_FILTERS_EVENT } from '../../lib/events';
 import { logger } from '../../lib/utils/logger';
+import { productsService } from '../../lib/services/products.service';
 
 const PAGE_CONTAINER = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8';
 
@@ -50,6 +52,45 @@ interface ProductsResponse {
   };
 }
 
+const PRODUCTS_LIST_REVALIDATE_SECONDS = 60;
+
+const getProductsCached = unstable_cache(
+  async (
+    page: number,
+    limit: number,
+    lang: string,
+    search?: string,
+    category?: string,
+    minPrice?: number,
+    maxPrice?: number,
+    colors?: string,
+    sizes?: string,
+    brand?: string
+  ): Promise<ProductsResponse> =>
+    productsService.findAll({
+      page,
+      limit,
+      lang,
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      colors,
+      sizes,
+      brand,
+    }) as Promise<ProductsResponse>,
+  ['products-catalog-db-v1'],
+  { revalidate: PRODUCTS_LIST_REVALIDATE_SECONDS }
+);
+
+function parseOptionalPrice(value?: string): number | undefined {
+  if (!value?.trim()) {
+    return undefined;
+  }
+  const parsed = Number.parseFloat(value.trim());
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 async function getProducts(
   page: number = 1,
   search?: string,
@@ -63,35 +104,19 @@ async function getProducts(
 ): Promise<ProductsResponse> {
   try {
     const language = getStoredLanguage();
-    const params: Record<string, string> = {
-      page: page.toString(),
-      limit: limit.toString(),
-      lang: language,
-    };
-
-    if (search?.trim()) params.search = search.trim();
-    if (category?.trim()) params.category = category.trim();
-    if (minPrice?.trim()) params.minPrice = minPrice.trim();
-    if (maxPrice?.trim()) params.maxPrice = maxPrice.trim();
-    if (colors?.trim()) params.colors = colors.trim();
-    if (sizes?.trim()) params.sizes = sizes.trim();
-    if (brand?.trim()) params.brand = brand.trim();
-
-    const queryString = new URLSearchParams(params).toString();
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-
-    const targetUrl = `${baseUrl}/api/v1/products?${queryString}`;
-    const res = await fetch(targetUrl, {
-      cache: 'no-store',
-    });
-
-    if (!res.ok) throw new Error(`API failed: ${res.status}`);
-
-    const response = (await res.json()) as ProductsResponse;
-    if (!response.data || !Array.isArray(response.data)) {
+    const response = await getProductsCached(
+      page,
+      limit,
+      language,
+      search?.trim() || undefined,
+      category?.trim() || undefined,
+      parseOptionalPrice(minPrice),
+      parseOptionalPrice(maxPrice),
+      colors?.trim() || undefined,
+      sizes?.trim() || undefined,
+      brand?.trim() || undefined
+    );
+    if (!Array.isArray(response.data)) {
       return {
         data: [],
         meta: { total: 0, page: 1, limit: 12, totalPages: 0 },

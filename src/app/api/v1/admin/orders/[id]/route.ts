@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
+import { safeParseAdminOrderUpdate } from "@/lib/schemas/admin.schema";
+import { toApiError } from "@/lib/types/errors";
 import { logger } from "@/lib/utils/logger";
 
 /**
@@ -33,29 +35,10 @@ export async function GET(
     logger.debug("✅ [ADMIN ORDERS] Order loaded:", id);
 
     return NextResponse.json(order);
-  } catch (error: any) {
-    console.error("❌ [ADMIN ORDERS] GET Error:", {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      code: error?.code,
-      meta: error?.meta,
-      type: error?.type,
-      title: error?.title,
-      status: error?.status,
-      detail: error?.detail,
-      fullError: error,
-    });
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+  } catch (error: unknown) {
+    logger.error("Admin order fetch failed", { error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 
@@ -84,35 +67,33 @@ export async function PUT(
 
     const { id } = await params;
     const body = await req.json();
-    logger.debug("📤 [ADMIN ORDERS] PUT request:", { id, body });
+    const parsed = safeParseAdminOrderUpdate(body);
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const detail =
+        Object.entries(fieldErrors)
+          .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`)
+          .join("; ") || parsed.error.message;
+      return NextResponse.json(
+        {
+          type: "https://api.shop.am/problems/validation-error",
+          title: "Validation Error",
+          status: 400,
+          detail,
+          instance: req.url,
+        },
+        { status: 400 }
+      );
+    }
 
-    const order = await adminService.updateOrder(id, body);
+    const order = await adminService.updateOrder(id, parsed.data);
     logger.debug("✅ [ADMIN ORDERS] Order updated:", id);
 
     return NextResponse.json(order);
-  } catch (error: any) {
-    console.error("❌ [ADMIN ORDERS] PUT Error:", {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      code: error?.code,
-      meta: error?.meta,
-      type: error?.type,
-      title: error?.title,
-      status: error?.status,
-      detail: error?.detail,
-      fullError: error,
-    });
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+  } catch (error: unknown) {
+    logger.error("Admin order update failed", { error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 
@@ -201,38 +182,15 @@ export async function DELETE(
       success: true,
       message: "Order deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const duration = Date.now() - startTime;
-    
-    // Մանրամասն լոգավորում
-    console.error("❌ [ADMIN ORDERS] DELETE Error:", {
+    logger.error("Admin order delete failed", {
       orderId: orderId || "unknown",
-      error: {
-        name: error?.name,
-        message: error?.message,
-        code: error?.code,
-        meta: error?.meta,
-        type: error?.type,
-        title: error?.title,
-        status: error?.status,
-        detail: error?.detail,
-      },
-      stack: error?.stack?.substring(0, 1000),
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString(),
+      durationMs: duration,
+      error,
     });
-
-    // Ստանդարտ սխալների մշակում
-    const statusCode = error?.status || 500;
-    const errorResponse = {
-      type: error?.type || "https://api.shop.am/problems/internal-error",
-      title: error?.title || "Internal Server Error",
-      status: statusCode,
-      detail: error?.detail || error?.message || "An error occurred while deleting the order",
-      instance: req.url,
-    };
-
-    return NextResponse.json(errorResponse, { status: statusCode });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 

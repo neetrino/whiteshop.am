@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
+import { toApiError } from "@/lib/types/errors";
 import { logger } from "@/lib/utils/logger";
 
 /**
@@ -30,18 +31,10 @@ export async function GET(
     const product = await adminService.getProductById(id);
 
     return NextResponse.json(product);
-  } catch (error: any) {
-    console.error("❌ [ADMIN PRODUCTS] GET [id] Error:", error);
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+  } catch (error: unknown) {
+    logger.error("Admin product fetch failed", { error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 
@@ -74,37 +67,17 @@ export async function PUT(
       id, 
       bodyKeys: Object.keys(body),
       hasVariants: !!body.variants,
-      variantsCount: body.variants?.length || 0,
-      body: JSON.stringify(body, null, 2) 
+      variantsCount: body.variants?.length || 0
     });
 
     const product = await adminService.updateProduct(id, body);
     logger.debug("✅ [ADMIN PRODUCTS] Product updated:", { id, productId: product?.id });
 
     return NextResponse.json(product);
-  } catch (error: any) {
-    console.error("❌ [ADMIN PRODUCTS] PUT Error:", {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      code: error?.code,
-      meta: error?.meta,
-      type: error?.type,
-      title: error?.title,
-      status: error?.status,
-      detail: error?.detail,
-      fullError: error,
-    });
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+  } catch (error: unknown) {
+    logger.error("Admin product update failed", { error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 
@@ -138,18 +111,10 @@ export async function DELETE(
     logger.debug("✅ [ADMIN PRODUCTS] Product deleted:", id);
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("❌ [ADMIN PRODUCTS] DELETE Error:", error);
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+  } catch (error: unknown) {
+    logger.error("Admin product delete failed", { error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 

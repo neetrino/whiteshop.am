@@ -6,6 +6,17 @@ import { cacheService } from "@/lib/services/cache.service";
 const PRODUCTS_CACHE_TTL = 120; // 2 minutes
 const FEATURED_CACHE_TTL = 600; // 10 minutes for home featured tabs (new/bestseller/featured)
 
+function buildProductsCacheKey(searchParams: URLSearchParams): string {
+  const sortedEntries = Array.from(searchParams.entries()).sort(([keyA], [keyB]) =>
+    keyA.localeCompare(keyB)
+  );
+  const normalizedParams = new URLSearchParams();
+  sortedEntries.forEach(([key, value]) => {
+    normalizedParams.append(key, value);
+  });
+  return `products:${normalizedParams.toString()}`;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -33,7 +44,7 @@ export async function GET(req: NextRequest) {
       lang: searchParams.get("lang") || "en",
     };
 
-    const cacheKey = `products:${searchParams.toString()}`;
+    const cacheKey = buildProductsCacheKey(searchParams);
     const cached = await cacheService.get(cacheKey);
     if (cached !== null && cached !== undefined) {
       const data = typeof cached === "string" ? JSON.parse(cached) : cached;
