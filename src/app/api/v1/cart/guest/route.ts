@@ -17,7 +17,7 @@ interface GuestCartRequestBody {
 
 interface GuestCartVariant {
   id: string;
-  sku: string;
+  sku: string | null;
   price: number;
   compareAtPrice: number | null;
   stock: number;

@@ -21,7 +21,7 @@ async function ensureUniqueSlugForLocale(slugBase: string, locale: string): Prom
   }
 }
 
-type VariantOptionInput = { valueId?: string; attributeKey?: string; value?: string };
+type VariantOptionInput = { attributeKey: string; value: string; valueId?: string };
 
 /**
  * Duplicate a product as an unpublished draft: variants get price 0 and stock 0.
@@ -56,10 +56,12 @@ export async function duplicateProductAsDraft(sourceProductId: string): Promise<
           attributeKey?: string | null;
           value?: string | null;
         };
-        if (o.valueId) {
-          opts.push({ valueId: o.valueId });
-        } else if (o.attributeKey && o.value) {
-          opts.push({ attributeKey: o.attributeKey, value: o.value });
+        if (o.attributeKey && o.value) {
+          opts.push({
+            attributeKey: o.attributeKey,
+            value: o.value,
+            ...(o.valueId ? { valueId: o.valueId } : {}),
+          });
         }
       }
     }
@@ -75,7 +77,7 @@ export async function duplicateProductAsDraft(sourceProductId: string): Promise<
   });
 
   if (variantsPayload.length === 0) {
-    variantsPayload.push({ price: 0, stock: 0, published: true });
+    variantsPayload.push({ price: 0, stock: 0, imageUrl: undefined, published: true });
   }
 
   const created = await adminProductsCreateService.createProduct({
