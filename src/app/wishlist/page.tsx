@@ -79,15 +79,24 @@ export default function WishlistPage() {
         };
       }>('/api/v1/products', {
         params: {
-          limit: '1000',
+          ids: idsToLoad.join(','),
+          limit: String(idsToLoad.length),
           lang: languagePreference,
         },
       });
 
-      const wishlistProducts = response.data.filter((product) =>
-        idsToLoad.includes(product.id)
-      );
+      const productById = new Map(response.data.map((product) => [product.id, product]));
+      const wishlistProducts = idsToLoad
+        .map((id) => productById.get(id))
+        .filter((product): product is Product => product !== undefined);
       setProducts(wishlistProducts);
+
+      const normalizedIds = wishlistProducts.map((product) => product.id);
+      if (normalizedIds.length !== idsToLoad.length) {
+        localStorage.setItem(WISHLIST_KEY, JSON.stringify(normalizedIds));
+        setWishlistIds(normalizedIds);
+        window.dispatchEvent(new Event('wishlist-updated'));
+      }
     } catch (error) {
       console.error('[Wishlist] Error fetching wishlist products:', error);
     } finally {

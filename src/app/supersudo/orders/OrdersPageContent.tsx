@@ -26,9 +26,6 @@ export function OrdersPageContent() {
     selectedOrderId,
     orderDetails,
     loadingOrderDetails,
-    setStatusFilter,
-    setPaymentStatusFilter,
-    setSearchQuery,
     setPage,
     formatCurrency,
     handleViewOrderDetails,
@@ -51,9 +48,6 @@ export function OrdersPageContent() {
         searchQuery={searchQuery}
         totalCount={meta?.total ?? orders.length}
         updateMessage={updateMessage}
-        setStatusFilter={setStatusFilter}
-        setPaymentStatusFilter={setPaymentStatusFilter}
-        setSearchQuery={setSearchQuery}
         setPage={setPage}
         router={router}
         searchParams={searchParams}

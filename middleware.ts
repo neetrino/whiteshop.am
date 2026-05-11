@@ -85,34 +85,70 @@ async function checkAuthRateLimit(request: NextRequest): Promise<NextResponse | 
 }
 
 /** CORS: allowed origin from env. For /api/* requests add CORS headers and handle preflight. */
-function getCorsHeaders(): Record<string, string> {
-  const origin =
-    process.env.CORS_ORIGIN ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "");
+function getAllowedOrigins(): string[] {
+  const configuredOrigins = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const defaults =
+    process.env.NODE_ENV === "development"
+      ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+      : [];
+  return [...new Set([...configuredOrigins, ...(appUrl ? [appUrl] : []), ...defaults])];
+}
+
+function getCorsHeaders(origin: string): Record<string, string> {
   return {
-    "Access-Control-Allow-Origin": origin || "*",
+    "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
   };
+}
+
+function resolveAllowedOrigin(request: NextRequest): string | null {
+  const requestOrigin = request.headers.get("origin");
+  if (!requestOrigin) {
+    return null;
+  }
+  const allowedOrigins = getAllowedOrigins();
+  return allowedOrigins.includes(requestOrigin) ? requestOrigin : null;
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (pathname.startsWith("/api/")) {
-    const corsHeaders = getCorsHeaders();
+    const allowedOrigin = resolveAllowedOrigin(request);
     if (request.method === "OPTIONS") {
-      return new NextResponse(null, { status: 204, headers: corsHeaders });
+      if (!allowedOrigin) {
+        return NextResponse.json(
+          {
+            type: "https://api.shop.am/problems/forbidden",
+            title: "Forbidden",
+            status: 403,
+            detail: "Origin is not allowed by CORS policy",
+          },
+          { status: 403 }
+        );
+      }
+      return new NextResponse(null, { status: 204, headers: getCorsHeaders(allowedOrigin) });
     }
     const response = NextResponse.next();
-    Object.entries(corsHeaders).forEach(([key, value]) => response.headers.set(key, value));
+    if (allowedOrigin) {
+      const corsHeaders = getCorsHeaders(allowedOrigin);
+      Object.entries(corsHeaders).forEach(([key, value]) => response.headers.set(key, value));
+    }
     // Run auth/rate-limit for protected paths, then return response with CORS
     if (pathname.startsWith("/api/v1/admin/")) {
       const authRes = await requireAdminAuth(request);
       if (authRes) {
-        Object.entries(corsHeaders).forEach(([k, v]) => authRes.headers.set(k, v));
+        if (allowedOrigin) {
+          const corsHeaders = getCorsHeaders(allowedOrigin);
+          Object.entries(corsHeaders).forEach(([k, v]) => authRes.headers.set(k, v));
+        }
         return authRes;
       }
     } else if (
@@ -121,7 +157,10 @@ export async function middleware(request: NextRequest) {
     ) {
       const rateLimitResponse = await checkAuthRateLimit(request);
       if (rateLimitResponse) {
-        Object.entries(corsHeaders).forEach(([k, v]) => rateLimitResponse.headers.set(k, v));
+        if (allowedOrigin) {
+          const corsHeaders = getCorsHeaders(allowedOrigin);
+          Object.entries(corsHeaders).forEach(([k, v]) => rateLimitResponse.headers.set(k, v));
+        }
         return rateLimitResponse;
       }
     }

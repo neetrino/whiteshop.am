@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { apiClient } from '../../../../lib/api-client';
 import { useTranslation } from '../../../../lib/i18n-client';
 import type { Product, ProductsResponse } from '../types';
@@ -30,7 +29,7 @@ export function useProductHandlers({
 }: UseProductHandlersProps) {
   const { t } = useTranslation();
   const { confirm: confirmDialog } = useAdminDialogs();
-  const router = useRouter();
+  const [duplicatingProductId, setDuplicatingProductId] = useState<string | null>(null);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -79,6 +78,28 @@ export function useProductHandlers({
       alert(t('admin.products.failedToDelete'));
     } finally {
       setBulkDeleting(false);
+    }
+  };
+
+  const handleDuplicateProduct = async (productId: string) => {
+    if (duplicatingProductId) {
+      return;
+    }
+    setDuplicatingProductId(productId);
+    try {
+      await apiClient.post<{ id: string }>(
+        `/api/v1/admin/products/${productId}/duplicate`,
+        {}
+      );
+      await fetchProducts();
+      alert(t('admin.products.duplicateSuccess'));
+    } catch (err: unknown) {
+      console.error('❌ [ADMIN] Error duplicating product:', err);
+      const message =
+        err instanceof Error ? err.message : t('admin.common.unknownErrorFallback');
+      alert(t('admin.products.duplicateError').replace('{message}', message));
+    } finally {
+      setDuplicatingProductId(null);
     }
   };
 
@@ -199,6 +220,8 @@ export function useProductHandlers({
     toggleSelect,
     toggleSelectAll,
     handleBulkDelete,
+    handleDuplicateProduct,
+    duplicatingProductId,
     handleDeleteProduct,
     handleTogglePublished,
     handleToggleFeatured,

@@ -5,6 +5,7 @@ import type { UpdateProductData } from "./types";
 import { collectVariantImages, buildProductUpdateData, updateProductTranslation, updateProductLabels, updateProductAttributes } from "./product-updater";
 import { updateOrCreateVariant } from "./variant-updater";
 import { updateAttributeValueImageUrls } from "./attribute-value-updater";
+import { ensureUniqueProductSlug } from "../product-slug-utils";
 
 /**
  * Update product
@@ -35,23 +36,33 @@ export async function updateProduct(
 
     // Execute everything in a transaction for atomicity and speed
     const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      const dataToPersist: UpdateProductData = { ...data };
+      if (data.slug && data.slug.trim()) {
+        dataToPersist.slug = await ensureUniqueProductSlug({
+          tx,
+          slug: data.slug,
+          locale: data.locale || "en",
+          excludeProductId: productId,
+        });
+      }
+
       // Collect all variant images to exclude from main media (if media is being updated)
-      const allVariantImages = await collectVariantImages(data.variants, productId, tx);
+      const allVariantImages = await collectVariantImages(dataToPersist.variants, productId, tx);
 
       // 1. Update product base data
-      const updateData = buildProductUpdateData(data, allVariantImages, existing);
+      const updateData = buildProductUpdateData(dataToPersist, allVariantImages, existing);
 
       // 2. Update translation
-      await updateProductTranslation(productId, data, tx);
+      await updateProductTranslation(productId, dataToPersist, tx);
 
       // 3. Update labels
-      await updateProductLabels(productId, data.labels, tx);
+      await updateProductLabels(productId, dataToPersist.labels, tx);
 
       // 3.5. Update ProductAttribute relations
-      await updateProductAttributes(productId, data.attributeIds, tx);
+      await updateProductAttributes(productId, dataToPersist.attributeIds, tx);
 
       // 4. Update variants
-      if (data.variants !== undefined) {
+      if (dataToPersist.variants !== undefined) {
         // Get existing variants with their IDs and SKUs for matching
         const existingVariants = await tx.productVariant.findMany({
           where: { productId },
@@ -67,11 +78,11 @@ export async function updateProduct(
         });
         const incomingVariantIds = new Set<string>();
         
-        const locale = data.locale || "en";
+        const locale = dataToPersist.locale || "en";
         
         // Process each variant: update if exists, create if new
-        if (data.variants.length > 0) {
-          for (const variant of data.variants) {
+        if (dataToPersist.variants.length > 0) {
+          for (const variant of dataToPersist.variants) {
             const variantId = await updateOrCreateVariant(
               variant,
               productId,

@@ -21,7 +21,24 @@ function getStoredArrayLength(key: string): number {
   try {
     const stored = window.localStorage.getItem(key);
     const parsed = stored ? JSON.parse(stored) : [];
-    return Array.isArray(parsed) ? parsed.length : 0;
+    if (!Array.isArray(parsed)) {
+      return 0;
+    }
+
+    const cleaned = parsed.filter(
+      (value): value is string =>
+        typeof value === 'string' &&
+        value.trim().length > 0 &&
+        value !== 'undefined' &&
+        value !== 'null'
+    );
+
+    // Heal corrupted legacy values so badges and pages stay in sync.
+    if (cleaned.length !== parsed.length) {
+      window.localStorage.setItem(key, JSON.stringify(cleaned));
+    }
+
+    return cleaned.length;
   } catch {
     return 0;
   }

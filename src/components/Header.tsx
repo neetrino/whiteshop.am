@@ -48,6 +48,8 @@ function isHeaderNavActive(pathname: string | null, href: string): boolean {
 const HEADER_NAV_LINK_BASE =
   'px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium whitespace-nowrap';
 
+const HEADER_FAST_NAV_ROUTES = ['/', '/products', '/about', '/contact', '/wishlist', '/compare', '/cart'] as const;
+
 function headerTextNavClassName(active: boolean): string {
   return active
     ? `${HEADER_NAV_LINK_BASE} bg-gray-100 text-gray-900 font-semibold ring-1 ring-gray-200/90`
@@ -472,6 +474,28 @@ export function Header() {
 
   const selectedCurrencyInfo = CURRENCIES[selectedCurrency];
   const searchExpanded = searchHoverExpanded || searchFocusExpanded || searchQuery.trim().length > 0;
+  const userNavHref = isLoggedIn ? '/profile' : '/login';
+
+  useEffect(() => {
+    HEADER_FAST_NAV_ROUTES.forEach((href) => {
+      void router.prefetch(href);
+    });
+    void router.prefetch(userNavHref);
+    if (isAdmin) {
+      void router.prefetch('/supersudo');
+    }
+  }, [isAdmin, router, userNavHref]);
+
+  const prefetchRoute = (href: string) => {
+    void router.prefetch(href);
+  };
+
+  const getFastNavHandlers = (href: string) => ({
+    prefetch: true,
+    onMouseEnter: () => prefetchRoute(href),
+    onTouchStart: () => prefetchRoute(href),
+    onFocus: () => prefetchRoute(href),
+  });
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -755,6 +779,7 @@ export function Header() {
           <nav className="order-3 hidden w-full items-center justify-center gap-1 md:order-none md:flex md:flex-1">
             <Link
               href="/"
+              {...getFastNavHandlers('/')}
               className={headerTextNavClassName(isHeaderNavActive(pathname, '/'))}
               aria-current={isHeaderNavActive(pathname, '/') ? 'page' : undefined}
             >
@@ -762,6 +787,7 @@ export function Header() {
             </Link>
             <Link
               href="/products"
+              {...getFastNavHandlers('/products')}
               className={headerTextNavClassName(isHeaderNavActive(pathname, '/products'))}
               aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
             >
@@ -769,6 +795,7 @@ export function Header() {
             </Link>
             <Link
               href="/about"
+              {...getFastNavHandlers('/about')}
               className={headerTextNavClassName(isHeaderNavActive(pathname, '/about'))}
               aria-current={isHeaderNavActive(pathname, '/about') ? 'page' : undefined}
             >
@@ -776,6 +803,7 @@ export function Header() {
             </Link>
             <Link
               href="/contact"
+              {...getFastNavHandlers('/contact')}
               className={headerTextNavClassName(isHeaderNavActive(pathname, '/contact'))}
               aria-current={isHeaderNavActive(pathname, '/contact') ? 'page' : undefined}
             >
@@ -879,6 +907,7 @@ export function Header() {
                       <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-200/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                         <Link
                           href="/profile"
+                          {...getFastNavHandlers('/profile')}
                           className={`block px-5 py-3 text-sm transition-all duration-150 font-medium border-b border-gray-100 ${
                             isHeaderNavActive(pathname, '/profile')
                               ? 'bg-gray-100 text-gray-900'
@@ -892,6 +921,7 @@ export function Header() {
                         {isAdmin && (
                           <Link
                             href="/supersudo"
+                            {...getFastNavHandlers('/supersudo')}
                             className={`block px-5 py-3 text-sm transition-all duration-150 font-medium border-b border-gray-100 ${
                               isHeaderNavActive(pathname, '/supersudo')
                                 ? 'bg-gray-100 text-gray-900'
@@ -924,6 +954,7 @@ export function Header() {
                 ) : (
                   <Link
                     href="/login"
+                    {...getFastNavHandlers('/login')}
                     className={headerIconNavClassName(isHeaderNavActive(pathname, '/login'))}
                     aria-current={isHeaderNavActive(pathname, '/login') ? 'page' : undefined}
                   >
@@ -935,6 +966,7 @@ export function Header() {
               {/* Compare */}
               <Link
                 href="/compare"
+                {...getFastNavHandlers('/compare')}
                 className={`${headerIconNavClassName(isHeaderNavActive(pathname, '/compare'))} relative group`}
                 aria-current={isHeaderNavActive(pathname, '/compare') ? 'page' : undefined}
               >
@@ -944,6 +976,7 @@ export function Header() {
               {/* Wishlist */}
               <Link
                 href="/wishlist"
+                {...getFastNavHandlers('/wishlist')}
                 className={`${headerIconNavClassName(isHeaderNavActive(pathname, '/wishlist'))} relative group`}
                 aria-current={isHeaderNavActive(pathname, '/wishlist') ? 'page' : undefined}
               >
@@ -953,6 +986,7 @@ export function Header() {
               {/* Shopping Cart */}
               <Link
                 href="/cart"
+                {...getFastNavHandlers('/cart')}
                 className={`flex items-center gap-[0.hpx] group rounded-lg transition-colors ${
                   isHeaderNavActive(pathname, '/cart')
                     ? 'bg-gray-100 ring-1 ring-gray-200/90 p-0.5'
@@ -1018,6 +1052,7 @@ export function Header() {
                     <Link
                       key={link.href}
                       href={link.href}
+                      {...getFastNavHandlers(link.href)}
                       onClick={() => setMobileMenuOpen(false)}
                       className={headerMobileRowClassName(isHeaderNavActive(pathname, link.href))}
                       aria-current={isHeaderNavActive(pathname, link.href) ? 'page' : undefined}
@@ -1031,6 +1066,7 @@ export function Header() {
 
                   <Link
                     href="/wishlist"
+                    {...getFastNavHandlers('/wishlist')}
                     onClick={() => setMobileMenuOpen(false)}
                     className={headerMobileRowClassName(isHeaderNavActive(pathname, '/wishlist'))}
                     aria-current={isHeaderNavActive(pathname, '/wishlist') ? 'page' : undefined}
@@ -1052,6 +1088,7 @@ export function Header() {
 
                   <Link
                     href="/compare"
+                    {...getFastNavHandlers('/compare')}
                     onClick={() => setMobileMenuOpen(false)}
                     className={headerMobileRowClassName(isHeaderNavActive(pathname, '/compare'))}
                     aria-current={isHeaderNavActive(pathname, '/compare') ? 'page' : undefined}
@@ -1076,6 +1113,7 @@ export function Header() {
                       {isAdmin && (
                         <Link
                           href="/supersudo"
+                          {...getFastNavHandlers('/supersudo')}
                           onClick={() => setMobileMenuOpen(false)}
                           className={`flex items-center justify-between px-4 py-3 normal-case ${
                             isHeaderNavActive(pathname, '/supersudo')
@@ -1095,6 +1133,7 @@ export function Header() {
                     <>
                       <Link
                         href="/login"
+                        {...getFastNavHandlers('/login')}
                         onClick={() => setMobileMenuOpen(false)}
                         className={`${headerMobileRowClassName(isHeaderNavActive(pathname, '/login'))} normal-case`}
                         aria-current={isHeaderNavActive(pathname, '/login') ? 'page' : undefined}
@@ -1106,6 +1145,7 @@ export function Header() {
                       </Link>
                       <Link
                         href="/register"
+                        {...getFastNavHandlers('/register')}
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center justify-between px-4 py-3 normal-case font-semibold ${
                           isHeaderNavActive(pathname, '/register')

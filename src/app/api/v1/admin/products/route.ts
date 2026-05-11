@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateToken, requireAdmin } from "@/lib/middleware/auth";
 import { adminService } from "@/lib/services/admin.service";
+import { toApiError } from "@/lib/types/errors";
 import { logger } from "@/lib/utils/logger";
 
 /**
@@ -140,7 +141,7 @@ export async function GET(req: NextRequest) {
     // Аутентификация и проверка прав администратора
     const user = await authenticateToken(req);
     if (!user || !requireAdmin(user)) {
-      console.warn("⚠️ [ADMIN PRODUCTS API] Unauthorized access attempt", { userId: user?.id });
+      logger.warn("Unauthorized admin products access attempt", { userId: user?.id });
       return NextResponse.json(
         {
           type: "https://api.shop.am/problems/forbidden",
@@ -158,7 +159,7 @@ export async function GET(req: NextRequest) {
     const validationResult = validateAndNormalizeFilters(searchParams);
     
     if (validationResult.error) {
-      console.warn("⚠️ [ADMIN PRODUCTS API] Validation error:", validationResult.error);
+      logger.warn("Admin products filters validation error", validationResult.error);
       return NextResponse.json(validationResult.error, { status: validationResult.error.status });
     }
 
@@ -177,27 +178,11 @@ export async function GET(req: NextRequest) {
     });
     
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const totalTime = Date.now() - requestStartTime;
-    console.error("❌ [ADMIN PRODUCTS API] GET Error:", {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      type: error?.type,
-      status: error?.status,
-      time: `${totalTime}ms`,
-    });
-    
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+    logger.error("Admin products GET failed", { durationMs: totalTime, error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 
@@ -229,7 +214,7 @@ export async function POST(req: NextRequest) {
     // Аутентификация и проверка прав администратора
     const user = await authenticateToken(req);
     if (!user || !requireAdmin(user)) {
-      console.warn("⚠️ [ADMIN PRODUCTS API] Unauthorized POST attempt", { userId: user?.id });
+      logger.warn("Unauthorized admin product creation attempt", { userId: user?.id });
       return NextResponse.json(
         {
           type: "https://api.shop.am/problems/forbidden",
@@ -246,8 +231,8 @@ export async function POST(req: NextRequest) {
     let body;
     try {
       body = await req.json();
-    } catch (parseError) {
-      console.error("❌ [ADMIN PRODUCTS API] JSON parse error:", parseError);
+    } catch (parseError: unknown) {
+      logger.warn("Admin product creation JSON parse error", { error: parseError });
       return NextResponse.json(
         {
           type: "https://api.shop.am/problems/validation-error",
@@ -344,27 +329,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(product, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const totalTime = Date.now() - requestStartTime;
-    console.error("❌ [ADMIN PRODUCTS API] POST Error:", {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
-      type: error?.type,
-      status: error?.status,
-      time: `${totalTime}ms`,
-    });
-    
-    return NextResponse.json(
-      {
-        type: error.type || "https://api.shop.am/problems/internal-error",
-        title: error.title || "Internal Server Error",
-        status: error.status || 500,
-        detail: error.detail || error.message || "An error occurred",
-        instance: req.url,
-      },
-      { status: error.status || 500 }
-    );
+    logger.error("Admin products POST failed", { durationMs: totalTime, error });
+    const apiError = toApiError(error, req.url);
+    return NextResponse.json(apiError, { status: apiError.status || 500 });
   }
 }
 

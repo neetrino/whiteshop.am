@@ -10,9 +10,6 @@ interface OrdersFiltersProps {
   searchQuery: string;
   totalCount: number;
   updateMessage: { type: 'success' | 'error'; text: string } | null;
-  setStatusFilter: (value: string) => void;
-  setPaymentStatusFilter: (value: string) => void;
-  setSearchQuery: (value: string) => void;
   setPage: (value: number | ((prev: number) => number)) => void;
   router: ReturnType<typeof useOrders>['router'];
   searchParams: ReturnType<typeof useOrders>['searchParams'];
@@ -24,9 +21,6 @@ export function OrdersFilters({
   searchQuery,
   totalCount,
   updateMessage,
-  setStatusFilter,
-  setPaymentStatusFilter,
-  setSearchQuery,
   setPage,
   router,
   searchParams,
@@ -34,7 +28,6 @@ export function OrdersFilters({
   const { t } = useTranslation();
 
   const handleStatusChange = (newStatus: string) => {
-    setStatusFilter(newStatus);
     setPage(1);
     const params = new URLSearchParams(searchParams?.toString() || '');
     if (newStatus) {
@@ -47,7 +40,6 @@ export function OrdersFilters({
   };
 
   const handlePaymentStatusChange = (newPaymentStatus: string) => {
-    setPaymentStatusFilter(newPaymentStatus);
     setPage(1);
     const params = new URLSearchParams(searchParams?.toString() || '');
     if (newPaymentStatus) {
@@ -60,7 +52,6 @@ export function OrdersFilters({
   };
 
   const handleSearchChange = (newSearch: string) => {
-    setSearchQuery(newSearch);
     setPage(1);
     const params = new URLSearchParams(searchParams?.toString() || '');
     if (newSearch.trim()) {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import type { AdminMenuItem } from '../../../components/AdminMenuDrawer';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminMenuDrawer } from '../../../components/AdminMenuDrawer';
@@ -45,7 +46,7 @@ export function AdminSidebar() {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname() ?? '/supersudo';
-  const adminTabs = getAdminMenuTABS(t);
+  const adminTabs = useMemo(() => getAdminMenuTABS(t), [t]);
   const { collapsed } = useAdminSidebarCollapse();
   const [productsNestedExpanded, toggleProductsNested] = useAdminProductsSubnavExpanded(pathname);
 

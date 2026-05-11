@@ -25,7 +25,6 @@ export async function getOrders(filters: OrderFilters = {}) {
       take: limit,
       orderBy,
       include: {
-        items: true,
         user: {
           select: {
             id: true,
@@ -34,6 +33,9 @@ export async function getOrders(filters: OrderFilters = {}) {
             email: true,
             phone: true,
           },
+        },
+        _count: {
+          select: { items: true },
         },
       },
     }),
