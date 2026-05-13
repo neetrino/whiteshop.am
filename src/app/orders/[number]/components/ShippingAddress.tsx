@@ -2,6 +2,7 @@
 
 import { Card } from '@shop/ui';
 import { useTranslation } from '../../../../lib/i18n-client';
+import { ORDER_DETAIL_CARD_CLASS } from '../constants/order-detail-ui';
 import type { Order } from '../types';
 
 interface ShippingAddressProps {
@@ -16,8 +17,8 @@ export function ShippingAddress({ shippingAddress }: ShippingAddressProps) {
   }
 
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('orders.shippingAddress.title')}</h2>
+    <Card className={`p-6 ${ORDER_DETAIL_CARD_CLASS}`}>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('orders.shippingAddress.title')}</h2>
       <div className="text-gray-600">
         {shippingAddress.firstName && shippingAddress.lastName && (
           <p>{shippingAddress.firstName} {shippingAddress.lastName}</p>

@@ -8,11 +8,16 @@ import { useAuth } from '../../../lib/auth/AuthContext';
 import { useTranslation } from '../../../lib/i18n-client';
 import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
-import { OrderStatus } from './components/OrderStatus';
 import { OrderItems } from './components/OrderItems';
 import { ShippingAddress } from './components/ShippingAddress';
-import { OrderSummary } from './components/OrderSummary';
+import { OrderPageHeader } from './components/OrderPageHeader';
+import { OrderHelpCard } from './components/OrderHelpCard';
+import { OrderSuccessFooterActions } from './components/OrderSuccessFooterActions';
 import type { Order } from './types';
+import {
+  ORDER_DETAIL_INNER_CLASS,
+  ORDER_DETAIL_PAGE_SURFACE_CLASS,
+} from './constants/order-detail-ui';
 
 export default function OrderPage() {
   const params = useParams();
@@ -23,8 +28,6 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useState(getStoredCurrency());
-  const [calculatedShipping, setCalculatedShipping] = useState<number | null>(null);
-  const [loadingShipping, setLoadingShipping] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -50,12 +53,6 @@ export default function OrderPage() {
       setLoading(true);
       const response = await apiClient.get<Order>(`/api/v1/orders/${params.number}`);
       setOrder(response);
-      
-      if (response.shippingMethod === 'delivery' && response.shippingAddress?.city) {
-        fetchShippingPrice(response.shippingAddress.city);
-      } else {
-        setCalculatedShipping(null);
-      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('orders.notFound.description');
       setError(errorMessage);
@@ -64,66 +61,40 @@ export default function OrderPage() {
     }
   }
 
-  async function fetchShippingPrice(city: string) {
-    if (!city || city.trim().length === 0) {
-      setCalculatedShipping(0);
-      return;
-    }
-
-    setLoadingShipping(true);
-    try {
-      const response = await apiClient.get<{ price: number }>('/api/v1/delivery/price', {
-        params: {
-          city: city.trim(),
-          country: 'Armenia',
-        },
-      });
-      setCalculatedShipping(response.price);
-    } catch {
-      setCalculatedShipping(0);
-    } finally {
-      setLoadingShipping(false);
-    }
-  }
-
   if (loading) {
-    return <LoadingState />;
+    return (
+      <div className={ORDER_DETAIL_PAGE_SURFACE_CLASS}>
+        <LoadingState />
+      </div>
+    );
   }
 
   if (error || !order) {
-    return <ErrorState error={error} />;
+    return (
+      <div className={ORDER_DETAIL_PAGE_SURFACE_CLASS}>
+        <ErrorState error={error} />
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {t('orders.title').replace('{number}', order.number)}
-        </h1>
-        <p className="text-gray-600">
-          {t('orders.placedOn').replace('{date}', new Date(order.createdAt).toLocaleDateString())}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <OrderStatus
-            status={order.status}
-            paymentStatus={order.paymentStatus}
-            fulfillmentStatus={order.fulfillmentStatus}
-          />
-          <OrderItems items={order.items} currency={currency} />
-          {order.shippingAddress && (
-            <ShippingAddress shippingAddress={order.shippingAddress} />
-          )}
-        </div>
-
-        <OrderSummary
-          order={order}
+    <div className={ORDER_DETAIL_PAGE_SURFACE_CLASS}>
+      <div className={ORDER_DETAIL_INNER_CLASS}>
+        <OrderPageHeader orderNumber={order.number} placedAt={order.createdAt} />
+        <OrderItems
+          items={order.items}
           currency={currency}
-          calculatedShipping={calculatedShipping}
-          loadingShipping={loadingShipping}
+          presentation="highlight"
+          orderTotals={order.totals}
         />
+        <OrderHelpCard />
+        <OrderSuccessFooterActions />
+
+        {order.shippingAddress && (
+          <section className="mt-4 space-y-6 border-t border-gray-200 pt-10">
+            <ShippingAddress shippingAddress={order.shippingAddress} />
+          </section>
+        )}
       </div>
     </div>
   );

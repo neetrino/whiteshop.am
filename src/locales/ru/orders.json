@@ -5,6 +5,19 @@
   },
   "title": "Заказ #{number}",
   "placedOn": "Размещен {date}",
+  "success": {
+    "title": "Заказ успешно оформлен",
+    "description": "Спасибо за заказ. Мы получили вашу заявку и скоро свяжемся с вами."
+  },
+  "help": {
+    "title": "Нужна помощь?",
+    "body": "Если у вас есть вопросы по заказу, позвоните нам.",
+    "phoneDisplay": "+374 XX-XX-XXXX"
+  },
+  "footerActions": {
+    "orderAgain": "Заказать снова",
+    "home": "Главная"
+  },
   "orderStatus": {
     "title": "Статус заказа",
     "payment": "Оплата: {status}",
@@ -12,6 +25,9 @@
   },
   "orderItems": {
     "title": "Товары заказа"
+  },
+  "purchasedItems": {
+    "title": "Купленные товары"
   },
   "shippingAddress": {
     "title": "Адрес доставки",
