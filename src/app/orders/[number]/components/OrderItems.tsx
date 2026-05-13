@@ -6,7 +6,7 @@ import { useTranslation } from '../../../../lib/i18n-client';
 import { OrderItem } from './OrderItem';
 import { ORDER_DETAIL_CARD_CLASS } from '../constants/order-detail-ui';
 import { ORDER_SUCCESS_RECEIPT_INNER_CLASS, ORDER_SUCCESS_RECEIPT_OUTER_CLASS } from '../constants/order-success-ui';
-import { buildReceiptBottomClipPath } from '../utils/receipt-bottom-clip-path';
+import { buildReceiptBottomClipPath } from '@/lib/receipt-bottom-clip-path';
 import { formatOrderGrandTotal } from '../utils/order-totals-display';
 import type { OrderItem as OrderItemType, Order } from '../types';
 

@@ -2,10 +2,18 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useMemo, useState } from 'react';
 import { Button } from '@shop/ui';
 import { formatPrice } from '../../lib/currency';
+import { buildReceiptBottomClipPath } from '@/lib/receipt-bottom-clip-path';
 import type { CurrencyCode } from '../../lib/currency';
 import type { Cart, CartItem } from './types';
+import { useCartDeliveryEstimate } from './use-cart-delivery-estimate';
+import { buildCartShippingAndTotalLabels } from './cart-summary-labels';
+
+/** Matches order confirmation receipt panel (rounded top, zigzag bottom via clip-path). */
+const CART_SUMMARY_RECEIPT_INNER_CLASS =
+  'rounded-t-2xl border border-b-0 border-gray-200 bg-white px-5 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6';
 
 /**
  * Cart item row component
@@ -208,54 +216,99 @@ interface OrderSummaryProps {
 
 export function OrderSummary({ cart, currency, t }: OrderSummaryProps) {
   const currencyCode = currency as CurrencyCode;
-  
+  const [promoCode, setPromoCode] = useState('');
+  const receiptClipPath = useMemo(() => buildReceiptBottomClipPath(), []);
+  const { deliveryPriceAMD, loadingDelivery } = useCartDeliveryEstimate();
+  const { shippingLabel, totalLabel } = buildCartShippingAndTotalLabels({
+    cart,
+    currencyCode,
+    deliveryPriceAMD,
+    loadingDelivery,
+  });
+
   return (
-    <div className="lg:col-span-1">
-      <div className="bg-white rounded-lg border border-gray-200 p-6 lg:sticky lg:top-24">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          {t('common.cart.orderSummary')}
-        </h2>
-        <div className="space-y-4 mb-6">
-          <div className="flex justify-between text-gray-600">
-            <span>{t('common.cart.subtotal')}</span>
-            <span>{formatPrice(cart.totals.subtotal, currencyCode)}</span>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>{t('common.cart.shipping')}</span>
-            <span>{t('common.cart.free')}</span>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>{t('common.cart.tax')}</span>
-            <span>{formatPrice(cart.totals.tax, currencyCode)}</span>
-          </div>
-          <div className="border-t border-gray-200 pt-4">
-            <div className="flex justify-between text-lg font-bold text-gray-900">
-              <span>{t('common.cart.total')}</span>
-              <span>{formatPrice(cart.totals.total, currencyCode)}</span>
+    <div className="lg:col-span-1 lg:sticky lg:top-24 self-start">
+      <div className="w-full [filter:drop-shadow(0_2px_10px_rgba(15,23,42,0.07))]">
+        <section
+          className={CART_SUMMARY_RECEIPT_INNER_CLASS}
+          style={{ clipPath: receiptClipPath }}
+          aria-labelledby="cart-order-summary-heading"
+        >
+          <h2
+            id="cart-order-summary-heading"
+            className="text-lg font-bold tracking-tight text-gray-900 sm:text-xl"
+          >
+            {t('common.cart.orderSummary')}
+          </h2>
+
+          <div className="mt-5">
+            <label htmlFor="cart-promo-code" className="text-sm text-gray-600">
+              {t('common.cart.promoCode')}
+            </label>
+            <div className="mt-2 flex gap-2">
+              <input
+                id="cart-promo-code"
+                type="text"
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value);
+                }}
+                placeholder={t('common.cart.promoCodePlaceholder')}
+                autoComplete="off"
+                className="min-w-0 flex-1 rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-500 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              />
+              <button
+                type="button"
+                className="shrink-0 rounded-xl border border-gray-900 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
+              >
+                {t('common.cart.applyPromo')}
+              </button>
             </div>
           </div>
-        </div>
-        <Button 
-          variant="primary" 
-          className="w-full" 
-          size="lg"
-          onClick={() => {
-            // Allow guest checkout - no redirect to login
-            window.location.href = '/checkout';
-          }}
-        >
-          {t('common.buttons.proceedToCheckout')}
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full mt-3"
-          size="md"
-          onClick={() => {
-            window.location.href = '/products';
-          }}
-        >
-          {t('common.buttons.browseProducts')}
-        </Button>
+
+          <div className="mt-6 space-y-3 text-sm text-gray-600">
+            <div className="flex justify-between gap-3">
+              <span>{t('common.cart.subtotal')}</span>
+              <span className="text-right font-medium text-gray-900">
+                {formatPrice(cart.totals.subtotal, currencyCode)}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span>{t('common.cart.shipping')}</span>
+              <span className="text-right font-medium text-gray-900">{shippingLabel}</span>
+            </div>
+          </div>
+
+          <div className="mt-4 border-t border-gray-200 pt-4">
+            <div className="flex justify-between gap-3 text-base font-bold text-gray-900 sm:text-lg">
+              <span>{t('common.cart.total')}</span>
+              <span>{totalLabel}</span>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <Button
+              variant="primary"
+              className="w-full"
+              size="lg"
+              onClick={() => {
+                window.location.href = '/checkout';
+              }}
+            >
+              {t('common.buttons.proceedToCheckout')}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full border-gray-900 text-gray-900 hover:bg-gray-100"
+              size="md"
+              onClick={() => {
+                window.location.href = '/products';
+              }}
+            >
+              {t('common.buttons.browseProducts')}
+            </Button>
+          </div>
+        </section>
       </div>
     </div>
   );
