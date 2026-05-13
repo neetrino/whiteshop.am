@@ -626,6 +626,7 @@
       "status": "Կարգավիճակ:",
       "payment": "Վճարում:",
       "customer": "Հաճախորդ",
+      "contactName": "Անուն",
       "shippingAddress": "Առաքման հասցե",
       "noShippingAddress": "Առաքման հասցե չկա",
       "shippingMethod": "Առաքման եղանակ:",

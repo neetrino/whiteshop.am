@@ -41,10 +41,15 @@ export function OrderDetailsModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {t('admin.orders.orderDetails.title')} #{orderDetails.number}
-          </h2>
+        <div className="flex items-start justify-between gap-4 p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <div className="min-w-0">
+            <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
+              {t('admin.orders.orderDetails.title')}
+            </h2>
+            <p className="text-lg text-gray-500 tabular-nums mt-1">
+              #{orderDetails.number}
+            </p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -64,7 +69,7 @@ export function OrderDetailsModal({
               <p className="text-gray-600">{t('admin.orders.orderDetails.loadingOrderDetails')}</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <OrderDetailsSummary
                 orderDetails={orderDetails}
                 currency={currency}

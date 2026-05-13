@@ -626,6 +626,7 @@
       "status": "Статус:",
       "payment": "Оплата:",
       "customer": "Клиент",
+      "contactName": "Имя",
       "shippingAddress": "Адрес доставки",
       "noShippingAddress": "Нет адреса доставки",
       "shippingMethod": "Способ доставки:",

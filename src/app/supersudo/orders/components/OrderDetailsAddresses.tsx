@@ -4,6 +4,7 @@ import { useTranslation } from '../../../../lib/i18n-client';
 import { Card } from '@shop/ui';
 import { CurrencyCode } from '../../../../lib/currency';
 import type { OrderDetails } from '../useOrders';
+import { getCheckoutPaymentMethodKey, getPaymentStatusColor } from '../utils/orderUtils';
 
 interface OrderDetailsAddressesProps {
   orderDetails: OrderDetails;
@@ -14,9 +15,11 @@ export function OrderDetailsAddresses({ orderDetails, formatCurrency }: OrderDet
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card className="p-4 md:p-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('admin.orders.orderDetails.shippingAddress')}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          {t('admin.orders.orderDetails.shippingAddress')}
+        </h3>
         {orderDetails.shippingMethod === 'pickup' ? (
           <div className="text-sm text-gray-700 space-y-1">
             <div>
@@ -71,21 +74,58 @@ export function OrderDetailsAddresses({ orderDetails, formatCurrency }: OrderDet
         )}
       </Card>
       <Card className="p-4 md:p-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('admin.orders.orderDetails.paymentInfo')}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+          {t('admin.orders.orderDetails.paymentInfo')}
+        </h3>
         {orderDetails.payment ? (
-          <div className="text-sm text-gray-700 space-y-1">
-            {orderDetails.payment.method && <div>{t('admin.orders.orderDetails.method')} {orderDetails.payment.method}</div>}
-            <div>
-              {t('admin.orders.orderDetails.amount')}{' '}
-              {formatCurrency(orderDetails.payment.amount, orderDetails.payment.currency || 'AMD', 'AMD')}
-            </div>
-            <div>{t('admin.orders.orderDetails.status')} {orderDetails.payment.status}</div>
-            {orderDetails.payment.cardBrand && orderDetails.payment.cardLast4 && (
-              <div>
-                {t('admin.orders.orderDetails.card')} {orderDetails.payment.cardBrand} ••••{orderDetails.payment.cardLast4}
-              </div>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-sm text-gray-700">
+            {orderDetails.payment.method && (
+              <>
+                <dt className="font-medium text-gray-500 whitespace-nowrap">
+                  {t('admin.orders.orderDetails.method')}
+                </dt>
+                <dd className="text-gray-900">
+                  {(() => {
+                    const key = getCheckoutPaymentMethodKey(orderDetails.payment?.method);
+                    if (!key) {
+                      return orderDetails.payment.method?.replace(/_/g, ' ') ?? '—';
+                    }
+                    return t(`checkout.payment.${key}`);
+                  })()}
+                </dd>
+              </>
             )}
-          </div>
+            <dt className="font-medium text-gray-500 whitespace-nowrap">
+              {t('admin.orders.orderDetails.amount')}
+            </dt>
+            <dd className="tabular-nums">
+              {formatCurrency(orderDetails.payment.amount, orderDetails.payment.currency || 'AMD', 'AMD')}
+            </dd>
+            <dt className="font-medium text-gray-500 whitespace-nowrap">
+              {t('admin.orders.orderDetails.status')}
+            </dt>
+            <dd>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${getPaymentStatusColor(orderDetails.payment.status)}`}
+              >
+                {(() => {
+                  const key = `admin.orders.${orderDetails.payment.status}`;
+                  const translated = t(key);
+                  return translated === key ? orderDetails.payment.status : translated;
+                })()}
+              </span>
+            </dd>
+            {orderDetails.payment.cardBrand && orderDetails.payment.cardLast4 && (
+              <>
+                <dt className="font-medium text-gray-500 whitespace-nowrap">
+                  {t('admin.orders.orderDetails.card')}
+                </dt>
+                <dd>
+                  {orderDetails.payment.cardBrand} ••••{orderDetails.payment.cardLast4}
+                </dd>
+              </>
+            )}
+          </dl>
         ) : (
           <div className="text-sm text-gray-500">{t('admin.orders.orderDetails.noPaymentInfo')}</div>
         )}

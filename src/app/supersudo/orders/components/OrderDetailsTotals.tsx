@@ -36,18 +36,30 @@ export function OrderDetailsTotals({
             <span>-{formatCurrency(orderDetails.totals.discount, (orderDetails.totals.currency || 'AMD') as CurrencyCode, 'USD')}</span>
           </div>
         )}
-        <div className="flex justify-between text-sm text-gray-700">
+        <div className="flex justify-between gap-4 text-sm text-gray-700">
           <span>{t('orders.orderSummary.shipping')}</span>
-          <span>
+          <span className="text-right tabular-nums">
             {orderDetails.shippingMethod === 'pickup'
               ? t('checkout.shipping.freePickup')
-              : formatCurrency(orderDetails.totals.shipping, orderDetails.totals.currency || 'AMD', 'AMD') + (orderDetails.shippingAddress?.city ? ` (${orderDetails.shippingAddress.city})` : '')}
+              : formatCurrency(
+                  orderDetails.totals.shipping,
+                  orderDetails.totals.currency || 'AMD',
+                  'AMD'
+                )}
           </span>
         </div>
-        <div className="flex justify-between text-sm text-gray-700">
-          <span>{t('orders.orderSummary.tax')}</span>
-          <span>{formatCurrency(orderDetails.totals.tax, (orderDetails.totals.currency || 'AMD') as CurrencyCode, 'USD')}</span>
-        </div>
+        {orderDetails.totals.tax > 0 && (
+          <div className="flex justify-between gap-4 text-sm text-gray-700">
+            <span>{t('orders.orderSummary.tax')}</span>
+            <span className="text-right tabular-nums">
+              {formatCurrency(
+                orderDetails.totals.tax,
+                (orderDetails.totals.currency || 'AMD') as CurrencyCode,
+                'USD'
+              )}
+            </span>
+          </div>
+        )}
         <div className="border-t border-gray-200 pt-3 mt-3">
           <div className="flex justify-between text-base font-bold text-gray-900">
             <span>{t('orders.orderSummary.total')}</span>

@@ -626,6 +626,7 @@
       "status": "Status:",
       "payment": "Payment:",
       "customer": "Customer",
+      "contactName": "Name",
       "shippingAddress": "Shipping Address",
       "noShippingAddress": "No shipping address",
       "shippingMethod": "Shipping Method:",
