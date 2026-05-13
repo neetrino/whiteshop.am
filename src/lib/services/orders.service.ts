@@ -1,5 +1,5 @@
 import { db } from "@white-shop/db";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@white-shop/db";
 import type { CheckoutData } from "../types/checkout";
 import {
   FIRST_PUBLIC_ORDER_NUMBER,
