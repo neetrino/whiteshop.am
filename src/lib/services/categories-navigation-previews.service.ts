@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@white-shop/db";
 import { db } from "@white-shop/db";
 import { flattenCategoryTree, type CategoryTreeNode } from "@/lib/categories/category-tree";
 import { processImageUrl } from "@/lib/utils/image-utils";

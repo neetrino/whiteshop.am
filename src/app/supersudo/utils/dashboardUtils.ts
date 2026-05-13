@@ -2,14 +2,20 @@
  * Dashboard utility functions
  */
 
+import { CURRENCIES, formatPriceInCurrency, type CurrencyCode } from '../../../lib/currency';
+
 /**
  * Formats currency amount
  */
 export function formatCurrency(amount: number, currency: string = 'USD'): string {
+  if (currency in CURRENCIES) {
+    return formatPriceInCurrency(amount, currency as CurrencyCode);
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency,
+    currency,
     minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount);
 }
 

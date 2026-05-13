@@ -1,5 +1,5 @@
 import { db } from "@white-shop/db";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@white-shop/db";
 import { adminService } from "./admin.service";
 import { ProductWithRelations } from "./products-find-query.service";
 

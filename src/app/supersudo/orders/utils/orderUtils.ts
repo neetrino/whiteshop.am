@@ -2,6 +2,25 @@
  * Order utilities - helper functions for order status colors and formatting
  */
 
+export type CheckoutPaymentMethodKey = 'cashOnDelivery' | 'idram' | 'arca';
+
+/** i18n segment under `checkout.payment.*`, or empty if unknown (caller shows raw method). */
+export function getCheckoutPaymentMethodKey(
+  method: string | null | undefined
+): CheckoutPaymentMethodKey | '' {
+  const m = method?.trim().toLowerCase() ?? '';
+  switch (m) {
+    case 'cash_on_delivery':
+      return 'cashOnDelivery';
+    case 'idram':
+      return 'idram';
+    case 'arca':
+      return 'arca';
+    default:
+      return '';
+  }
+}
+
 export function getStatusColor(status: string): string {
   switch (status.toLowerCase()) {
     case 'pending':

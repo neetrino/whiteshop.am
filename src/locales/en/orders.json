@@ -5,6 +5,19 @@
   },
   "title": "Order #{number}",
   "placedOn": "Placed On {date}",
+  "success": {
+    "title": "Your order was placed successfully",
+    "description": "Thank you for your order. We have received your request and will contact you shortly."
+  },
+  "help": {
+    "title": "Need help?",
+    "body": "If you have questions about your order, please call us.",
+    "phoneDisplay": "+374 XX-XX-XXXX"
+  },
+  "footerActions": {
+    "orderAgain": "Order again",
+    "home": "Home"
+  },
   "orderStatus": {
     "title": "Order Status",
     "payment": "Payment: {status}",
@@ -12,6 +25,9 @@
   },
   "orderItems": {
     "title": "Order Items"
+  },
+  "purchasedItems": {
+    "title": "Purchased items"
   },
   "shippingAddress": {
     "title": "Shipping Address",

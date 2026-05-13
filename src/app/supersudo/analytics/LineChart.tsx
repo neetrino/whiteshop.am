@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '../../../lib/i18n-client';
+import { CURRENCIES, formatPriceInCurrency, type CurrencyCode } from '../../../lib/currency';
 
 interface LineChartData {
   _id: string;
@@ -18,10 +19,14 @@ export function LineChart({ data }: LineChartProps) {
   if (!data || data.length === 0) return null;
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
+    if (currency in CURRENCIES) {
+      return formatPriceInCurrency(amount, currency as CurrencyCode);
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency,
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 

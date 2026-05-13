@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@white-shop/db';
 import { db } from '@white-shop/db';
 import { extractMediaUrl } from '@/lib/utils/extractMediaUrl';
 import { processImageUrl } from '@/lib/utils/image-utils';

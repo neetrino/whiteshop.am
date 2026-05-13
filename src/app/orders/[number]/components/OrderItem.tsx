@@ -48,7 +48,7 @@ export function OrderItem({ item, currency }: OrderItemProps) {
   })();
 
   return (
-    <div className="flex gap-4 pb-4 border-b border-gray-200 last:border-0">
+    <div className="flex gap-4 border-b border-gray-200 pb-4 last:border-0">
       {item.imageUrl && (
         <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
           <img 

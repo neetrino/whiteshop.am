@@ -1,4 +1,9 @@
-import { Prisma } from "@prisma/client";
+/**
+ * Product slug utilities for admin flows.
+ * Import `Prisma` from `@white-shop/db` so types match the generated client
+ * (`shared/db/generated`), not the default `@prisma/client` package entry.
+ */
+import type { Prisma } from "@white-shop/db";
 
 const FALLBACK_PRODUCT_SLUG = "product";
 const MAX_SLUG_ATTEMPTS = 1000;

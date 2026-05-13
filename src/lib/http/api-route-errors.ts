@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@white-shop/db";
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/utils/logger";
 

@@ -1,20 +1,48 @@
 import { db } from "@white-shop/db";
-import { Prisma } from "@prisma/client";
-import { customAlphabet } from "nanoid";
+import { Prisma } from "@white-shop/db";
 import type { CheckoutData } from "../types/checkout";
+import {
+  FIRST_PUBLIC_ORDER_NUMBER,
+  ORDER_NUMBER_ALLOCATION_LOCK_KEY,
+} from "../constants/order-number";
 import { logger } from "../utils/logger";
 import { adminDeliveryService } from "./admin/admin-delivery.service";
 import { extractMediaUrl } from "../utils/extractMediaUrl";
 
-const orderNumberId = customAlphabet("0123456789ABCDEFGHJKLMNPQRSTUVWXYZ", 10);
+const ORDER_SEQUENCE_FLOOR = FIRST_PUBLIC_ORDER_NUMBER - 1;
 
-function generateOrderNumber(): string {
-  const now = new Date();
-  const ymd =
-    now.getFullYear().toString().slice(-2) +
-    String(now.getMonth() + 1).padStart(2, "0") +
-    String(now.getDate()).padStart(2, "0");
-  return `${ymd}-${orderNumberId()}`;
+async function allocateNextOrderNumber(
+  tx: Prisma.TransactionClient
+): Promise<string> {
+  await tx.$executeRaw(
+    Prisma.sql`SELECT pg_advisory_xact_lock(${ORDER_NUMBER_ALLOCATION_LOCK_KEY}::bigint)`
+  );
+  const rows = await tx.$queryRaw<Array<{ next: string }>>(
+    Prisma.sql`
+      SELECT (GREATEST(COALESCE(MAX(CAST("number" AS INTEGER)), ${ORDER_SEQUENCE_FLOOR}), ${ORDER_SEQUENCE_FLOOR}) + 1)::text AS next
+      FROM "orders"
+      WHERE "number" ~ '^[0-9]+$'
+    `
+  );
+  const raw = rows[0]?.next;
+  if (raw === undefined || raw === null) {
+    throw {
+      status: 500,
+      type: "https://api.shop.am/problems/internal-error",
+      title: "Internal Server Error",
+      detail: "Could not allocate order number",
+    };
+  }
+  const nextNum = Number.parseInt(String(raw), 10);
+  if (!Number.isFinite(nextNum) || nextNum < FIRST_PUBLIC_ORDER_NUMBER) {
+    throw {
+      status: 500,
+      type: "https://api.shop.am/problems/internal-error",
+      title: "Internal Server Error",
+      detail: "Invalid order number sequence",
+    };
+  }
+  return String(nextNum);
 }
 type CartItemWithRelations = Prisma.CartItemGetPayload<{
   include: {
@@ -306,12 +334,10 @@ class OrdersService {
       const taxAmount = 0; // TODO: Calculate tax if needed
       const total = subtotal - discountAmount + shippingAmount + taxAmount;
 
-      // Generate order number
-      const orderNumber = generateOrderNumber();
-
       // Create order with items in a transaction (timeout to avoid hung connections)
       const order = await db.$transaction(
         async (tx: Prisma.TransactionClient) => {
+        const orderNumber = await allocateNextOrderNumber(tx);
         // Create order
         const newOrder = await tx.order.create({
           data: {

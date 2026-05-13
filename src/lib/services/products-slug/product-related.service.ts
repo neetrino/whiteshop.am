@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@white-shop/db";
 import { db } from "@white-shop/db";
 import { logger } from "../../utils/logger";
 import { findCategoryBySlug, getAllChildCategoryIds } from "../products-find-query/category-utils";
