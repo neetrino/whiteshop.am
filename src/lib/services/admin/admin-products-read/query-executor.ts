@@ -16,7 +16,6 @@ const getProductListInclude = () => ({
     take: 1,
     orderBy: { price: "asc" as const },
   },
-  labels: true,
   categories: {
     include: {
       translations: {
@@ -105,47 +104,37 @@ export async function executeProductListQuery(
   const queryStartTime = Date.now();
   
   try {
-    // Test database connection first
-    logger.debug('Testing database connection...');
-    await db.$queryRaw`SELECT 1`;
-    logger.debug('Database connection OK');
-
-    // Fetch products
-    logger.debug('Fetching products...');
-    const products = await db.product.findMany({
+    const listQuery = db.product.findMany({
       where,
       skip,
       take,
       orderBy,
       include: getProductListInclude(),
     });
-    
-    const productsTime = Date.now() - queryStartTime;
-    logger.debug(`Products fetched in ${productsTime}ms. Found ${products.length} products`);
 
-    // Get count with timeout
-    logger.debug('Counting total products...');
-    const countStartTime = Date.now();
-    
-    const countPromise = db.product.count({ where });
-    const timeoutPromise = new Promise<number>((_, reject) => 
-      setTimeout(() => reject(new Error("Count query timeout")), 10000)
-    );
-    
-    let total: number;
-    try {
-      total = await Promise.race([countPromise, timeoutPromise]) as number;
-      const countTime = Date.now() - countStartTime;
-      logger.debug(`Count completed in ${countTime}ms. Total: ${total}`);
-    } catch (countError: unknown) {
-      logger.warn('Count query failed, using estimated total', { 
-        error: countError instanceof Error ? countError.message : String(countError) 
+    const COUNT_TIMEOUT_MS = 10_000;
+    const countWithTimeout = Promise.race([
+      db.product.count({ where }),
+      new Promise<number>((_, reject) => {
+        setTimeout(() => reject(new Error("Count query timeout")), COUNT_TIMEOUT_MS);
+      }),
+    ]).catch((countError: unknown) => {
+      logger.warn("Count query failed or timed out, using estimated total", {
+        error: countError instanceof Error ? countError.message : String(countError),
       });
-      total = products.length || take;
-    }
-    
+      return -1;
+    });
+
+    logger.debug("Fetching products and total count in parallel...");
+    const [products, countResult] = await Promise.all([listQuery, countWithTimeout]);
+
+    const total = countResult === -1 ? products.length || take : countResult;
+
     const queryTime = Date.now() - queryStartTime;
-    logger.debug(`All database queries completed in ${queryTime}ms`);
+    logger.debug(`All database queries completed in ${queryTime}ms`, {
+      productCount: products.length,
+      total,
+    });
 
     return { products, total };
   } catch (error: unknown) {
@@ -155,38 +144,32 @@ export async function executeProductListQuery(
       try {
         await ensureProductVariantAttributesColumn();
         // Retry the query after creating the column
-        const products = await db.product.findMany({
+        const listQuery = db.product.findMany({
           where,
           skip,
           take,
           orderBy,
           include: getProductListInclude(),
         });
-        
-        const productsTime = Date.now() - queryStartTime;
-        logger.debug(`Products fetched in ${productsTime}ms. Found ${products.length} products (after creating attributes column)`);
-        
-        // Get count
-        const countStartTime = Date.now();
-        const countPromise = db.product.count({ where });
-        const timeoutPromise = new Promise<number>((_, reject) => 
-          setTimeout(() => reject(new Error("Count query timeout")), 10000)
-        );
-        
-        let total: number;
-        try {
-          total = await Promise.race([countPromise, timeoutPromise]) as number;
-          const countTime = Date.now() - countStartTime;
-          logger.debug(`Count completed in ${countTime}ms. Total: ${total}`);
-        } catch (countError: unknown) {
-          logger.warn('Count query failed, using estimated total', { 
-            error: countError instanceof Error ? countError.message : String(countError) 
+
+        const COUNT_TIMEOUT_MS = 10_000;
+        const countWithTimeout = Promise.race([
+          db.product.count({ where }),
+          new Promise<number>((_, reject) => {
+            setTimeout(() => reject(new Error("Count query timeout")), COUNT_TIMEOUT_MS);
+          }),
+        ]).catch((countError: unknown) => {
+          logger.warn("Count query failed or timed out, using estimated total", {
+            error: countError instanceof Error ? countError.message : String(countError),
           });
-          total = products.length || take;
-        }
-        
+          return -1;
+        });
+
+        const [products, countResult] = await Promise.all([listQuery, countWithTimeout]);
+        const total = countResult === -1 ? products.length || take : countResult;
+
         const queryTime = Date.now() - queryStartTime;
-        logger.debug(`All database queries completed in ${queryTime}ms`);
+        logger.debug(`All database queries completed in ${queryTime}ms (after attributes column retry)`);
 
         return { products, total };
       } catch (retryError: unknown) {

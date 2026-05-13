@@ -206,6 +206,7 @@ export async function buildWhereClause(
   const {
     category,
     search,
+    ids,
     filter,
     lang = "en",
   } = filters;
@@ -217,6 +218,12 @@ export async function buildWhereClause(
     published: true,
     deletedAt: null,
   };
+
+  if (ids && ids.length > 0) {
+    where.id = {
+      in: ids,
+    };
+  }
 
   // Add search filter
   if (search && search.trim()) {

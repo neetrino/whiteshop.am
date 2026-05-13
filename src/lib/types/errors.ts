@@ -54,33 +54,50 @@ export function isApiError(error: unknown): error is ApiError {
   );
 }
 
+function shouldMaskErrorDetail(status: number): boolean {
+  return process.env.NODE_ENV === "production" && status >= 500;
+}
+
 /**
  * Convert unknown error to ApiError format
  */
 export function toApiError(error: unknown, instance?: string): ApiError {
   if (isAppError(error)) {
+    const status = error.status;
     return {
       type: error.type,
       title: error.title,
-      status: error.status,
-      detail: error.detail,
+      status,
+      detail: shouldMaskErrorDetail(status)
+        ? "An internal error occurred"
+        : error.detail,
       instance: error.instance || instance,
     };
   }
 
   if (isApiError(error)) {
+    const status =
+      typeof error.status === "number" ? error.status : 500;
     return {
-      ...error,
+      type: error.type || 'https://api.shop.am/problems/internal-error',
+      title: error.title || 'Internal Server Error',
+      status,
+      detail: shouldMaskErrorDetail(status)
+        ? "An internal error occurred"
+        : error.detail || error.message || 'An error occurred',
       instance: error.instance || instance,
     };
   }
 
   if (error instanceof Error) {
+    const status = 500;
     return {
       type: 'https://api.shop.am/problems/internal-error',
       title: 'Internal Server Error',
-      status: 500,
-      detail: error.message || 'An error occurred',
+      status,
+      detail: shouldMaskErrorDetail(status)
+        ? 'An internal error occurred'
+        : error.message || 'An error occurred',
       instance,
     };
   }

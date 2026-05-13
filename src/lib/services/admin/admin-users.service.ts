@@ -1,10 +1,11 @@
 import { db } from "@white-shop/db";
+import type { AdminUserUpdateInput } from "@/lib/schemas/admin.schema";
 
 class AdminUsersService {
   /**
    * Get users
    */
-  async getUsers(_filters: any) {
+  async getUsers(_filters: unknown) {
     const users = await db.user.findMany({
       where: {
         deletedAt: null,
@@ -46,7 +47,7 @@ class AdminUsersService {
   /**
    * Update user
    */
-  async updateUser(userId: string, data: any) {
+  async updateUser(userId: string, data: AdminUserUpdateInput) {
     return await db.user.update({
       where: { id: userId },
       data: {

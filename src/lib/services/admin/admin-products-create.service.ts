@@ -9,6 +9,10 @@ import {
   separateMainAndVariantImages,
 } from "../../utils/image-utils";
 import { logger } from "@/lib/utils/logger";
+import { ensureUniqueProductSlug } from "./product-slug-utils";
+
+const PRODUCT_CREATE_TX_TIMEOUT_MS = 15000;
+const PRODUCT_CREATE_TX_MAX_WAIT_MS = 5000;
 
 class AdminProductsCreateService {
   /**
@@ -125,7 +129,17 @@ class AdminProductsCreateService {
     try {
       logger.debug('🆕 [ADMIN PRODUCTS CREATE SERVICE] Creating product:', data.title);
 
+      if (data.attributeIds && data.attributeIds.length > 0) {
+        await ensureProductAttributesTable();
+      }
+
       const result = await db.$transaction(async (tx: any) => {
+        const uniqueSlug = await ensureUniqueProductSlug({
+          tx,
+          slug: data.slug,
+          locale: data.locale || "en",
+        });
+
         // Track used SKUs within this transaction to ensure uniqueness
         const usedSkus = new Set<string>();
         
@@ -237,7 +251,7 @@ class AdminProductsCreateService {
             const uniqueSku = await this.generateUniqueSku(
               tx,
               variant.sku,
-              data.slug,
+              uniqueSlug,
               variantIndex,
               usedSkus
             );
@@ -342,7 +356,7 @@ class AdminProductsCreateService {
               create: {
                 locale: data.locale || "en",
                 title: data.title,
-                slug: data.slug,
+                slug: uniqueSlug,
                 subtitle: data.subtitle || undefined,
                 descriptionHtml: data.descriptionHtml || undefined,
               },
@@ -366,9 +380,6 @@ class AdminProductsCreateService {
         // Create ProductAttribute relations if attributeIds provided
         if (data.attributeIds && data.attributeIds.length > 0) {
           try {
-            // Ensure table exists (for Vercel deployments where migrations might not run)
-            await ensureProductAttributesTable();
-            
             logger.debug('🔗 [ADMIN PRODUCTS CREATE SERVICE] Creating ProductAttribute relations for product:', product.id, 'attributes:', data.attributeIds);
             await tx.productAttribute.createMany({
               data: data.attributeIds.map((attributeId) => ({
@@ -401,6 +412,9 @@ class AdminProductsCreateService {
             labels: true,
           },
         });
+      }, {
+        timeout: PRODUCT_CREATE_TX_TIMEOUT_MS,
+        maxWait: PRODUCT_CREATE_TX_MAX_WAIT_MS,
       });
 
       // Revalidate cache

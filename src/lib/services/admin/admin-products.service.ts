@@ -7,6 +7,7 @@ import { adminProductsReadService } from "./admin-products-read.service";
 import { adminProductsCreateService } from "./admin-products-create.service";
 import { adminProductsUpdateService } from "./admin-products-update.service";
 import { adminProductsDeleteService } from "./admin-products-delete.service";
+import { duplicateProductAsDraft } from "./admin-products-duplicate.service";
 
 class AdminProductsService {
   // Delegate to specialized services
@@ -17,6 +18,7 @@ class AdminProductsService {
 
   // Create methods
   createProduct = adminProductsCreateService.createProduct.bind(adminProductsCreateService);
+  duplicateProductAsDraft = duplicateProductAsDraft;
 
   // Update methods
   updateProduct = adminProductsUpdateService.updateProduct.bind(adminProductsUpdateService);

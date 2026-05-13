@@ -114,12 +114,26 @@ export default function ProductsPage() {
     }
   };
 
+  /** Only `createdAt-*` is applied on the server; other sorts are client-only (avoids refetch on every header click). */
+  const sortParamForApi = sortBy.startsWith('createdAt') ? sortBy : '';
+  const categoryFilterKey = [...selectedCategories].sort().join(',');
+
   useEffect(() => {
     if (isLoggedIn && isAdmin) {
-      fetchProducts();
+      void fetchProducts();
     }
-     
-  }, [isLoggedIn, isAdmin, page, search, selectedCategories, skuSearch, stockFilter, sortBy, minPrice, maxPrice]);
+  }, [
+    isLoggedIn,
+    isAdmin,
+    page,
+    search,
+    categoryFilterKey,
+    skuSearch,
+    stockFilter,
+    sortParamForApi,
+    minPrice,
+    maxPrice,
+  ]);
 
   const fetchProducts = async () => {
     try {
@@ -383,6 +397,8 @@ export default function ProductsPage() {
               handleHeaderSort={handleHeaderSort}
               currency={currency}
               handleDeleteProduct={handlers.handleDeleteProduct}
+              handleDuplicateProduct={handlers.handleDuplicateProduct}
+              duplicatingProductId={handlers.duplicatingProductId}
               handleTogglePublished={handlers.handleTogglePublished}
               handleToggleFeatured={handlers.handleToggleFeatured}
               meta={meta}
