@@ -152,22 +152,6 @@ export function CheckoutForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Input
-                label={t('checkout.form.address')}
-                type="text"
-                placeholder={t('checkout.placeholders.address')}
-                {...register('shippingAddress', {
-                  onChange: () => {
-                    if (error && error.includes('shipping address')) {
-                      setError(null);
-                    }
-                  }
-                })}
-                error={errors.shippingAddress?.message}
-                disabled={isSubmitting}
-              />
-            </div>
-            <div>
-              <Input
                 label={t('checkout.form.city')}
                 type="text"
                 placeholder={t('checkout.placeholders.city')}
@@ -179,6 +163,22 @@ export function CheckoutForm({
                   }
                 })}
                 error={errors.shippingCity?.message}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <Input
+                label={t('checkout.form.address')}
+                type="text"
+                placeholder={t('checkout.placeholders.address')}
+                {...register('shippingAddress', {
+                  onChange: () => {
+                    if (error && error.includes('shipping address')) {
+                      setError(null);
+                    }
+                  }
+                })}
+                error={errors.shippingAddress?.message}
                 disabled={isSubmitting}
               />
             </div>
