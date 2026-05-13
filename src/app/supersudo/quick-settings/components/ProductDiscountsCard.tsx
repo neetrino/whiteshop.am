@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Card, Button, Input } from '@shop/ui';
 import { useTranslation } from '../../../../lib/i18n-client';
 import { logger } from "@/lib/utils/logger";
+import { formatPriceInCurrency } from '../../../../lib/currency';
 
 interface Product {
   id: string;
@@ -45,13 +46,7 @@ export function ProductDiscountsCard({
   const { t } = useTranslation();
   const PAGE_CHUNK_SIZE = 3;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  const formatPrice = (price: number) => formatPriceInCurrency(price, 'USD');
 
   const paginationWindow = useMemo(() => {
     if (productsTotalPages <= 10) {

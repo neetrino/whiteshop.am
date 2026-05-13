@@ -635,12 +635,14 @@ export function Header() {
                   onClick={() => {
                     setShowCurrency(!showCurrency);
                   }}
+                  aria-label={`${selectedCurrencyInfo.name} (${selectedCurrencyInfo.symbol})`}
                   className={`inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200/90 px-3 text-gray-800 shadow-sm transition-colors ${
                     showCurrency ? 'bg-gray-200' : 'bg-gray-100 hover:bg-gray-200/90'
                   }`}
                 >
-                  <span className="text-sm font-semibold leading-none tabular-nums">{selectedCurrencyInfo.symbol}</span>
-                  <span className="text-sm font-medium leading-none tabular-nums">{selectedCurrency}</span>
+                  <span className="text-base font-semibold leading-none tabular-nums" aria-hidden>
+                    {selectedCurrencyInfo.symbol}
+                  </span>
                   <ChevronDownIcon />
                 </button>
                 {showCurrency && (
@@ -648,15 +650,19 @@ export function Header() {
                     {Object.values(CURRENCIES).map((currency) => (
                       <button
                         key={currency.code}
+                        type="button"
                         onClick={() => handleCurrencyChange(currency.code)}
+                        aria-label={currency.name}
                         className={`w-full text-left px-4 py-2.5 text-sm transition-all duration-150 ${selectedCurrency === currency.code
                             ? 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 font-semibold'
                             : 'text-gray-700 hover:bg-gray-50'
                           }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span>{currency.code}</span>
-                          <span className="text-gray-500">{currency.symbol}</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-lg tabular-nums" aria-hidden>
+                            {currency.symbol}
+                          </span>
+                          <span className="truncate text-xs text-gray-500">{currency.name}</span>
                         </div>
                       </button>
                     ))}
@@ -728,19 +734,23 @@ export function Header() {
                       {Object.values(CURRENCIES).map((currency) => (
                         <button
                           key={currency.code}
+                          type="button"
                           onClick={() => {
                             handleCurrencyChange(currency.code);
                             setShowMobileCurrency(false);
                           }}
+                          aria-label={currency.name}
                           className={`w-full rounded-md px-3 py-2 text-left text-sm transition-all duration-150 ${
                             selectedCurrency === currency.code
                               ? 'bg-gradient-to-r from-gray-100 to-gray-50 text-gray-900 font-semibold'
                               : 'text-gray-700 hover:bg-gray-50'
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <span>{currency.code}</span>
-                            <span className="text-gray-500">{currency.symbol}</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-lg tabular-nums" aria-hidden>
+                              {currency.symbol}
+                            </span>
+                            <span className="truncate text-xs text-gray-500">{currency.name}</span>
                           </div>
                         </button>
                       ))}

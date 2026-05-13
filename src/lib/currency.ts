@@ -9,6 +9,22 @@ export const CURRENCIES = {
 
 export type CurrencyCode = keyof typeof CURRENCIES;
 
+/** Latin-style currencies: symbol immediately before the amount */
+const CURRENCY_SYMBOL_BEFORE_AMOUNT: ReadonlySet<CurrencyCode> = new Set(['USD', 'EUR']);
+
+function formatAmountWithCurrencySymbol(amount: number, currency: CurrencyCode): string {
+  const { symbol } = CURRENCIES[currency];
+  const numberPart = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+  if (CURRENCY_SYMBOL_BEFORE_AMOUNT.has(currency)) {
+    return `${symbol}${numberPart}`;
+  }
+  return `${numberPart}\u00A0${symbol}`;
+}
+
 // Cache for currency rates from API
 let currencyRatesCache: Record<string, number> | null = null;
 let currencyRatesCacheTime: number = 0;
@@ -104,19 +120,8 @@ export function formatPrice(price: number, currency: CurrencyCode = 'USD'): stri
   }
   
   const convertedPrice = price * rate;
-  
-  // Show all currencies without decimals (remove .00)
-  const minimumFractionDigits = 0;
-  const maximumFractionDigits = 0;
-  
-  const formatted = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currencyInfo.code,
-    minimumFractionDigits,
-    maximumFractionDigits,
-  }).format(convertedPrice);
-  
-  return formatted;
+
+  return formatAmountWithCurrencySymbol(convertedPrice, currency);
 }
 
 /**
@@ -151,20 +156,7 @@ export function convertPrice(price: number, fromCurrency: CurrencyCode, toCurren
  * Use this for prices that are already in AMD (like shipping costs)
  */
 export function formatPriceInCurrency(price: number, currency: CurrencyCode = 'AMD'): string {
-  const currencyInfo = CURRENCIES[currency];
-  
-  // Show all currencies without decimals (remove .00)
-  const minimumFractionDigits = 0;
-  const maximumFractionDigits = 0;
-  
-  const formatted = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currencyInfo.code,
-    minimumFractionDigits,
-    maximumFractionDigits,
-  }).format(price);
-  
-  return formatted;
+  return formatAmountWithCurrencySymbol(price, currency);
 }
 
 

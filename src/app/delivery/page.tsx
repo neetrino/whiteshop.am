@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from '../../lib/i18n-client';
 import { getStoredLanguage } from '../../lib/language';
 import { loadTranslation } from '../../lib/i18n';
+import { formatPriceInCurrency } from '../../lib/currency';
 
 export default function DeliveryPage() {
   const { t } = useTranslation();
@@ -40,11 +41,9 @@ export default function DeliveryPage() {
           <div className="space-y-4 text-gray-700">
             {methods.map((method) => {
               if (!method.enabled) return null;
-              const freeAbove = method.freeAbove ? new Intl.NumberFormat('hy-AM', {
-                style: 'currency',
-                currency: 'AMD',
-                minimumFractionDigits: 0,
-              }).format(method.freeAbove) : null;
+              const freeAbove = method.freeAbove
+                ? formatPriceInCurrency(method.freeAbove, 'AMD')
+                : null;
               
               return (
                 <div key={method.id}>
@@ -54,11 +53,10 @@ export default function DeliveryPage() {
                       t('delivery.deliveryInformation.freeDelivery')
                     ) : (
                       <>
-                        {t('delivery.deliveryInformation.deliveryCost').replace('{price}', new Intl.NumberFormat('hy-AM', {
-                          style: 'currency',
-                          currency: 'AMD',
-                          minimumFractionDigits: 0,
-                        }).format(method.price))}
+                        {t('delivery.deliveryInformation.deliveryCost').replace(
+                          '{price}',
+                          formatPriceInCurrency(method.price, 'AMD'),
+                        )}
                         {freeAbove && ` (${t('delivery.deliveryInformation.freeForOrdersAbove').replace('{amount}', freeAbove)})`}
                       </>
                     )}
