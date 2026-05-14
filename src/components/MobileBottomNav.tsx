@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Heart, Home, Search, UserRound, Store, X } from 'lucide-react';
 import { getCompareCount, getWishlistCount } from '../lib/storageCounts';
@@ -45,13 +45,13 @@ export function MobileBottomNav() {
   const [showShopCategories, setShowShopCategories] = useState(false);
   const [shopCategories, setShopCategories] = useState<TopCategoryItem[]>([]);
   const [shopCategoriesLoading, setShopCategoriesLoading] = useState(false);
+  const shopCategoriesFetchStartedRef = useRef(false);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
 
   useEffect(() => {
     const updateCounts = () => {
       const wishlist = getWishlistCount();
       const compare = getCompareCount();
-      console.debug('[MobileBottomNav] wishlist/compare counts refreshed', { wishlist, compare });
       setWishlistCount(wishlist);
       setCompareCount(compare);
     };
@@ -80,12 +80,19 @@ export function MobileBottomNav() {
   useEffect(() => {
     setShowShopCategories(false);
     setCategorySearchQuery('');
+    shopCategoriesFetchStartedRef.current = false;
   }, [pathname]);
 
   useEffect(() => {
-    if (!showShopCategories || shopCategories.length > 0 || shopCategoriesLoading) {
+    if (!showShopCategories) {
+      shopCategoriesFetchStartedRef.current = false;
       return;
     }
+    if (shopCategories.length > 0 || shopCategoriesLoading || shopCategoriesFetchStartedRef.current) {
+      return;
+    }
+
+    shopCategoriesFetchStartedRef.current = true;
 
     const fetchTopCategories = async () => {
       try {
@@ -102,7 +109,7 @@ export function MobileBottomNav() {
       }
     };
 
-    fetchTopCategories();
+    void fetchTopCategories();
   }, [showShopCategories, shopCategories.length, shopCategoriesLoading]);
 
   const navItems: MobileNavItem[] = useMemo(

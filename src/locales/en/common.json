@@ -40,7 +40,8 @@
     "privacy": "Privacy",
     "terms": "Terms",
     "delivery": "Delivery",
-    "stores": "Stores"
+    "stores": "Stores",
+    "categoriesMenuUnavailable": "Category menu temporarily unavailable"
   },
   "stock": {
     "inStock": "In Stock",

@@ -1,9 +1,6 @@
 import { getHealthResponse } from "@/lib/server/health-handler";
 
-/**
- * GET /api/health
- * App + DATABASE_URL presence + PostgreSQL / Prisma connectivity.
- */
+/** GET /api/v1/health — same checks as /api/health */
 export async function GET() {
   return getHealthResponse();
 }

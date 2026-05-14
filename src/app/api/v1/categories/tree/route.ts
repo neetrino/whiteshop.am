@@ -1,3 +1,4 @@
+import { assertPostgresDatabaseUrlConfigured } from "@white-shop/db/env";
 import { NextRequest, NextResponse } from "next/server";
 import {
   STOREFRONT_CACHE_KEYS,
@@ -5,7 +6,7 @@ import {
   readJsonCache,
   writeJsonCache,
 } from "@/lib/cache/storefront-cache";
-import { apiRouteErrorResponse } from "@/lib/http/api-route-errors";
+import { apiRouteErrorResponse, buildApiRouteErrorContext } from "@/lib/http/api-route-errors";
 import { categoriesService } from "@/lib/services/categories.service";
 
 export async function GET(req: NextRequest) {
@@ -19,11 +20,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(cached, { headers: { "X-Cache": "HIT" } });
     }
 
+    assertPostgresDatabaseUrlConfigured();
     const result = await categoriesService.getTree(lang);
     await writeJsonCache(cacheKey, STOREFRONT_CACHE_TTL.categoriesTree, result);
 
     return NextResponse.json(result, { headers: { "X-Cache": "MISS" } });
   } catch (error: unknown) {
-    return apiRouteErrorResponse(req, error, "[CATEGORIES TREE]");
+    return apiRouteErrorResponse(req, error, "[CATEGORIES TREE]", buildApiRouteErrorContext(req));
   }
 }

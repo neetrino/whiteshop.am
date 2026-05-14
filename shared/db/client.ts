@@ -6,17 +6,30 @@ declare global {
 
 const globalForPrisma = globalThis as typeof globalThis & { prisma?: PrismaClient };
 
+function appendQueryParam(url: string, key: string, value: string): string {
+  const lower = url.toLowerCase();
+  if (lower.includes(`${key.toLowerCase()}=`)) {
+    return url;
+  }
+  return url.includes("?") ? `${url}&${key}=${value}` : `${url}?${key}=${value}`;
+}
+
 /**
  * Append libpq params if missing: UTF-8 + bounded connect wait (faster fail than default).
+ * Neon/Vercel: ensure TLS; Prisma + Neon transaction pooler needs `pgbouncer=true`.
  */
 function augmentDatabaseUrl(raw: string): string {
   if (!raw) return raw;
   let u = raw;
-  if (!u.includes("client_encoding=")) {
-    u += u.includes("?") ? "&client_encoding=UTF8" : "?client_encoding=UTF8";
+  u = appendQueryParam(u, "client_encoding", "UTF8");
+  u = appendQueryParam(u, "connect_timeout", "12");
+  const lower = u.toLowerCase();
+  if ((lower.includes(".neon.tech") || lower.includes("neon.tech")) && !lower.includes("sslmode=")) {
+    u = appendQueryParam(u, "sslmode", "require");
   }
-  if (!u.includes("connect_timeout=")) {
-    u += u.includes("?") ? "&connect_timeout=12" : "?connect_timeout=12";
+  const lowerAfterSsl = u.toLowerCase();
+  if ((u.includes("-pooler") || lowerAfterSsl.includes("pooler.")) && !lowerAfterSsl.includes("pgbouncer=")) {
+    u = appendQueryParam(u, "pgbouncer", "true");
   }
   return u;
 }
@@ -36,9 +49,6 @@ export const db =
     errorFormat: "pretty",
   });
 
-// Prisma Client connects automatically on first query (lazy connection)
-// No need to call $connect() explicitly as it can cause issues in Next.js API routes
-// Connection will be established automatically when the first database query is made
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// Reuse one client per serverless isolate (Vercel/Next) and across dev HMR.
+globalForPrisma.prisma = db;
 

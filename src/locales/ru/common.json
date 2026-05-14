@@ -40,7 +40,8 @@
     "privacy": "Конфиденциальность",
     "terms": "Условия",
     "delivery": "Доставка",
-    "stores": "Магазины"
+    "stores": "Магазины",
+    "categoriesMenuUnavailable": "Меню категорий временно недоступно"
   },
   "stock": {
     "inStock": "В наличии",

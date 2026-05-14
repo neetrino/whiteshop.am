@@ -1,6 +1,7 @@
+import { assertPostgresDatabaseUrlConfigured } from "@white-shop/db/env";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@white-shop/db";
-import { apiRouteErrorResponse } from "@/lib/http/api-route-errors";
+import { apiRouteErrorResponse, buildApiRouteErrorContext } from "@/lib/http/api-route-errors";
 import { cacheService } from "@/lib/services/cache.service";
 import { processImageUrl } from "@/lib/utils/image-utils";
 
@@ -22,6 +23,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    assertPostgresDatabaseUrlConfigured();
     const categories = await db.category.findMany({
       where: { parentId: null },
       include: {
@@ -128,6 +130,6 @@ export async function GET(req: NextRequest) {
       headers: { "X-Cache": "MISS" },
     });
   } catch (error: unknown) {
-    return apiRouteErrorResponse(req, error, "[TOP CATEGORIES]");
+    return apiRouteErrorResponse(req, error, "[TOP CATEGORIES]", buildApiRouteErrorContext(req));
   }
 }

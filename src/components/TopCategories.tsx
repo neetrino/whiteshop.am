@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,26 +25,35 @@ export function TopCategories() {
   const router = useRouter();
   const [topCategories, setTopCategories] = useState<TopCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  useEffect(() => {
-    fetchTopCategories();
-  }, []);
-
-  const fetchTopCategories = async () => {
+  const fetchTopCategories = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadFailed(false);
       const language = getStoredLanguage();
       const response = await apiClient.get<TopCategoriesResponse>('/api/v1/categories/top', {
         params: { lang: language, limit: '5' },
       });
       setTopCategories(response.data || []);
-    } catch (err) {
-      console.error('[TopCategories] Error:', err);
+    } catch {
       setTopCategories([]);
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void fetchTopCategories();
+    const onLanguage = () => {
+      void fetchTopCategories();
+    };
+    window.addEventListener('language-updated', onLanguage);
+    return () => {
+      window.removeEventListener('language-updated', onLanguage);
+    };
+  }, [fetchTopCategories]);
 
   if (loading) {
     return (
@@ -59,6 +68,23 @@ export function TopCategories() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (loadFailed && topCategories.length === 0) {
+    return (
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-gray-500 mb-3">{t('home.top_categories.load_error')}</p>
+          <button
+            type="button"
+            onClick={() => void fetchTopCategories()}
+            className="text-sm font-medium text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline"
+          >
+            {t('home.top_categories.try_again')}
+          </button>
         </div>
       </section>
     );
