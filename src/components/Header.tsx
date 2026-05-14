@@ -223,6 +223,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>('AMD');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesTreeLoadFailed, setCategoriesTreeLoadFailed] = useState(false);
   const [, setSelectedCategory] = useState<Category | null>(null);
   const currentYear = new Date().getFullYear();
 
@@ -451,26 +452,38 @@ export function Header() {
 
   // Sync search input with URL params - handled by HeaderSearchSync component wrapped in Suspense
 
-  // Fetch categories (language is always 'en')
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    let cancelled = false;
 
-  const fetchCategories = async () => {
-    try {
-      // Small delay to avoid simultaneous requests
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Language is always 'en'
-      const response = await apiClient.get<CategoriesResponse>('/api/v1/categories/tree', {
-        params: { lang: 'en' },
-      });
-      setCategories(response.data || []);
-    } catch (err: any) {
-      console.error('Error fetching categories:', err);
-      setCategories([]);
-    }
-  };
+    const loadCategories = async () => {
+      try {
+        setCategoriesTreeLoadFailed(false);
+        const lang = getStoredLanguage();
+        const response = await apiClient.get<CategoriesResponse>('/api/v1/categories/tree', {
+          params: { lang },
+        });
+        if (!cancelled) {
+          setCategories(response.data || []);
+        }
+      } catch (err: unknown) {
+        console.error('Error fetching categories:', err);
+        if (!cancelled) {
+          setCategories([]);
+          setCategoriesTreeLoadFailed(true);
+        }
+      }
+    };
+
+    void loadCategories();
+    const onLanguage = () => {
+      void loadCategories();
+    };
+    window.addEventListener('language-updated', onLanguage);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('language-updated', onLanguage);
+    };
+  }, []);
 
   const selectedCurrencyInfo = CURRENCIES[selectedCurrency];
   const searchExpanded = searchHoverExpanded || searchFocusExpanded || searchQuery.trim().length > 0;
@@ -795,14 +808,21 @@ export function Header() {
             >
               {t('common.navigation.home')}
             </Link>
-            <Link
-              href="/products"
-              {...getFastNavHandlers('/products')}
-              className={headerTextNavClassName(isHeaderNavActive(pathname, '/products'))}
-              aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
-            >
-              {t('common.navigation.products')}
-            </Link>
+            <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              <Link
+                href="/products"
+                {...getFastNavHandlers('/products')}
+                className={headerTextNavClassName(isHeaderNavActive(pathname, '/products'))}
+                aria-current={isHeaderNavActive(pathname, '/products') ? 'page' : undefined}
+              >
+                {t('common.navigation.products')}
+              </Link>
+              {categoriesTreeLoadFailed && categories.length === 0 && (
+                <span className="text-xs font-normal text-gray-400 normal-case" role="status">
+                  {t('common.navigation.categoriesMenuUnavailable')}
+                </span>
+              )}
+            </span>
             <Link
               href="/about"
               {...getFastNavHandlers('/about')}

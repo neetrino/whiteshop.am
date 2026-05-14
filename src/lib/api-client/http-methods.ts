@@ -148,7 +148,7 @@ export async function getRequest<T>(
   }
 
   if (!response.ok) {
-    // Retry on 429 (Too Many Requests) errors
+    // Retry on 429 only. Do not retry 5xx (e.g. 503 DB unavailable) to avoid request storms.
     if (response.status === 429 && retryCount < maxRetries) {
       const delay = retryDelay * (retryCount + 1); // Exponential backoff
       console.warn(`⚠️ [API CLIENT] Rate limited, retrying in ${delay}ms... (attempt ${retryCount + 1}/${maxRetries})`);

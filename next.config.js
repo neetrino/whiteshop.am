@@ -19,6 +19,8 @@ const nextConfig = {
   reactStrictMode: true,
   // Скрыть индикатор "Compiling..." в углу в dev — не мешает на экране
   devIndicators: false,
+  /** Do not bundle workspace DB + native query engine; load `@white-shop/db` from node_modules at runtime. */
+  serverExternalPackages: ['@white-shop/db'],
   transpilePackages: ['@shop/ui', '@shop/design-tokens'],
   // Standalone output - prevents prerendering of 404 page
   output: 'standalone',
@@ -123,11 +125,9 @@ const nextConfig = {
     
     return config;
   },
-  // Turbopack configuration for monorepo
-  // Required when webpack config is present - Next.js 16 requires explicit turbopack config
-  // Set root to project root where Next.js is installed in node_modules (monorepo workspace)
+  // Turbopack: required when a custom `webpack` callback exists (Next.js 16+). `root` scopes the workspace.
   turbopack: {
-    root: path.resolve(__dirname, '.'),
+    root: __dirname,
   },
 };
 

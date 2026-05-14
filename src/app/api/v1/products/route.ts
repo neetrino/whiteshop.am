@@ -1,5 +1,6 @@
+import { assertPostgresDatabaseUrlConfigured } from "@white-shop/db/env";
 import { NextRequest, NextResponse } from "next/server";
-import { apiRouteErrorResponse } from "@/lib/http/api-route-errors";
+import { apiRouteErrorResponse, buildApiRouteErrorContext } from "@/lib/http/api-route-errors";
 import { productsService } from "@/lib/services/products.service";
 import { cacheService } from "@/lib/services/cache.service";
 
@@ -62,6 +63,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    assertPostgresDatabaseUrlConfigured();
     const result = await productsService.findAll(filters);
 
     const onlyFeatured =
@@ -77,7 +79,7 @@ export async function GET(req: NextRequest) {
       headers: { "X-Cache": "MISS" },
     });
   } catch (error: unknown) {
-    return apiRouteErrorResponse(req, error, "[PRODUCTS]");
+    return apiRouteErrorResponse(req, error, "[PRODUCTS]", buildApiRouteErrorContext(req));
   }
 }
 

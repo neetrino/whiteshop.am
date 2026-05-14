@@ -21,6 +21,10 @@
     "errorLoading": "Failed to load products",
     "tryAgain": "Try Again",
     "noProducts": "No products in this category."
+  },
+  "top_categories": {
+    "load_error": "Categories could not be loaded right now.",
+    "try_again": "Try again"
   }
 }
 
