@@ -24,6 +24,9 @@ const nextConfig = {
   transpilePackages: ['@shop/ui', '@shop/design-tokens'],
   // Standalone output - prevents prerendering of 404 page
   output: 'standalone',
+  outputFileTracingIncludes: {
+    '/*': ['./shared/db/generated/prisma-client/**'],
+  },
   // Security headers (P1-SEC-07)
   async headers() {
     return [

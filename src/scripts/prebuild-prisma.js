@@ -16,6 +16,7 @@ const MAX_ATTEMPTS = 5;
 const DELAY_MS = 1500;
 const dbDir = path.join(__dirname, "../../shared/db");
 const generatedClientDir = path.join(dbDir, "generated/prisma-client");
+const packageRunner = process.platform === "win32" ? "corepack.cmd" : "corepack";
 
 function hasEngineBinary() {
   if (!fs.existsSync(generatedClientDir)) {
@@ -33,7 +34,7 @@ async function main() {
   }
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const result = spawnSync("pnpm", ["run", "db:generate"], {
+    const result = spawnSync(packageRunner, ["pnpm", "run", "db:generate"], {
       cwd: dbDir,
       env: process.env,
       shell: true,
