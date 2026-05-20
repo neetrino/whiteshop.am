@@ -1,7 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  /// Avoid Windows EPERM when renaming the engine under pnpm `node_modules/.pnpm/.../.prisma/client`
-  output   = "../generated/prisma-client"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {

@@ -9,7 +9,7 @@
     "dev:clean": "node -e \"require('fs').rmSync('.next', {recursive: true, force: true})\" && next dev",
     "prebuild": "node src/scripts/prebuild-prisma.js",
     "prebuild:migrate": "node src/scripts/run-migrations.js",
-    "build": "pnpm run prebuild && next build",
+    "build": "corepack pnpm run prebuild && next build",
     "build:with-migrate": "pnpm run prebuild:migrate && next build",
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
@@ -50,6 +50,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@prisma/nextjs-monorepo-workaround-plugin": "^5.22.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/browser-image-compression": "^1.0.1",
     "@types/dompurify": "^3.2.0",

@@ -28,5 +28,3 @@ temp/
 # .vscode/
 # *.swp
 # *.swo
-# Prisma (custom output under shared/db; recreated by prisma generate / workspace postinstall)
-shared/db/generated/
