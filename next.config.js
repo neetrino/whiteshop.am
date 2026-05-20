@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
+const { PrismaPlugin } = require('@prisma/nextjs-monorepo-workaround-plugin');
 
 // Vercel Toolbar / Live inject scripts and WebSockets from vercel.live (preview & prod tooling).
 const VERCEL_LIVE_SCRIPT = 'https://vercel.live';
@@ -19,14 +20,7 @@ const nextConfig = {
   reactStrictMode: true,
   // Скрыть индикатор "Compiling..." в углу в dev — не мешает на экране
   devIndicators: false,
-  /** Do not bundle workspace DB + native query engine; load `@white-shop/db` from node_modules at runtime. */
-  serverExternalPackages: ['@white-shop/db'],
-  transpilePackages: ['@shop/ui', '@shop/design-tokens'],
-  // Standalone output - prevents prerendering of 404 page
-  output: 'standalone',
-  outputFileTracingIncludes: {
-    '/*': ['./shared/db/generated/prisma-client/**'],
-  },
+  transpilePackages: ['@shop/ui', '@shop/design-tokens', '@white-shop/db'],
   // Security headers (P1-SEC-07)
   async headers() {
     return [
@@ -117,7 +111,11 @@ const nextConfig = {
         aggregateTimeout: 300,
       };
     }
-    
+
+    if (isServer) {
+      config.plugins = [...(config.plugins ?? []), new PrismaPlugin()];
+    }
+
     // Resolve workspace packages and path aliases
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -125,7 +123,7 @@ const nextConfig = {
       '@shop/ui': path.resolve(__dirname, 'shared/ui'),
       '@shop/design-tokens': path.resolve(__dirname, 'shared/design-tokens'),
     };
-    
+
     return config;
   },
   // Turbopack: required when a custom `webpack` callback exists (Next.js 16+). `root` scopes the workspace.
